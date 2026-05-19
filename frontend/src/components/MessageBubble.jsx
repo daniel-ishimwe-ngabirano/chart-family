@@ -76,6 +76,18 @@ export default function MessageBubble({ message, isOwn, onReply }) {
         </div>
       )}
 
+      {attachments.length > 0 && attachments[0].mimeType?.startsWith("audio/") && (
+        <div className="message-audio">
+          <audio src={attachments[0].url} controls preload="metadata" />
+        </div>
+      )}
+
+      {attachments.length > 0 && attachments[0].mimeType?.startsWith("video/") && (
+        <div className="message-video" onClick={() => setShowMedia(true)}>
+          <video src={attachments[0].url} controls preload="metadata" />
+        </div>
+      )}
+
       <div
         className={`message-bubble ${isOwn ? "own" : "other"}`}
         onContextMenu={(e) => { e.preventDefault(); setShowMenu(true); }}

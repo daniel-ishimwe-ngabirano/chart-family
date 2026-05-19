@@ -1,6 +1,9 @@
 node_modules
+node_modules_old
 dist
 .env
 *.log
 .DS_Store
 coverage
+backend/uploads/
+backend/src/prisma/dev.db
