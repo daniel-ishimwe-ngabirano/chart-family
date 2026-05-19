@@ -1,0 +1,19 @@
+{
+  "name": "wavechat",
+  "version": "2.0.0",
+  "description": "WaveChat - Real-time messaging platform",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "npm run start --prefix backend",
+    "db:generate": "npm run db:generate --prefix backend",
+    "db:push": "npm run db:push --prefix backend",
+    "db:migrate": "npm run db:migrate --prefix backend"
+  },
+  "keywords": ["chat", "realtime", "messaging", "socket.io"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

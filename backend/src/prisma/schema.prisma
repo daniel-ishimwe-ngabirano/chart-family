@@ -1,0 +1,406 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String?  @unique
+  phone          String?  @unique
+  fullName       String
+  username       String?  @unique
+  password       String?
+  avatar         String?
+  bio            String?
+  role           String   @default("user")
+  lastSeen       DateTime @default(now())
+  isOnline       Boolean  @default(false)
+  isVerified     Boolean  @default(false)
+  googleId       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sessions          Session[]
+  devices           Device[]
+  sentMessages      Message[]            @relation("SentMessages")
+  conversations     ConversationMember[]
+  groupAdminOf      Conversation[]       @relation("GroupAdmin")
+  blockedUsers      Block[]              @relation("Blocker")
+  blockedBy         Block[]              @relation("Blocked")
+  starredMessages   StarredMessage[]
+  readReceipts      ReadReceipt[]
+  reactions         Reaction[]
+  pinnedMessages    PinnedMessage[]
+  drafts            Draft[]
+  pollsCreated      Poll[]               @relation("PollCreator")
+  pollVotes         PollVote[]
+  callsInitiated    Call[]               @relation("CallInitiator")
+  callsReceived     Call[]               @relation("CallReceiver")
+  callParticipants  CallParticipant[]
+  adminLogs         AdminLog[]
+  reportsMade       Report[]              @relation("Reporter")
+  reportsReceived   Report[]              @relation("ReportedUser")
+  broadcastReads    BroadcastRead[]
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ip           String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id          String   @id @default(uuid())
+  userId      String
+  deviceId    String
+  deviceName  String?
+  deviceType  String?
+  fcmToken    String?
+  lastActive  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+}
+
+model Conversation {
+  id            String   @id @default(uuid())
+  isGroup       Boolean  @default(false)
+  groupName     String?
+  groupAvatar   String?
+  groupAdminId  String?
+  inviteCode    String?  @unique
+  isBroadcast   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  members         ConversationMember[]
+  messages        Message[]
+  pinnedMessages  PinnedMessage[]
+  polls           Poll[]
+  drafts          Draft[]
+  groupAdmin      User?    @relation("GroupAdmin", fields: [groupAdminId], references: [id], onDelete: SetNull)
+  calls           Call[]
+}
+
+model ConversationMember {
+  id             String   @id @default(uuid())
+  conversationId String
+  userId         String
+  role           String   @default("member")
+  joinedAt       DateTime @default(now())
+  lastReadAt     DateTime @default(now())
+  isMuted        Boolean  @default(false)
+  nickname       String?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id              String    @id @default(uuid())
+  conversationId  String
+  senderId        String
+  text            String?
+  type            String    @default("TEXT")
+  metadata        String?
+  replyToId       String?
+  isEdited        Boolean   @default(false)
+  isDeleted       Boolean   @default(false)
+  deletedForEveryone Boolean @default(false)
+  scheduledAt     DateTime?
+  disappearsAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo         Message?     @relation("ReplyTo", fields: [replyToId], references: [id])
+  replies         Message[]    @relation("ReplyTo")
+  readReceipts    ReadReceipt[]
+  attachments     Attachment[]
+  reactions       Reaction[]
+  pinnedMessages  PinnedMessage[]
+  starredBy       StarredMessage[]
+}
+
+model ReadReceipt {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+}
+
+model Attachment {
+  id         String @id @default(uuid())
+  messageId  String
+  url        String
+  publicId   String?
+  fileName   String
+  fileSize   Int
+  mimeType   String
+  width      Int?
+  height     Int?
+  duration   Int?
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+model PinnedMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  messageId      String
+  pinnedById     String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  message      Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  pinnedBy     User         @relation(fields: [pinnedById], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, messageId])
+}
+
+model StarredMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  messageId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId])
+}
+
+model Draft {
+  id             String   @id @default(uuid())
+  userId         String
+  conversationId String
+  text           String?
+  metadata       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conversationId])
+}
+
+model Block {
+  id         String   @id @default(uuid())
+  blockerId  String
+  blockedId  String
+  createdAt  DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+}
+
+model Call {
+  id             String   @id @default(uuid())
+  conversationId String?
+  callerId       String
+  receiverId     String
+  type           String
+  status         String   @default("INITIATED")
+  startedAt      DateTime?
+  endedAt        DateTime?
+  duration       Int?
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation?  @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  caller         User           @relation("CallInitiator", fields: [callerId], references: [id], onDelete: Cascade)
+  receiver       User           @relation("CallReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  participants   CallParticipant[]
+}
+
+model CallParticipant {
+  id        String    @id @default(uuid())
+  callId    String
+  userId    String
+  joinedAt  DateTime?
+  leftAt    DateTime?
+  isMuted   Boolean   @default(false)
+  isVideoOn Boolean   @default(true)
+
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([callId, userId])
+}
+
+model Poll {
+  id             String   @id @default(uuid())
+  conversationId String
+  createdById    String
+  question       String
+  isAnonymous    Boolean  @default(false)
+  isMultipleChoice Boolean @default(false)
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("PollCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  options      PollOption[]
+  votes        PollVote[]
+}
+
+model PollOption {
+  id     String @id @default(uuid())
+  pollId String
+  text   String
+
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes  PollVote[]
+}
+
+model PollVote {
+  id        String   @id @default(uuid())
+  pollId    String
+  optionId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  label       String
+  description String?
+  enabled     Boolean  @default(false)
+  category    String   @default("general")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  type      String   @default("string")
+  group     String   @default("general")
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdminLog {
+  id        String       @id @default(uuid())
+  userId    String
+  action    String
+  resource  String
+  details   String?
+  createdAt DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  reporterId  String
+  reportedId  String
+  messageId   String?
+  reason      String
+  description String?
+  status      String   @default("pending")
+  handledById String?
+  handledAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  reporter User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported User @relation("ReportedUser", fields: [reportedId], references: [id], onDelete: Cascade)
+}
+
+model BadWord {
+  id   String @id @default(uuid())
+  word String @unique
+}
+
+model Broadcast {
+  id        String          @id @default(uuid())
+  title     String
+  message   String
+  type      String          @default("info")
+  createdBy String
+  createdAt DateTime        @default(now())
+
+  reads BroadcastRead[]
+}
+
+model BroadcastRead {
+  id           String    @id @default(uuid())
+  broadcastId  String
+  userId       String
+  readAt       DateTime  @default(now())
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([broadcastId, userId])
+}
+
+model PageSection {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  content   String
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NavItem {
+  id        String    @id @default(uuid())
+  label     String
+  icon      String?
+  path      String
+  parentId  String?
+  position  Int       @default(0)
+  isVisible Boolean   @default(true)
+  role      String?   @default("user")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  parent   NavItem?  @relation("NavTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children NavItem[] @relation("NavTree")
+}
