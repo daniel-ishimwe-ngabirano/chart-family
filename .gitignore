@@ -2,8 +2,8 @@ node_modules
 node_modules_old
 dist
 .env
+backend/uploads/
+backend/src/prisma/dev.db
 *.log
 .DS_Store
 coverage
-backend/uploads/
-backend/src/prisma/dev.db

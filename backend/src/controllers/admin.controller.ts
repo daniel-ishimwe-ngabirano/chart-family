@@ -10,8 +10,8 @@ const ADMIN_AUTH_COOKIE = "admin_token";
 function setAdminCookie(res: Response, token: string) {
   res.cookie(ADMIN_AUTH_COOKIE, token, {
     httpOnly: true,
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     secure: env.NODE_ENV === "production",
-    sameSite: "strict",
     maxAge: 24 * 60 * 60 * 1000,
   });
 }
@@ -362,9 +362,9 @@ export async function getPageSections(req: Request, res: Response, next: NextFun
 export async function upsertPageSection(req: Request, res: Response, next: NextFunction) {
   try {
     await checkAdmin(req);
-    const { slug } = req.params;
+    const slug = req.params.slug as string;
     const { title, content, published } = req.body;
-    const section = await pageSectionService.upsert(slug, { title, content, published });
+    const section = await pageSectionService.upsert(slug, { title: (title as string), content: (content as string), published: Boolean(published) });
     try { getIO().emit("sections:updated", section); } catch {}
     res.json(section);
   } catch (err) { next(err); }

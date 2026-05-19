@@ -17,3 +17,7 @@ export async function connectDB(): Promise<void> {
     throw error;
   }
 }
+
+export function now(): Date {
+  return new Date();
+}

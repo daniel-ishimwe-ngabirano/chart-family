@@ -3,6 +3,7 @@ import axios from "../lib/axios.js";
 
 export const useAuthStore = create((set) => ({
   authUser: null,
+  token: null,
   isSigningUp: false,
   isLoggingIn: false,
   isCheckingAuth: true,
@@ -35,7 +36,7 @@ export const useAuthStore = create((set) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axios.post("/auth/login", data);
-      set({ authUser: res.data.user });
+      set({ authUser: res.data.user, token: res.data.accessToken });
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || "Login failed" };
@@ -47,7 +48,7 @@ export const useAuthStore = create((set) => ({
   logout: async () => {
     try {
       await axios.post("/auth/logout");
-      set({ authUser: null });
+      set({ authUser: null, token: null });
     } catch (error) {
       console.error("Logout error:", error);
     }

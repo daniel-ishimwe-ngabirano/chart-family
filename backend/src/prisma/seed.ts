@@ -72,14 +72,12 @@ async function main() {
       groupAdminId: admin.id,
       inviteCode: "wavechat",
       members: {
-        createMany: {
-          data: [
-            { userId: admin.id, role: "admin" },
-            { userId: users[0].id, role: "member" },
-            { userId: users[1].id, role: "member" },
-            { userId: users[2].id, role: "member" },
-          ],
-        },
+        create: [
+          { userId: admin.id, role: "admin" },
+          { userId: users[0].id, role: "member" },
+          { userId: users[1].id, role: "member" },
+          { userId: users[2].id, role: "member" },
+        ],
       },
     },
   });
@@ -89,12 +87,10 @@ async function main() {
     data: {
       isGroup: false,
       members: {
-        createMany: {
-          data: [
-            { userId: admin.id, role: "admin" },
-            { userId: users[0].id, role: "member" },
-          ],
-        },
+        create: [
+          { userId: admin.id, role: "admin" },
+          { userId: users[0].id, role: "member" },
+        ],
       },
     },
   });
@@ -136,14 +132,12 @@ async function main() {
       createdById: admin.id,
       question: "What feature should we build next?",
       options: {
-        createMany: {
-          data: [
-            { text: "Voice Calls" },
-            { text: "Screen Sharing" },
-            { text: "Channels" },
-            { text: "Bots/API" },
-          ],
-        },
+        create: [
+          { text: "Voice Calls" },
+          { text: "Screen Sharing" },
+          { text: "Channels" },
+          { text: "Bots/API" },
+        ],
       },
     },
   });

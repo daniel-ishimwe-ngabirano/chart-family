@@ -1,20 +1,15 @@
 version: "3.8"
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: wavechat
+  mongo:
+    image: mongo:7
     ports:
-      - "5432:5432"
-      
+      - "27017:27017"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mongodata:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -37,7 +32,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/wavechat
+      DATABASE_URL: mongodb://mongo:27017/wavechat
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
@@ -58,7 +53,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     depends_on:
-      postgres:
+      mongo:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -76,4 +71,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  pgdata:
+  mongodata:

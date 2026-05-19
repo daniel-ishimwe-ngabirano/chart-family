@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id             String   @id @default(uuid())
+  id             String   @id @map("_id") @default(uuid())
   email          String?  @unique
   phone          String?  @unique
   fullName       String
@@ -22,7 +22,7 @@ model User {
   isVerified     Boolean  @default(false)
   googleId       String?
   createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  updatedAt      DateTime @default(now())
 
   sessions          Session[]
   devices           Device[]
@@ -48,7 +48,7 @@ model User {
 }
 
 model Session {
-  id           String   @id @default(uuid())
+  id           String   @id @map("_id") @default(uuid())
   userId       String
   refreshToken String   @unique
   userAgent    String?
@@ -60,7 +60,7 @@ model Session {
 }
 
 model Device {
-  id          String   @id @default(uuid())
+  id          String   @id @map("_id") @default(uuid())
   userId      String
   deviceId    String
   deviceName  String?
@@ -75,7 +75,7 @@ model Device {
 }
 
 model Conversation {
-  id            String   @id @default(uuid())
+  id            String   @id @map("_id") @default(uuid())
   isGroup       Boolean  @default(false)
   groupName     String?
   groupAvatar   String?
@@ -83,7 +83,7 @@ model Conversation {
   inviteCode    String?  @unique
   isBroadcast   Boolean  @default(false)
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now())
 
   members         ConversationMember[]
   messages        Message[]
@@ -95,7 +95,7 @@ model Conversation {
 }
 
 model ConversationMember {
-  id             String   @id @default(uuid())
+  id             String   @id @map("_id") @default(uuid())
   conversationId String
   userId         String
   role           String   @default("member")
@@ -111,7 +111,7 @@ model ConversationMember {
 }
 
 model Message {
-  id              String    @id @default(uuid())
+  id              String    @id @map("_id") @default(uuid())
   conversationId  String
   senderId        String
   text            String?
@@ -124,7 +124,7 @@ model Message {
   scheduledAt     DateTime?
   disappearsAt    DateTime?
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  updatedAt       DateTime @default(now())
 
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender          User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
@@ -138,7 +138,7 @@ model Message {
 }
 
 model ReadReceipt {
-  id        String   @id @default(uuid())
+  id        String   @id @map("_id") @default(uuid())
   messageId String
   userId    String
   readAt    DateTime @default(now())
@@ -150,7 +150,7 @@ model ReadReceipt {
 }
 
 model Attachment {
-  id         String @id @default(uuid())
+  id         String @id @map("_id") @default(uuid())
   messageId  String
   url        String
   publicId   String?
@@ -165,7 +165,7 @@ model Attachment {
 }
 
 model Reaction {
-  id        String   @id @default(uuid())
+  id        String   @id @map("_id") @default(uuid())
   messageId String
   userId    String
   emoji     String
@@ -178,7 +178,7 @@ model Reaction {
 }
 
 model PinnedMessage {
-  id             String   @id @default(uuid())
+  id             String   @id @map("_id") @default(uuid())
   conversationId String
   messageId      String
   pinnedById     String
@@ -192,7 +192,7 @@ model PinnedMessage {
 }
 
 model StarredMessage {
-  id        String   @id @default(uuid())
+  id        String   @id @map("_id") @default(uuid())
   userId    String
   messageId String
   createdAt DateTime @default(now())
@@ -204,13 +204,13 @@ model StarredMessage {
 }
 
 model Draft {
-  id             String   @id @default(uuid())
+  id             String   @id @map("_id") @default(uuid())
   userId         String
   conversationId String
   text           String?
   metadata       String?
   createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  updatedAt      DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -219,7 +219,7 @@ model Draft {
 }
 
 model Block {
-  id         String   @id @default(uuid())
+  id         String   @id @map("_id") @default(uuid())
   blockerId  String
   blockedId  String
   createdAt  DateTime @default(now())
@@ -231,7 +231,7 @@ model Block {
 }
 
 model Call {
-  id             String   @id @default(uuid())
+  id             String   @id @map("_id") @default(uuid())
   conversationId String?
   callerId       String
   receiverId     String
@@ -249,7 +249,7 @@ model Call {
 }
 
 model CallParticipant {
-  id        String    @id @default(uuid())
+  id        String    @id @map("_id") @default(uuid())
   callId    String
   userId    String
   joinedAt  DateTime?
@@ -264,7 +264,7 @@ model CallParticipant {
 }
 
 model Poll {
-  id             String   @id @default(uuid())
+  id             String   @id @map("_id") @default(uuid())
   conversationId String
   createdById    String
   question       String
@@ -280,7 +280,7 @@ model Poll {
 }
 
 model PollOption {
-  id     String @id @default(uuid())
+  id     String @id @map("_id") @default(uuid())
   pollId String
   text   String
 
@@ -289,7 +289,7 @@ model PollOption {
 }
 
 model PollVote {
-  id        String   @id @default(uuid())
+  id        String   @id @map("_id") @default(uuid())
   pollId    String
   optionId  String
   userId    String
@@ -303,29 +303,29 @@ model PollVote {
 }
 
 model FeatureFlag {
-  id          String   @id @default(uuid())
+  id          String   @id @map("_id") @default(uuid())
   name        String   @unique
   label       String
   description String?
   enabled     Boolean  @default(false)
   category    String   @default("general")
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
 }
 
 model Setting {
-  id        String   @id @default(uuid())
+  id        String   @id @map("_id") @default(uuid())
   key       String   @unique
   value     String
   type      String   @default("string")
   group     String   @default("general")
   label     String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 }
 
 model AdminLog {
-  id        String       @id @default(uuid())
+  id        String       @id @map("_id") @default(uuid())
   userId    String
   action    String
   resource  String
@@ -336,7 +336,7 @@ model AdminLog {
 }
 
 model Report {
-  id          String   @id @default(uuid())
+  id          String   @id @map("_id") @default(uuid())
   reporterId  String
   reportedId  String
   messageId   String?
@@ -352,12 +352,12 @@ model Report {
 }
 
 model BadWord {
-  id   String @id @default(uuid())
+  id   String @id @map("_id") @default(uuid())
   word String @unique
 }
 
 model Broadcast {
-  id        String          @id @default(uuid())
+  id        String          @id @map("_id") @default(uuid())
   title     String
   message   String
   type      String          @default("info")
@@ -368,7 +368,7 @@ model Broadcast {
 }
 
 model BroadcastRead {
-  id           String    @id @default(uuid())
+  id           String    @id @map("_id") @default(uuid())
   broadcastId  String
   userId       String
   readAt       DateTime  @default(now())
@@ -380,17 +380,17 @@ model BroadcastRead {
 }
 
 model PageSection {
-  id        String   @id @default(uuid())
+  id        String   @id @map("_id") @default(uuid())
   slug      String   @unique
   title     String
   content   String
   published Boolean  @default(false)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 }
 
 model NavItem {
-  id        String    @id @default(uuid())
+  id        String    @id @map("_id") @default(uuid())
   label     String
   icon      String?
   path      String
@@ -399,7 +399,7 @@ model NavItem {
   isVisible Boolean   @default(true)
   role      String?   @default("user")
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  updatedAt DateTime @default(now())
 
   parent   NavItem?  @relation("NavTree", fields: [parentId], references: [id], onDelete: SetNull)
   children NavItem[] @relation("NavTree")

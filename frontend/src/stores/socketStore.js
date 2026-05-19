@@ -6,6 +6,8 @@ import { useFeatureStore } from "./featureStore.js";
 import { useSettingsStore } from "./settingsStore.js";
 import { playMessageReceived, playCallRingtone, playCallConnected, playCallEnded } from "../lib/sounds.js";
 
+const SOCKET_URL = import.meta.env.VITE_API_URL || "";
+
 let socket = null;
 let stopRingtone = null;
 
@@ -15,9 +17,9 @@ export const connectSocket = () => {
   const authUser = useAuthStore.getState().authUser;
   if (!authUser || socket?.connected) return;
 
-  socket = io("", {
-    auth: { token: document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*=\s*([^;]*).*$)|^.*$/, "$1") },
-    query: { token: document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*=\s*([^;]*).*$)|^.*$/, "$1") },
+  socket = io(SOCKET_URL, {
+    auth: { token: useAuthStore.getState().token },
+    transports: ["websocket", "polling"],
   });
 
   socket.on("connect", () => {

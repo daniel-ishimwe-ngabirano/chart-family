@@ -8,23 +8,18 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
   } catch (err) { next(err); }
 }
 
+const COOKIE_OPTS = {
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === "production" ? "none" as const : "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+};
+
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const { user, accessToken, refreshToken, sessionId } = await authService.login(req.body);
 
-    res.cookie("jwt", accessToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("jwt", accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
+    res.cookie("refreshToken", refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     res.json({ user, accessToken, refreshToken, sessionId });
   } catch (err) { next(err); }
@@ -39,11 +34,7 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
     }
     const result = await authService.refreshAccessToken(token);
 
-    res.cookie("jwt", result.accessToken, {
-      httpOnly: true, sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("jwt", result.accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
 
     res.json(result);
   } catch (err) { next(err); }
@@ -81,17 +72,8 @@ export async function googleCallback(req: Request, res: Response, next: NextFunc
       deviceType: req.body.deviceType,
     });
 
-    res.cookie("jwt", result.accessToken, {
-      httpOnly: true, sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true, sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("jwt", result.accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
+    res.cookie("refreshToken", result.refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}?auth=success`);
   } catch (err) { next(err); }

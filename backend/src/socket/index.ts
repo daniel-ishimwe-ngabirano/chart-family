@@ -10,11 +10,11 @@ import { setupCallHandlers } from "./handlers/call.handler.js";
 import type { SocketWithUser } from "../types/index.js";
 
 const userSocketMap = new Map<string, Set<string>>();
-let io: SocketServer | null = null;
+let _io: SocketServer | undefined;
 
 export function getIO(): SocketServer {
-  if (!io) throw new Error("Socket.IO not initialized");
-  return io;
+  if (!_io) throw new Error("Socket.IO not initialized");
+  return _io;
 }
 
 export function getUserSocketIds(userId: string): string[] {
@@ -26,7 +26,7 @@ export function isUserOnline(userId: string): boolean {
 }
 
 export async function setupSocket(httpServer: HttpServer): Promise<SocketServer> {
-  io = new SocketServer(httpServer, {
+  const io = new SocketServer(httpServer, {
     cors: {
       origin: [env.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"],
       methods: ["GET", "POST"],
@@ -35,6 +35,7 @@ export async function setupSocket(httpServer: HttpServer): Promise<SocketServer>
     pingInterval: 10000,
     pingTimeout: 5000,
   });
+  _io = io;
 
   // Redis adapter for scaling (optional, requires @socket.io/redis-adapter)
   if (isRedisConnected()) {
@@ -81,12 +82,12 @@ export async function setupSocket(httpServer: HttpServer): Promise<SocketServer>
       where: { id: userId },
       data: { isOnline: true, lastSeen: new Date() },
     });
-    io.emit("user:online", { userId, sockets: getUserSocketIds(userId).length });
+    io!.emit("user:online", { userId, sockets: getUserSocketIds(userId).length });
 
     // Setup handlers
-    setupChatHandlers(io, socket);
-    setupPresenceHandlers(io, socket);
-    setupCallHandlers(io, socket);
+    setupChatHandlers(io!, socket);
+    setupPresenceHandlers(io!, socket);
+    setupCallHandlers(io!, socket);
 
     socket.on("disconnect", async () => {
       console.log(`User disconnected: ${userId} (socket: ${socket.id})`);
@@ -100,7 +101,7 @@ export async function setupSocket(httpServer: HttpServer): Promise<SocketServer>
             where: { id: userId },
             data: { isOnline: false, lastSeen: new Date() },
           });
-          io.emit("user:offline", { userId });
+          io!.emit("user:offline", { userId });
         }
       }
     });

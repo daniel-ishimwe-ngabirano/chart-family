@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { createServer } from "http";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { env } from "./config/env.js";
 import passport from "passport";
@@ -26,8 +27,15 @@ const httpServer = createServer(app);
 
 // Security
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+const corsOrigins = env.FRONTEND_URL
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .concat("http://localhost:5173");
+
 app.use(cors({
-  origin: [env.FRONTEND_URL, "http://localhost:5173"],
+  origin: corsOrigins,
   credentials: true,
 }));
 
@@ -68,13 +76,21 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/public", publicRoutes);
 
-// Serve frontend in production
+// Serve frontend in production (Docker/standalone)
 if (env.NODE_ENV === "production") {
-  const distPath = path.join(__dirname, "..", "..", "frontend", "dist");
-  app.use(express.static(distPath));
-  app.get("*", (_req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+  const candidates = [
+    path.join(__dirname, "..", "public"),
+    path.join(__dirname, "..", "..", "frontend", "dist"),
+  ];
+  for (const distPath of candidates) {
+    if (fs.existsSync(path.join(distPath, "index.html"))) {
+      app.use(express.static(distPath));
+      app.get("*", (_req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+      break;
+    }
+  }
 }
 
 // Error handler

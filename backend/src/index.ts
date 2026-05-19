@@ -9,8 +9,8 @@ import { env } from "./config/env.js";
 import { startBackgroundJobs } from "./events/index.js";
 import { adminService } from "./services/admin.service.js";
 
-const ADMIN_EMAIL = "admin@wavechat.com";
-const ADMIN_PASSWORD = "Admin@123";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@wavechat.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@123";
 
 async function seedAdminDefaults() {
   try {
