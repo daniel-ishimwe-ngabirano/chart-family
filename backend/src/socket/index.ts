@@ -82,12 +82,12 @@ export async function setupSocket(httpServer: HttpServer): Promise<SocketServer>
       where: { id: userId },
       data: { isOnline: true, lastSeen: new Date() },
     });
-    io!.emit("user:online", { userId, sockets: getUserSocketIds(userId).length });
+    getIO().emit("user:online", { userId, sockets: getUserSocketIds(userId).length });
 
     // Setup handlers
-    setupChatHandlers(io!, socket);
-    setupPresenceHandlers(io!, socket);
-    setupCallHandlers(io!, socket);
+    setupChatHandlers(getIO(), socket);
+    setupPresenceHandlers(getIO(), socket);
+    setupCallHandlers(getIO(), socket);
 
     socket.on("disconnect", async () => {
       console.log(`User disconnected: ${userId} (socket: ${socket.id})`);
@@ -101,7 +101,7 @@ export async function setupSocket(httpServer: HttpServer): Promise<SocketServer>
             where: { id: userId },
             data: { isOnline: false, lastSeen: new Date() },
           });
-          io!.emit("user:offline", { userId });
+          getIO().emit("user:offline", { userId });
         }
       }
     });

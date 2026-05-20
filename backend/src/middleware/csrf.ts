@@ -28,7 +28,7 @@ export function setCsrfToken(req: Request, res: Response, next: NextFunction) {
     const token = crypto.randomBytes(32).toString("hex");
     res.cookie(CSRF_COOKIE, token, {
       httpOnly: false,
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });

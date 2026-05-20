@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider     = "mongodb"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 model User {
@@ -128,7 +129,7 @@ model Message {
 
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender          User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  replyTo         Message?     @relation("ReplyTo", fields: [replyToId], references: [id])
+  replyTo         Message?     @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   replies         Message[]    @relation("ReplyTo")
   readReceipts    ReadReceipt[]
   attachments     Attachment[]
@@ -401,6 +402,6 @@ model NavItem {
   createdAt DateTime  @default(now())
   updatedAt DateTime @default(now())
 
-  parent   NavItem?  @relation("NavTree", fields: [parentId], references: [id], onDelete: SetNull)
+  parent   NavItem?  @relation("NavTree", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children NavItem[] @relation("NavTree")
 }

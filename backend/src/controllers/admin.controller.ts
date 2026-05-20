@@ -362,7 +362,7 @@ export async function getPageSections(req: Request, res: Response, next: NextFun
 export async function upsertPageSection(req: Request, res: Response, next: NextFunction) {
   try {
     await checkAdmin(req);
-    const slug = req.params.slug as string;
+    const slug = String(req.params.slug);
     const { title, content, published } = req.body;
     const section = await pageSectionService.upsert(slug, { title: (title as string), content: (content as string), published: Boolean(published) });
     try { getIO().emit("sections:updated", section); } catch {}
