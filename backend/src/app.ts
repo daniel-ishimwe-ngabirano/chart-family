@@ -25,6 +25,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const httpServer = createServer(app);
 
+// Trust proxy (Render places you behind a proxy)
+app.set("trust proxy", 1);
+
 // Security
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 

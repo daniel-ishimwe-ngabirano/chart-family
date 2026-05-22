@@ -40,8 +40,18 @@ router.get("/me", protectRoute, authController.getMe);
 router.get("/sessions", protectRoute, authController.getSessions);
 
 // Google OAuth
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"], session: false }));
-router.get("/google/callback", passport.authenticate("google", { session: false, failureRedirect: "/login" }), authController.googleCallback);
+router.get("/google", (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login`);
+  }
+  passport.authenticate("google", { scope: ["profile", "email"], session: false })(req, res, next);
+});
+router.get("/google/callback", (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login`);
+  }
+  passport.authenticate("google", { session: false, failureRedirect: "/login" })(req, res, next);
+}, authController.googleCallback);
 
 // Phone OTP
 router.post("/send-otp", otpLimiter, authController.sendOtp);
