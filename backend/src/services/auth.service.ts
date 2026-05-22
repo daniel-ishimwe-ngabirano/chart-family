@@ -38,7 +38,7 @@ export class AuthService {
       data: {
         fullName: data.fullName,
         email: data.email,
-        phone: data.phone,
+        ...(data.phone ? { phone: data.phone } : {}),
         password: hashedPassword,
         username,
         avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(data.fullName)}`,
