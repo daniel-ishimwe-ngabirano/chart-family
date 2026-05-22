@@ -3,8 +3,10 @@ import { authService } from "../services/auth.service.js";
 
 export async function signup(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = await authService.signup(req.body);
-    res.status(201).json(user);
+    const { user, accessToken, refreshToken, sessionId } = await authService.signup(req.body);
+    res.cookie("jwt", accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
+    res.cookie("refreshToken", refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.status(201).json({ user, accessToken, refreshToken, sessionId });
   } catch (err) { next(err); }
 }
 
@@ -12,6 +14,7 @@ const COOKIE_OPTS = {
   httpOnly: true,
   sameSite: process.env.NODE_ENV === "production" ? "none" as const : "lax" as const,
   secure: process.env.NODE_ENV === "production",
+  path: "/",
 };
 
 export async function login(req: Request, res: Response, next: NextFunction) {

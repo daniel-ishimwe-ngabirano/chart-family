@@ -51,7 +51,20 @@ export class AuthService {
       },
     });
 
-    return user;
+    const sessionId = uuidv4();
+    const accessToken = this.generateAccessToken({ userId: user.id, sessionId });
+    const refreshToken = this.generateRefreshToken({ userId: user.id, sessionId });
+
+    await prisma.session.create({
+      data: {
+        id: sessionId,
+        userId: user.id,
+        refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return { user, accessToken, refreshToken, sessionId };
   }
 
   async login(data: { email?: string; phone?: string; password: string; deviceId?: string; deviceName?: string; deviceType?: string }) {
