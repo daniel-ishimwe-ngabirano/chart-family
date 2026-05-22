@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "../lib/axios.js";
 import Navbar from "../components/landing/Navbar.jsx";
 import Hero from "../components/landing/Hero.jsx";
 import Features from "../components/landing/Features.jsx";
@@ -17,9 +18,8 @@ export default function LandingPage() {
   const [sections, setSections] = useState([]);
 
   const fetchSections = () => {
-    fetch("/api/public/page-sections")
-      .then((r) => r.json())
-      .then((data) => setSections(Array.isArray(data) ? data : []))
+    axios.get("/public/page-sections")
+      .then((res) => setSections(Array.isArray(res.data) ? res.data : []))
       .catch(() => setSections([]));
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "../../lib/axios.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
 import { MessageCircle, Shield, Zap, Users, ArrowRight } from "lucide-react";
 
@@ -14,9 +15,8 @@ export default function Hero() {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    fetch("/api/public/stats")
-      .then((r) => r.json())
-      .then((d) => setStats(d))
+    axios.get("/public/stats")
+      .then((res) => setStats(res.data))
       .catch(() => setStats({ totalUsers: 0, totalMessages: 0 }));
   }, []);
 
