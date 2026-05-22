@@ -11,7 +11,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx src/prisma/seed.ts",
-    "postinstall": "prisma generate && prisma db push --accept-data-loss"
+    "postinstall": "prisma generate && (prisma db push --accept-data-loss 2> /dev/null || echo 'db push skipped - verify DATABASE_URL env var')"
   },
   "keywords": [],
   "type": "module",
