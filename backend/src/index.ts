@@ -6,24 +6,11 @@ import { setupSocket } from "./socket/index.js";
 import { connectDB } from "./config/database.js";
 import { connectRedis } from "./config/redis.js";
 import { env } from "./config/env.js";
-import { execSync } from "child_process";
 import { startBackgroundJobs } from "./events/index.js";
 import { adminService } from "./services/admin.service.js";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@wavechat.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@123";
-
-function syncDatabase() {
-  try {
-    execSync("npx prisma db push --accept-data-loss", {
-      timeout: 30000,
-      stdio: "pipe",
-    });
-    console.log("Database schema synced");
-  } catch (err) {
-    console.warn("Database sync skipped:", (err as Error).message);
-  }
-}
 
 async function seedAdminDefaults() {
   try {
@@ -50,8 +37,6 @@ async function start() {
   } catch {
     console.warn("Redis not available, running without it");
   }
-
-  syncDatabase();
 
   await seedAdminDefaults();
   await setupSocket(httpServer);
