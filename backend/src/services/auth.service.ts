@@ -215,7 +215,7 @@ export class AuthService {
   }
 
   async phoneSignup(data: { fullName: string; phone: string; username?: string }) {
-    const existing = await prisma.user.findUnique({ where: { phone: data.phone } });
+    const existing = await prisma.user.findFirst({ where: { phone: data.phone } });
     if (existing) throw new AppError("Phone already in use", 400);
 
     const username = data.username || `user_${Math.random().toString(36).slice(2, 8)}`;

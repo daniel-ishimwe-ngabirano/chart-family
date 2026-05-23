@@ -34,7 +34,7 @@ export class UserService {
       if (existing && existing.id !== userId) throw new AppError("Username already taken", 400);
     }
     if (data.phone) {
-      const existing = await prisma.user.findUnique({ where: { phone: data.phone } });
+      const existing = await prisma.user.findFirst({ where: { phone: data.phone } });
       if (existing && existing.id !== userId) throw new AppError("Phone already in use", 400);
     }
 
