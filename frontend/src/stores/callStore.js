@@ -184,12 +184,13 @@ export const useCallStore = create((set, get) => ({
       const socket = getSocket();
       socket?.emit("call:end", { receiverId: remoteUser.id });
 
+      const direction = get().incomingCallerId || get().pendingCallerId ? "incoming" : "outgoing";
       const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
       history.unshift({
         id: Date.now(),
         name: remoteUser.fullName || "Unknown",
         avatar: remoteUser.avatar || "",
-        type: "outgoing",
+        type: direction,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         duration: get().callDuration,
         callType: type,
@@ -262,12 +263,13 @@ export const useCallStore = create((set, get) => ({
     clearInterval(get()._durationInterval);
 
     if (remoteUser && get().status !== "calling") {
+      const direction = get().incomingCallerId || get().pendingCallerId ? "missed" : "missed";
       const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
       history.unshift({
         id: Date.now(),
         name: remoteUser.fullName || "Unknown",
         avatar: remoteUser.avatar || "",
-        type: "missed",
+        type: direction,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         duration: 0,
         callType: get().type,

@@ -1,6 +1,6 @@
 import { useCallStore } from "../../stores/callStore.js";
 import { useChatStore } from "../../stores/chatStore.js";
-import { Phone, X } from "lucide-react";
+import { Phone, X, Video, PhoneOff } from "lucide-react";
 
 export default function IncomingCall() {
   const {
@@ -15,26 +15,36 @@ export default function IncomingCall() {
   const callerName = caller?.fullName || "Incoming Call";
   const callerAvatar = caller?.avatar || "";
 
+  const handleAccept = () => {
+    if (incomingType === "VIDEO") acceptCall();
+    else acceptCall();
+  };
+
   return (
     <div className="incoming-call-overlay">
-      <div className="incoming-call-card">
-        <div className="incoming-call-avatar">
-          <div className="call-avatar-ring">
-            <img src={callerAvatar} alt="" className="call-avatar-img" />
+      <div className="incoming-call-bg" />
+      <div className="incoming-call-content">
+        <div className="incoming-call-avatar-wrapper">
+          <div className="incoming-avatar-ring">
+            <img src={callerAvatar || "/default-avatar.svg"} alt="" className="incoming-caller-img" />
           </div>
         </div>
-        <div className="incoming-call-info">
-          <div className="incoming-call-name">{callerName}</div>
-          <div className="incoming-call-type">
-            {incomingType === "VIDEO" ? "📹 Video call" : "📞 Voice call"}
-          </div>
+        <div className="incoming-call-name">{callerName}</div>
+        <div className="incoming-call-label">
+          {incomingType === "VIDEO" ? "WhatsApp Video Call…" : "WhatsApp Voice Call…"}
         </div>
         <div className="incoming-call-actions">
           <button className="incoming-btn decline" onClick={rejectCall}>
-            <X size={24} />
+            <div className="incoming-btn-circle decline-circle">
+              <X size={28} />
+            </div>
+            <span>Decline</span>
           </button>
-          <button className="incoming-btn accept" onClick={acceptCall}>
-            <Phone size={24} />
+          <button className="incoming-btn accept" onClick={handleAccept}>
+            <div className="incoming-btn-circle accept-circle">
+              {incomingType === "VIDEO" ? <Video size={28} /> : <Phone size={28} />}
+            </div>
+            <span>{incomingType === "VIDEO" ? "Accept" : "Accept"}</span>
           </button>
         </div>
       </div>
