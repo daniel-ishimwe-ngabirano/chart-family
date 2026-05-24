@@ -61,10 +61,6 @@ export default function MessageBubble({ message, isOwn, onReply }) {
 
   const attachments = message.attachments || [];
 
-  if (message.type === "VOICE_NOTE" || attachments.some(a => a.mimeType?.startsWith("audio/"))) {
-    console.log("[Voice Debug]", { type: message.type, attachments, url: attachments[0]?.url, allKeys: Object.keys(message) });
-  }
-
   return (
     <div className={`message-wrapper ${isOwn ? "own" : "other"}`}>
       {message.replyTo && (
@@ -80,11 +76,17 @@ export default function MessageBubble({ message, isOwn, onReply }) {
         </div>
       )}
 
-      {attachments.length > 0 && (attachments[0].mimeType?.startsWith("audio/") || message.type === "VOICE_NOTE") && (
-        <div className="message-audio">
-          <audio src={attachments[0].url} controls preload="metadata" />
-        </div>
-      )}
+      {(() => {
+        const shouldRender = attachments.length > 0 && (attachments[0]?.mimeType?.startsWith("audio/") || message.type === "VOICE_NOTE");
+        console.log("[Audio Render Check]", { shouldRender, len: attachments.length, mimeType: attachments[0]?.mimeType, type: message.type });
+        if (!shouldRender) return null;
+        return (
+          <div className="message-audio">
+            <div style={{color:'red',fontWeight:'bold',marginBottom:4}}>🎵 VOICE MESSAGE</div>
+            <audio src={attachments[0]?.url} controls preload="metadata" style={{width:'100%',height:50,background:'#333'}} />
+          </div>
+        );
+      })()}
 
       {attachments.length > 0 && attachments[0].mimeType?.startsWith("video/") && (
         <div className="message-video" onClick={() => setShowMedia(true)}>
