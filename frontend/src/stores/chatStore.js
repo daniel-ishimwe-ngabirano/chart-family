@@ -6,6 +6,8 @@ export const useChatStore = create((set, get) => ({
   selectedConversation: null,
   messages: [],
   isMessagesLoading: false,
+  isLoadingMore: false,
+  nextCursor: null,
   users: [],
   onlineUsers: new Set(),
 
@@ -57,15 +59,29 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  getMessages: async (conversationId) => {
-    set({ isMessagesLoading: true });
+  getMessages: async (conversationId, cursor) => {
+    const isInitial = !cursor;
+    if (isInitial) set({ isMessagesLoading: true });
+    else set({ isLoadingMore: true });
     try {
-      const res = await axios.get(`/conversations/${conversationId}/messages`);
-      set({ messages: res.data.messages || res.data });
+      const params = cursor ? `?cursor=${cursor}&limit=50` : "?limit=50";
+      const res = await axios.get(`/conversations/${conversationId}/messages${params}`);
+      const data = res.data;
+      const newMessages = data.messages || res.data;
+      const nextCursor = data.nextCursor || null;
+      if (isInitial) {
+        set({ messages: newMessages, nextCursor, isMessagesLoading: false, isLoadingMore: false });
+      } else {
+        set((state) => ({
+          messages: [...newMessages, ...state.messages],
+          nextCursor,
+          isLoadingMore: false,
+        }));
+      }
+      return { messages: newMessages, nextCursor };
     } catch (error) {
       console.error("GetMessages error:", error);
-    } finally {
-      set({ isMessagesLoading: false });
+      set({ isMessagesLoading: false, isLoadingMore: false });
     }
   },
 

@@ -32,6 +32,22 @@ export const connectSocket = () => {
     useChatStore.getState().addMessage(message);
     useChatStore.getState().getConversations();
     playMessageReceived();
+
+    const state = useChatStore.getState();
+    if (state.selectedConversation?.id !== message.conversationId) {
+      const sender = message.sender;
+      window.dispatchEvent(new CustomEvent("app:notification", {
+        detail: {
+          id: message.id,
+          title: sender?.fullName || "New message",
+          body: message.text || (message.type === "IMAGE" ? "📷 Image" : message.type === "VIDEO" ? "🎥 Video" : "📎 Media"),
+          avatar: sender?.avatar || "",
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          type: "message",
+          conversationId: message.conversationId,
+        },
+      }));
+    }
   });
 
   socket.on("message:updated", (message) => {
@@ -70,6 +86,16 @@ export const connectSocket = () => {
     if (stopRingtone) stopRingtone();
     stopRingtone = playCallRingtone();
     useCallStore.getState().setIncomingCall(callerId, type, conversationId);
+    window.dispatchEvent(new CustomEvent("app:notification", {
+      detail: {
+        id: `call-${callerId}`,
+        title: "Incoming Call",
+        body: type === "VIDEO" ? "📹 Video call incoming..." : "📞 Voice call incoming...",
+        avatar: "",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "call",
+      },
+    }));
   });
 
   socket.on("call:accepted", ({ userId }) => {
@@ -110,6 +136,31 @@ export const connectSocket = () => {
 
   socket.on("sections:updated", () => {
     window.dispatchEvent(new CustomEvent("sections:updated"));
+  });
+
+  socket.on("conversation:new", ({ conversation, forMembers }) => {
+    if (forMembers?.includes(useAuthStore.getState().authUser?.id)) {
+      useChatStore.getState().getConversations();
+    }
+  });
+
+  socket.on("conversation:updated", () => {
+    useChatStore.getState().getConversations();
+  });
+
+  socket.on("group:member-removed", ({ conversationId, userId }) => {
+    const authUser = useAuthStore.getState().authUser;
+    if (userId === authUser?.id) {
+      const chatState = useChatStore.getState();
+      if (chatState.selectedConversation?.id === conversationId) {
+        chatState.setSelectedConversation(null);
+      }
+    }
+    useChatStore.getState().getConversations();
+  });
+
+  socket.on("group:member-left", ({ conversationId, userId }) => {
+    useChatStore.getState().getConversations();
   });
 
   socket.on("disconnect", () => {

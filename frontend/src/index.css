@@ -56,16 +56,20 @@
 
 html {
   height: 100%;
+  overflow: hidden;
 }
 
 body, #root {
-  min-height: 100%;
+  height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 .app-layout {
-  height: 100vh;
+  height: 100%;
+  width: 100%;
   overflow: hidden;
+  display: flex;
 }
 
 a { color: var(--text-link); text-decoration: none; }
@@ -617,6 +621,15 @@ input, textarea {
   white-space: pre-wrap;
 }
 
+.message-wrapper {
+  animation: messageSlideIn 0.2s ease-out;
+}
+
+@keyframes messageSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .message-bubble.own {
   background: var(--bg-message-own);
   border-bottom-right-radius: 4px;
@@ -950,6 +963,59 @@ input, textarea {
   color: var(--text-muted);
 }
 
+.emoji-picker {
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+}
+
+.emoji-categories {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.emoji-cat-btn {
+  font-size: 20px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: none;
+  transition: background 0.2s;
+}
+
+.emoji-cat-btn.active {
+  background: var(--bg-hover);
+  outline: 2px solid var(--accent);
+}
+
+.emoji-cat-btn:hover {
+  background: var(--bg-hover);
+}
+
+.emoji-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.emoji-btn {
+  font-size: 24px;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.15s, transform 0.1s;
+  line-height: 1;
+}
+
+.emoji-btn:hover {
+  background: var(--bg-hover);
+  transform: scale(1.2);
+}
+
 .send-btn {
   background: var(--accent);
   color: white;
@@ -1053,17 +1119,16 @@ input, textarea {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: var(--primary, #6366f1);
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: callPulse 2s infinite;
+  animation: callPulse 2s ease-in-out infinite;
 }
 
 @keyframes callPulse {
-  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.6); }
-  70% { box-shadow: 0 0 0 30px rgba(99, 102, 241, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
 }
 
 .call-avatar-img {
@@ -1156,12 +1221,31 @@ input, textarea {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-width: 360px;
   width: 90%;
+  animation: callPulseIn 0.3s ease-out;
+}
+
+@keyframes callPulseIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .incoming-call-avatar {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
+}
+
+.incoming-call-avatar .call-avatar-ring {
+  animation: incomingRingPulse 1.5s ease-in-out infinite;
+  background: var(--accent);
+  width: 100px;
+  height: 100px;
+}
+
+@keyframes incomingRingPulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.6); }
+  50% { box-shadow: 0 0 0 20px rgba(0, 168, 132, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); }
 }
 
 .incoming-call-info {
@@ -2840,6 +2924,18 @@ input, textarea {
   text-overflow: ellipsis;
 }
 
+.panel-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  color: var(--text-secondary);
+  gap: 1rem;
+  opacity: 0.6;
+}
+
 .unread-badge {
   background: var(--accent);
   color: white;
@@ -3124,9 +3220,9 @@ input, textarea {
 @media (max-width: 768px) {
   .app-sidebar { display: none; }
   .mobile-bottom-nav { display: flex; }
-  .app-main { flex-direction: column; padding-bottom: 64px; }
-  .chat-list-panel-wrap { width: 100%; min-width: 0; }
-  .main-chat-wrap { display: none; }
+  .app-main { flex-direction: column; padding-bottom: 64px; height: 100%; }
+  .chat-list-panel-wrap { width: 100%; min-width: 0; height: 100%; }
+  .main-chat-wrap { display: none; height: 100%; }
   .app-main.mobile-chat .chat-list-panel-wrap { display: none; }
   .app-main.mobile-chat .main-chat-wrap { display: flex; }
   .mobile-back { display: block; }
@@ -3786,7 +3882,16 @@ input, textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 64px;
+  padding: 2rem;
+  color: var(--accent);
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: var(--text-muted);
 }
 
 /* Button primary (for admin pages) */

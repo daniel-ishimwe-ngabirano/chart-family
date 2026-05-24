@@ -7,11 +7,41 @@ import { useTranslate } from "../hooks/useTranslate.js";
 import { playTyping, playMessageSent } from "../lib/sounds.js";
 import { SmilePlus, Send, Paperclip, X, Reply, Mic, Square } from "lucide-react";
 
-const EMOJIS = ["😀","😂","😍","🥰","😎","🤔","😢","😡","👍","❤️","🔥","🎉","💯","🙏","🚀","👋","💪","🤝","✨","⭐"];
+const EMOJI_CATEGORIES = [
+  {
+    name: "Smileys",
+    emojis: ["😀","😃","😄","😁","😅","😂","🤣","😊","😇","🙂","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🥴","😵","🤯","🤠","🥳","🥺","😢","😭","😤","😠","😡","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖","😺","😸","😹","😻","😼","😽","🙀","😿","😾"],
+  },
+  {
+    name: "Gestures",
+    emojis: ["👍","👎","👊","✊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","✋","🤚","🖐","🖖","👋","🤙","💪","🦾","🖕","✍️","🙏","💅","🤳","💃","🕺"],
+  },
+  {
+    name: "Hearts",
+    emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💕","💞","💗","💖","💘","💝","💟","❣️","💔","❤️‍🔥","❤️‍🩹"],
+  },
+  {
+    name: "Objects",
+    emojis: ["🔥","⭐","✨","💯","🎉","🎊","🎈","🎁","🎀","🪄","🕯️","💡","🔦","🏆","🥇","🥈","🥉","🏅","🎖️","📚","📖","📝","✏️","🖊️","✂️","📌","📍","🔗","🧷","📎","🖇️","📐","📏"],
+  },
+  {
+    name: "Nature",
+    emojis: ["🌞","🌝","🌛","🌜","🌚","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌙","🌎","🌍","🌏","🪐","💫","🌟","🌠","🌌","☀️","⛅","🌈","⚡","💧","🌊","🔥","🌸","🌺","🌻","🌹","🌷","🌼","🌿","🍀","🌵","🌴","🌲","🌳"],
+  },
+  {
+    name: "Food",
+    emojis: ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥝","🍅","🥑","🥦","🥬","🥒","🌽","🥕","🧄","🧅","🥔","🍠","🥐","🍞","🥖","🧀","🥚","🍳","🥓","🥩","🍗","🍖","🌭","🍔","🍟","🍕","🥪","🥙","🧆","🌮","🌯","🥗","🥘","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥮","🍡","🍧","🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🥛","🍼","☕","🍵","🧃","🥤","🍺","🍻","🥂","🍷","🥃","🍸","🍹","🧉","🍾"],
+  },
+  {
+    name: "Activities",
+    emojis: ["🚀","✈️","🚗","🚌","🚲","🏍️","🚂","🚢","🎸","🎹","🥁","🎤","🎧","🎵","🎶","🎮","🕹️","🎲","♟️","🎯","🎳","⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🪀","🏓","🏸","🏒","🏑","🥍","🏏","🪃"],
+  },
+];
 
 export default function MessageInput({ replyTo, onCancelReply }) {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState(0);
   const [files, setFiles] = useState([]);
   const [filePreviews, setFilePreviews] = useState([]);
   const [recording, setRecording] = useState(false);
@@ -176,11 +206,25 @@ export default function MessageInput({ replyTo, onCancelReply }) {
       )}
       {showEmoji && (
         <div className="emoji-picker">
-          {EMOJIS.map((emoji) => (
-            <button key={emoji} className="emoji-btn" onClick={() => addEmoji(emoji)}>
-              {emoji}
-            </button>
-          ))}
+          <div className="emoji-categories">
+            {EMOJI_CATEGORIES.map((cat, i) => (
+              <button
+                key={cat.name}
+                className={`emoji-cat-btn ${emojiCategory === i ? "active" : ""}`}
+                onClick={() => setEmojiCategory(i)}
+                title={cat.name}
+              >
+                {cat.emojis[0]}
+              </button>
+            ))}
+          </div>
+          <div className="emoji-grid">
+            {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji) => (
+              <button key={emoji} className="emoji-btn" onClick={() => addEmoji(emoji)}>
+                {emoji}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <form className="input-form" onSubmit={handleSubmit}>

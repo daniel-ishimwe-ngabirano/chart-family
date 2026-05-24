@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getSocket } from "../stores/socketStore.js";
+import { useChatStore } from "./chatStore.js";
 
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
@@ -14,6 +15,8 @@ export const useCallStore = create((set, get) => ({
   incomingCallerId: null,
   incomingType: null,
   incomingConversationId: null,
+  pendingOffer: null,
+  pendingCallerId: null,
   callDuration: 0,
   isMuted: false,
   isSpeakerOn: false,
@@ -24,7 +27,7 @@ export const useCallStore = create((set, get) => ({
   },
 
   clearIncomingCall: () => {
-    set({ incomingCallerId: null, incomingType: null, incomingConversationId: null, status: "idle" });
+    set({ incomingCallerId: null, incomingType: null, incomingConversationId: null, pendingOffer: null, pendingCallerId: null, status: "idle" });
   },
 
   startCall: async (remoteUser, type, conversationId) => {
@@ -41,6 +44,23 @@ export const useCallStore = create((set, get) => ({
 
     pc.ontrack = (e) => {
       set({ remoteStream: e.streams[0] });
+    };
+
+    pc.onnegotiationneeded = async () => {
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        const socket = getSocket();
+        socket?.emit("signal:offer", { to: remoteUser.id, offer });
+      } catch (err) {
+        console.error("onnegotiationneeded error:", err);
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+        get().endCall();
+      }
     };
 
     const offer = await pc.createOffer();
@@ -71,8 +91,9 @@ export const useCallStore = create((set, get) => ({
   },
 
   acceptCall: async () => {
-    const { incomingCallerId, incomingType, incomingConversationId } = get();
-    if (!incomingCallerId) return;
+    const { incomingCallerId, incomingType, incomingConversationId, pendingOffer, pendingCallerId } = get();
+    const callerId = incomingCallerId || pendingCallerId;
+    if (!callerId) return;
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: incomingType === "VIDEO" });
     const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -81,7 +102,7 @@ export const useCallStore = create((set, get) => ({
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         const socket = getSocket();
-        socket?.emit("signal:ice-candidate", { to: incomingCallerId, candidate: e.candidate });
+        socket?.emit("signal:ice-candidate", { to: callerId, candidate: e.candidate });
       }
     };
 
@@ -89,7 +110,27 @@ export const useCallStore = create((set, get) => ({
       set({ remoteStream: e.streams[0] });
     };
 
-    const remoteUser = { id: incomingCallerId, fullName: "Caller" };
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+        get().endCall();
+      }
+    };
+
+    const users = useChatStore.getState().users;
+    const caller = users.find((u) => u.id === callerId);
+    const remoteUser = { id: callerId, fullName: caller?.fullName || "Caller", avatar: caller?.avatar || "" };
+
+    if (pendingOffer) {
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        const socket = getSocket();
+        socket?.emit("signal:answer", { to: callerId, answer });
+      } catch (err) {
+        console.error("Failed to set pending offer:", err);
+      }
+    }
 
     const durationInterval = setInterval(() => {
       set((s) => ({ callDuration: s.callDuration + 1 }));
@@ -110,11 +151,13 @@ export const useCallStore = create((set, get) => ({
       incomingCallerId: null,
       incomingType: null,
       incomingConversationId: null,
+      pendingOffer: null,
+      pendingCallerId: null,
       _durationInterval: durationInterval,
     });
 
     const socket = getSocket();
-    socket?.emit("call:accept", { callerId: incomingCallerId });
+    socket?.emit("call:accept", { callerId });
   },
 
   rejectCall: () => {
@@ -127,7 +170,7 @@ export const useCallStore = create((set, get) => ({
   },
 
   endCall: () => {
-    const { peerConnection, localStream, remoteUser, _durationInterval } = get();
+    const { peerConnection, localStream, remoteUser, _durationInterval, type } = get();
     clearInterval(_durationInterval);
 
     if (peerConnection) {
@@ -140,6 +183,18 @@ export const useCallStore = create((set, get) => ({
     if (remoteUser && get().status === "calling") {
       const socket = getSocket();
       socket?.emit("call:end", { receiverId: remoteUser.id });
+
+      const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
+      history.unshift({
+        id: Date.now(),
+        name: remoteUser.fullName || "Unknown",
+        avatar: remoteUser.avatar || "",
+        type: "outgoing",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        duration: get().callDuration,
+        callType: type,
+      });
+      localStorage.setItem("wavechat_call_history", JSON.stringify(history.slice(0, 50)));
     }
 
     set({
@@ -155,12 +210,20 @@ export const useCallStore = create((set, get) => ({
       isSpeakerOn: false,
       isVideoEnabled: true,
       _durationInterval: null,
+      pendingOffer: null,
+      pendingCallerId: null,
+      incomingCallerId: null,
+      incomingType: null,
+      incomingConversationId: null,
     });
   },
 
   handleSignalOffer: async (from, offer) => {
     const pc = get().peerConnection;
-    if (!pc) return;
+    if (!pc) {
+      set({ pendingOffer: offer, pendingCallerId: from, status: "ringing", incomingCallerId: from });
+      return;
+    }
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.createAnswer();
@@ -193,10 +256,24 @@ export const useCallStore = create((set, get) => ({
   },
 
   handleCallEnded: () => {
-    const { peerConnection, localStream } = get();
+    const { peerConnection, localStream, remoteUser } = get();
     if (peerConnection) peerConnection.close();
     if (localStream) localStream.getTracks().forEach((t) => t.stop());
     clearInterval(get()._durationInterval);
+
+    if (remoteUser && get().status !== "calling") {
+      const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
+      history.unshift({
+        id: Date.now(),
+        name: remoteUser.fullName || "Unknown",
+        avatar: remoteUser.avatar || "",
+        type: "missed",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        duration: 0,
+        callType: get().type,
+      });
+      localStorage.setItem("wavechat_call_history", JSON.stringify(history.slice(0, 50)));
+    }
     set({
       status: "idle",
       type: null,
@@ -207,6 +284,11 @@ export const useCallStore = create((set, get) => ({
       peerConnection: null,
       callDuration: 0,
       _durationInterval: null,
+      pendingOffer: null,
+      pendingCallerId: null,
+      incomingCallerId: null,
+      incomingType: null,
+      incomingConversationId: null,
     });
   },
 
