@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { adminService } from "../services/admin.service.js";
-import { pageSectionService } from "../services/pageSection.service.js";
-import { AppError } from "../middleware/errorHandler.js";
+import { notificationService } from "../services/notification.service.js";
+import { mediaService } from "../services/media.service.js";
 import { getIO } from "../socket/index.js";
 import { env } from "../config/env.js";
 
@@ -367,6 +367,22 @@ export async function upsertPageSection(req: Request, res: Response, next: NextF
     const section = await pageSectionService.upsert(slug, { title: (title as string), content: (content as string), published: Boolean(published) });
     try { getIO().emit("sections:updated", section); } catch {}
     res.json(section);
+  } catch (err) { next(err); }
+}
+
+// ========== FILE UPLOAD ==========
+
+export async function uploadAdminFile(req: Request, res: Response, next: NextFunction) {
+  try {
+    await checkAdmin(req);
+    if (!req.file) {
+      res.status(400).json({ error: "No file provided" });
+      return;
+    }
+    mediaService.validateFile(req.file);
+    const folder = (req.body.folder as string) || "wavechat/admin";
+    const result = await mediaService.uploadFile(req.file, folder);
+    res.json({ url: result.url, publicId: result.publicId });
   } catch (err) { next(err); }
 }
 

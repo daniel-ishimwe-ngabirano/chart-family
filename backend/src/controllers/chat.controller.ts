@@ -27,6 +27,16 @@ export async function getMessages(req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 }
 
+export async function getMedia(req: Request, res: Response, next: NextFunction) {
+  try {
+    const cursor = req.query.cursor as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 30;
+    const type = req.query.type as string | undefined;
+    const result = await chatService.getMedia(req.params.conversationId as string, req.userId!, type, cursor, limit);
+    res.json(result);
+  } catch (err) { next(err); }
+}
+
 export async function searchMessages(req: Request, res: Response, next: NextFunction) {
   try {
     const query = req.query.q as string;

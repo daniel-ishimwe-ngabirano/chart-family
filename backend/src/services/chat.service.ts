@@ -134,6 +134,54 @@ export class ChatService {
     };
   }
 
+  async getMedia(conversationId: string, userId: string, type?: string, cursor?: string, limit = 30) {
+    const member = await prisma.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId } },
+    });
+    if (!member) throw new AppError("Not a member of this conversation", 403);
+
+    const where: Record<string, unknown> = {
+      conversationId,
+      deletedForEveryone: false,
+      attachments: { some: {} },
+    };
+
+    if (type === "image") where.type = { in: ["IMAGE", "IMAGE_GIF"] };
+    else if (type === "video") where.type = { in: ["VIDEO", "VIDEO_NOTE"] };
+    else if (type === "audio") where.type = { in: ["AUDIO", "VOICE_NOTE"] };
+    else if (type === "file") where.type = "FILE";
+
+    if (cursor) where.createdAt = { lt: new Date(cursor) };
+
+    const messages = await prisma.message.findMany({
+      where: where as any,
+      orderBy: { createdAt: "desc" },
+      take: limit + 1,
+      include: {
+        attachments: true,
+        sender: { select: { id: true, fullName: true } },
+      },
+    });
+
+    const hasMore = messages.length > limit;
+    const result = hasMore ? messages.slice(0, limit) : messages;
+
+    const media = result.flatMap((msg) =>
+      (msg.attachments || []).map((att) => ({
+        ...att,
+        messageId: msg.id,
+        senderId: msg.senderId,
+        senderName: msg.sender?.fullName,
+        createdAt: msg.createdAt,
+      }))
+    );
+
+    return {
+      media,
+      nextCursor: hasMore ? result[result.length - 1]?.createdAt?.toISOString() : null,
+    };
+  }
+
   async searchMessages(conversationId: string, userId: string, query: string) {
     const member = await prisma.conversationMember.findUnique({
       where: { conversationId_userId: { conversationId, userId } },

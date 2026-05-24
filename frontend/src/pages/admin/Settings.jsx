@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSettingsStore } from "../../stores/settingsStore.js";
 import { Save, Loader2 } from "lucide-react";
+import AdminImageUpload from "../../components/AdminImageUpload.jsx";
+
+const IMAGE_SETTING_KEYS = ["logo", "favicon", "og_image", "background", "banner", "avatar_default", "icon", "image"];
 
 export default function AdminSettings() {
   const { settings, loading, fetchSettings, updateSettings } = useSettingsStore();
@@ -75,6 +78,12 @@ export default function AdminSettings() {
                     />
                     <span className="admin-switch-slider" />
                   </label>
+                ) : IMAGE_SETTING_KEYS.some((k) => setting.key.toLowerCase().includes(k)) ? (
+                  <AdminImageUpload
+                    value={local[setting.key] ?? ""}
+                    onChange={(val) => setLocal({ ...local, [setting.key]: val })}
+                    label={setting.label || setting.key}
+                  />
                 ) : (
                   <input
                     className="admin-input"

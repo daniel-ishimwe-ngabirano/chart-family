@@ -1,8 +1,10 @@
 import { Router } from "express";
+import multer from "multer";
 import * as adminController from "../controllers/admin.controller.js";
 import { protectRoute } from "../middleware/auth.js";
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Admin Auth
 router.get("/auth/status", protectRoute, adminController.checkAdminPasswordStatus);
@@ -67,6 +69,9 @@ router.put("/roles/:userId", protectRoute, adminController.updateUserRole);
 // Page Sections
 router.get("/page-sections", protectRoute, adminController.getPageSections);
 router.put("/page-sections/:slug", protectRoute, adminController.upsertPageSection);
+
+// File Upload
+router.post("/upload", protectRoute, upload.single("file"), adminController.uploadAdminFile);
 
 // Seed
 router.post("/seed", protectRoute, adminController.seedAdminData);

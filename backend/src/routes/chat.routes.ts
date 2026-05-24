@@ -17,6 +17,7 @@ router.post("/messages/:messageId/forward", protectRoute, chatController.forward
 router.post("/messages/:messageId/pin", protectRoute, chatController.pinMessage);
 
 router.get("/:conversationId/pinned", protectRoute, chatController.getPinnedMessages);
+router.get("/:conversationId/media", protectRoute, chatController.getMedia);
 router.get("/:conversationId/messages", protectRoute, chatController.getMessages);
 router.get("/:conversationId/search", protectRoute, chatController.searchMessages);
 router.post("/:conversationId/messages", protectRoute, upload.array("files", 10), chatController.sendMessage);

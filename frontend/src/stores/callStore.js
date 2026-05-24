@@ -58,6 +58,9 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "connected") {
+        get().startTimer();
+      }
       if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
         get().endCall();
       }
@@ -69,10 +72,6 @@ export const useCallStore = create((set, get) => ({
     const socket = getSocket();
     socket?.emit("call:start", { receiverId: remoteUser.id, type, conversationId });
     socket?.emit("signal:offer", { to: remoteUser.id, offer });
-
-    const durationInterval = setInterval(() => {
-      set((s) => ({ callDuration: s.callDuration + 1 }));
-    }, 1000);
 
     set({
       status: "calling",
@@ -86,7 +85,6 @@ export const useCallStore = create((set, get) => ({
       isMuted: false,
       isSpeakerOn: false,
       isVideoEnabled: type === "VIDEO",
-      _durationInterval: durationInterval,
     });
   },
 
@@ -111,6 +109,9 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "connected") {
+        get().startTimer();
+      }
       if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
         get().endCall();
       }
@@ -132,10 +133,6 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
-    const durationInterval = setInterval(() => {
-      set((s) => ({ callDuration: s.callDuration + 1 }));
-    }, 1000);
-
     set({
       status: "calling",
       type: incomingType,
@@ -153,11 +150,18 @@ export const useCallStore = create((set, get) => ({
       incomingConversationId: null,
       pendingOffer: null,
       pendingCallerId: null,
-      _durationInterval: durationInterval,
     });
 
     const socket = getSocket();
     socket?.emit("call:accept", { callerId });
+  },
+
+  startTimer: () => {
+    if (get()._durationInterval) return;
+    const interval = setInterval(() => {
+      set((s) => ({ callDuration: s.callDuration + 1 }));
+    }, 1000);
+    set({ _durationInterval: interval });
   },
 
   rejectCall: () => {
