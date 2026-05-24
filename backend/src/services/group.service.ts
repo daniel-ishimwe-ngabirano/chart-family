@@ -40,7 +40,7 @@ export class GroupService {
   }
 
   async joinGroupViaInvite(inviteCode: string, userId: string) {
-    const conversation = await prisma.conversation.findUnique({ where: { inviteCode } });
+    const conversation = await prisma.conversation.findFirst({ where: { inviteCode } });
     if (!conversation) throw new AppError("Invalid invite code", 404);
     if (!conversation.isGroup) throw new AppError("Not a group conversation", 400);
 
