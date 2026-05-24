@@ -76,7 +76,7 @@ export default function MessageBubble({ message, isOwn, onReply }) {
         </div>
       )}
 
-      {attachments.length > 0 && attachments[0].mimeType?.startsWith("audio/") && (
+      {attachments.length > 0 && (attachments[0].mimeType?.startsWith("audio/") || message.type === "VOICE_NOTE") && (
         <div className="message-audio">
           <audio src={attachments[0].url} controls preload="metadata" />
         </div>
