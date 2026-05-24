@@ -61,6 +61,10 @@ export default function MessageBubble({ message, isOwn, onReply }) {
 
   const attachments = message.attachments || [];
 
+  if (message.type === "VOICE_NOTE" || attachments.some(a => a.mimeType?.startsWith("audio/"))) {
+    console.log("[Voice Debug]", { type: message.type, attachments, url: attachments[0]?.url, allKeys: Object.keys(message) });
+  }
+
   return (
     <div className={`message-wrapper ${isOwn ? "own" : "other"}`}>
       {message.replyTo && (
