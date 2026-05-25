@@ -47,6 +47,10 @@ export const useCallStore = create((set, get) => ({
       set({ remoteStream: stream });
     };
 
+    pc.onnegotiationneeded = () => {
+      // handled explicitly below to avoid race conditions
+    };
+
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === "connected") {
         get().startTimer();
