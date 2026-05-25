@@ -11,22 +11,36 @@ export default function CallOverlay() {
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
 
   useEffect(() => {
     if (localVideoRef.current) localVideoRef.current.srcObject = localStream;
   }, [localStream]);
 
   useEffect(() => {
-    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.play().catch(() => {});
+    }
+  }, [remoteStream]);
+
+  useEffect(() => {
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = remoteStream;
+      remoteAudioRef.current.play().catch(() => {});
+    }
   }, [remoteStream]);
 
   if (status !== "calling") return null;
 
   const durationStr = `${String(Math.floor(callDuration / 60)).padStart(2, "0")}:${String(callDuration % 60).padStart(2, "0")}`;
-  const showConnecting = type === "VIDEO" ? !remoteStream : true;
 
   return (
     <div className={`call-overlay ${type === "VIDEO" ? "video-call" : "voice-call"}`}>
+      {type === "VOICE" && remoteStream && (
+        <audio ref={remoteAudioRef} autoPlay />
+      )}
+
       {type === "VIDEO" && remoteStream && (
         <video ref={remoteVideoRef} autoPlay playsInline className="call-remote-video" />
       )}

@@ -43,18 +43,8 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      set({ remoteStream: e.streams[0] });
-    };
-
-    pc.onnegotiationneeded = async () => {
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        const socket = getSocket();
-        socket?.emit("signal:offer", { to: remoteUser.id, offer });
-      } catch (err) {
-        console.error("onnegotiationneeded error:", err);
-      }
+      const stream = e.streams[0];
+      set({ remoteStream: stream });
     };
 
     pc.onconnectionstatechange = () => {
