@@ -16,24 +16,24 @@ export function setupCallHandlers(io: SocketServer, socket: SocketWithUser) {
     });
   });
 
-  socket.on("call:accept", ({ callId, callerId }) => {
+  socket.on("call:accept", ({ callerId }) => {
     const callerSockets = getUserSocketIds(callerId);
     callerSockets.forEach((sid) => {
-      io.to(sid).emit("call:accepted", { callId, userId });
+      io.to(sid).emit("call:accepted", { userId });
     });
   });
 
-  socket.on("call:reject", ({ callId, callerId }) => {
+  socket.on("call:reject", ({ callerId }) => {
     const callerSockets = getUserSocketIds(callerId);
     callerSockets.forEach((sid) => {
-      io.to(sid).emit("call:rejected", { callId, userId });
+      io.to(sid).emit("call:rejected", { userId });
     });
   });
 
-  socket.on("call:end", ({ callId, receiverId }) => {
+  socket.on("call:end", ({ receiverId }) => {
     const receiverSockets = getUserSocketIds(receiverId);
     receiverSockets.forEach((sid) => {
-      io.to(sid).emit("call:ended", { callId, userId });
+      io.to(sid).emit("call:ended", { userId });
     });
   });
 

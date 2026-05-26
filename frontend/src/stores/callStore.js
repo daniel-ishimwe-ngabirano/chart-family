@@ -5,8 +5,9 @@ import { useChatStore } from "./chatStore.js";
 const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 export const useCallStore = create((set, get) => ({
-  status: "idle", // idle | ringing | calling
-  type: null, // "VOICE" | "VIDEO"
+  status: "idle",
+  error: null,
+  type: null,
   remoteUser: null,
   conversationId: null,
   localStream: null,
@@ -22,6 +23,8 @@ export const useCallStore = create((set, get) => ({
   isSpeakerOn: false,
   isVideoEnabled: true,
 
+  clearError: () => set({ error: null }),
+
   setIncomingCall: (callerId, type, conversationId) => {
     set({ incomingCallerId: callerId, incomingType: type, incomingConversationId: conversationId, status: "ringing" });
   },
@@ -31,7 +34,14 @@ export const useCallStore = create((set, get) => ({
   },
 
   startCall: async (remoteUser, type, conversationId) => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === "VIDEO" });
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === "VIDEO" });
+    } catch (err) {
+      set({ error: `Cannot access microphone${type === "VIDEO" ? "/camera" : ""}: ${err.message || "Permission denied"}` });
+      return;
+    }
+
     const pc = new RTCPeerConnection(ICE_SERVERS);
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
@@ -43,29 +53,36 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      const stream = e.streams[0];
-      set({ remoteStream: stream });
+      set({ remoteStream: e.streams[0] });
     };
 
-    pc.onnegotiationneeded = () => {
-      // handled explicitly below to avoid race conditions
-    };
+    pc.onnegotiationneeded = () => {};
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === "connected") {
+      const state = pc.connectionState;
+      if (state === "connected") {
         get().startTimer();
       }
-      if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+      if (state === "disconnected" || state === "failed") {
         get().endCall();
       }
     };
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+    let offer;
+    try {
+      offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+    } catch (err) {
+      stream.getTracks().forEach((t) => t.stop());
+      set({ error: `Failed to create call offer: ${err.message}` });
+      return;
+    }
 
     const socket = getSocket();
-    socket?.emit("call:start", { receiverId: remoteUser.id, type, conversationId });
-    socket?.emit("signal:offer", { to: remoteUser.id, offer });
+    if (socket) {
+      socket.emit("call:start", { receiverId: remoteUser.id, type, conversationId });
+      socket.emit("signal:offer", { to: remoteUser.id, offer });
+    }
 
     set({
       status: "calling",
@@ -79,15 +96,23 @@ export const useCallStore = create((set, get) => ({
       isMuted: false,
       isSpeakerOn: false,
       isVideoEnabled: type === "VIDEO",
+      error: null,
     });
   },
 
   acceptCall: async () => {
-    const { incomingCallerId, incomingType, incomingConversationId, pendingOffer, pendingCallerId } = get();
-    const callerId = incomingCallerId || pendingCallerId;
+    const { incomingCallerId, incomingType, incomingConversationId } = get();
+    const callerId = incomingCallerId;
     if (!callerId) return;
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: incomingType === "VIDEO" });
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: incomingType === "VIDEO" });
+    } catch (err) {
+      set({ error: `Cannot access microphone${incomingType === "VIDEO" ? "/camera" : ""}: ${err.message || "Permission denied"}` });
+      return;
+    }
+
     const pc = new RTCPeerConnection(ICE_SERVERS);
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
@@ -102,11 +127,14 @@ export const useCallStore = create((set, get) => ({
       set({ remoteStream: e.streams[0] });
     };
 
+    pc.onnegotiationneeded = () => {};
+
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === "connected") {
+      const state = pc.connectionState;
+      if (state === "connected") {
         get().startTimer();
       }
-      if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+      if (state === "disconnected" || state === "failed") {
         get().endCall();
       }
     };
@@ -115,13 +143,18 @@ export const useCallStore = create((set, get) => ({
     const caller = users.find((u) => u.id === callerId);
     const remoteUser = { id: callerId, fullName: caller?.fullName || "Caller", avatar: caller?.avatar || "" };
 
-    if (pendingOffer) {
+    let answered = false;
+
+    const currentState = get();
+    const offer = currentState.pendingOffer;
+    if (offer) {
       try {
-        await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer));
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         const socket = getSocket();
         socket?.emit("signal:answer", { to: callerId, answer });
+        answered = true;
       } catch (err) {
         console.error("Failed to set pending offer:", err);
       }
@@ -144,10 +177,17 @@ export const useCallStore = create((set, get) => ({
       incomingConversationId: null,
       pendingOffer: null,
       pendingCallerId: null,
+      error: null,
     });
 
     const socket = getSocket();
-    socket?.emit("call:accept", { callerId });
+    if (socket) {
+      socket.emit("call:accept", { callerId });
+    }
+
+    if (!answered) {
+      console.log("acceptCall: pendingOffer not yet available, answer will be created by handleSignalOffer");
+    }
   },
 
   startTimer: () => {
@@ -168,7 +208,8 @@ export const useCallStore = create((set, get) => ({
   },
 
   endCall: () => {
-    const { peerConnection, localStream, remoteUser, _durationInterval, type } = get();
+    const state = get();
+    const { peerConnection, localStream, remoteUser, _durationInterval, type } = state;
     clearInterval(_durationInterval);
 
     if (peerConnection) {
@@ -178,11 +219,11 @@ export const useCallStore = create((set, get) => ({
       localStream.getTracks().forEach((t) => t.stop());
     }
 
-    if (remoteUser && get().status === "calling") {
+    if (remoteUser && state.status === "calling") {
       const socket = getSocket();
       socket?.emit("call:end", { receiverId: remoteUser.id });
 
-      const direction = get().incomingCallerId || get().pendingCallerId ? "incoming" : "outgoing";
+      const direction = state.incomingCallerId || state.pendingCallerId ? "incoming" : "outgoing";
       const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
       history.unshift({
         id: Date.now(),
@@ -190,7 +231,7 @@ export const useCallStore = create((set, get) => ({
         avatar: remoteUser.avatar || "",
         type: direction,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        duration: get().callDuration,
+        duration: state.callDuration,
         callType: type,
       });
       localStorage.setItem("wavechat_call_history", JSON.stringify(history.slice(0, 50)));
@@ -223,6 +264,13 @@ export const useCallStore = create((set, get) => ({
       set({ pendingOffer: offer, pendingCallerId: from, status: "ringing", incomingCallerId: from });
       return;
     }
+
+    const signalingState = pc.signalingState;
+    if (signalingState !== "stable") {
+      console.log("handleSignalOffer: PC not in stable state, deferring", signalingState);
+      return;
+    }
+
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.createAnswer();
@@ -236,7 +284,10 @@ export const useCallStore = create((set, get) => ({
 
   handleSignalAnswer: async (answer) => {
     const pc = get().peerConnection;
-    if (!pc) return;
+    if (!pc) {
+      console.warn("handleSignalAnswer: no peer connection");
+      return;
+    }
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
     } catch (err) {
@@ -255,13 +306,14 @@ export const useCallStore = create((set, get) => ({
   },
 
   handleCallEnded: () => {
-    const { peerConnection, localStream, remoteUser } = get();
+    const state = get();
+    const { peerConnection, localStream, remoteUser, type } = state;
     if (peerConnection) peerConnection.close();
     if (localStream) localStream.getTracks().forEach((t) => t.stop());
-    clearInterval(get()._durationInterval);
+    clearInterval(state._durationInterval);
 
-    if (remoteUser && get().status !== "calling") {
-      const direction = get().incomingCallerId || get().pendingCallerId ? "missed" : "missed";
+    if (remoteUser && state.status !== "calling") {
+      const direction = state.incomingCallerId || state.pendingCallerId ? "incoming" : "outgoing";
       const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
       history.unshift({
         id: Date.now(),
@@ -270,7 +322,7 @@ export const useCallStore = create((set, get) => ({
         type: direction,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         duration: 0,
-        callType: get().type,
+        callType: type,
       });
       localStorage.setItem("wavechat_call_history", JSON.stringify(history.slice(0, 50)));
     }

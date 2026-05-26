@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useCallStore } from "../../stores/callStore.js";
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2 } from "lucide-react";
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, AlertCircle } from "lucide-react";
 
 export default function CallOverlay() {
   const {
     status, type, remoteUser, localStream, remoteStream,
-    callDuration, isMuted, isVideoEnabled, isSpeakerOn,
-    endCall, toggleMute, toggleVideo, toggleSpeaker,
+    callDuration, isMuted, isVideoEnabled, isSpeakerOn, error,
+    endCall, toggleMute, toggleVideo, toggleSpeaker, clearError,
   } = useCallStore();
 
   const localVideoRef = useRef(null);
@@ -79,6 +79,14 @@ export default function CallOverlay() {
         <div className="call-video-info">
           <div className="call-video-name">{remoteUser?.fullName || "Unknown"}</div>
           <div className="call-video-duration">{durationStr}</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="call-error-bar">
+          <AlertCircle size={18} />
+          <span>{error}</span>
+          <button onClick={clearError} className="call-error-close">&times;</button>
         </div>
       )}
 

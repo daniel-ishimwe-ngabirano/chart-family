@@ -1,11 +1,11 @@
 import { useCallStore } from "../../stores/callStore.js";
 import { useChatStore } from "../../stores/chatStore.js";
-import { Phone, X, Video, PhoneOff } from "lucide-react";
+import { Phone, X, Video, PhoneOff, AlertCircle } from "lucide-react";
 
 export default function IncomingCall() {
   const {
-    status, incomingCallerId, incomingType,
-    acceptCall, rejectCall,
+    status, incomingCallerId, incomingType, error,
+    acceptCall, rejectCall, clearError,
   } = useCallStore();
   const { users } = useChatStore();
 
@@ -15,10 +15,7 @@ export default function IncomingCall() {
   const callerName = caller?.fullName || "Incoming Call";
   const callerAvatar = caller?.avatar || "";
 
-  const handleAccept = () => {
-    if (incomingType === "VIDEO") acceptCall();
-    else acceptCall();
-  };
+  const handleAccept = () => acceptCall();
 
   return (
     <div className="incoming-call-overlay">
@@ -31,8 +28,14 @@ export default function IncomingCall() {
         </div>
         <div className="incoming-call-name">{callerName}</div>
         <div className="incoming-call-label">
-          {incomingType === "VIDEO" ? "WhatsApp Video Call…" : "WhatsApp Voice Call…"}
+          {incomingType === "VIDEO" ? "WaveChat Video Call…" : "WaveChat Voice Call…"}
         </div>
+        {error && (
+          <div className="incoming-call-error">
+            <AlertCircle size={16} />
+            <span>{error}</span>
+          </div>
+        )}
         <div className="incoming-call-actions">
           <button className="incoming-btn decline" onClick={rejectCall}>
             <div className="incoming-btn-circle decline-circle">
@@ -44,7 +47,7 @@ export default function IncomingCall() {
             <div className="incoming-btn-circle accept-circle">
               {incomingType === "VIDEO" ? <Video size={28} /> : <Phone size={28} />}
             </div>
-            <span>{incomingType === "VIDEO" ? "Accept" : "Accept"}</span>
+            <span>Accept</span>
           </button>
         </div>
       </div>

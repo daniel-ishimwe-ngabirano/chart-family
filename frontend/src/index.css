@@ -1325,6 +1325,52 @@ input, textarea {
   color: #ef5350;
 }
 
+/* --- Call Error Bar --- */
+.call-error-bar {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #d32f2f;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 20;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.call-error-bar .call-error-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.call-error-bar .call-error-close:hover {
+  opacity: 1;
+}
+
+.incoming-call-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ef5350;
+  font-size: 12px;
+  margin-top: 4px;
+  text-align: center;
+}
+
 /* ==============================================
    INCOMING CALL (WhatsApp-style)
    ============================================== */
