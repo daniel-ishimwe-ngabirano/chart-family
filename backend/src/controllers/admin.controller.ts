@@ -175,7 +175,8 @@ export async function getTheme(req: Request, res: Response, next: NextFunction) 
 
 export async function checkAdminPasswordStatus(_req: Request, res: Response, next: NextFunction) {
   try {
-    res.json({ hasPassword: await adminService.hasPassword() });
+    const result = await adminService.checkPasswordStatus();
+    res.json(result);
   } catch (err) { next(err); }
 }
 

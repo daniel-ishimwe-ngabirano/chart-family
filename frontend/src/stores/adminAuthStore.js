@@ -21,9 +21,9 @@ export const useAdminAuthStore = create((set) => ({
   checkPasswordStatus: async () => {
     try {
       const res = await axios.get("/admin/auth/status");
-      return res.data.hasPassword;
+      return res.data;
     } catch {
-      return false;
+      return { hasPassword: false };
     }
   },
 

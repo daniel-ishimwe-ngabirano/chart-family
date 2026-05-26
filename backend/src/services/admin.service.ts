@@ -239,14 +239,43 @@ export class AdminService {
 
   // ========== ADMIN AUTH ==========
 
-  async hasPassword(): Promise<boolean> {
+  _generatePassword(length = 20): string {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*";
+    let pwd = "";
+    for (let i = 0; i < length; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+    return pwd;
+  }
+
+  async checkPasswordStatus(): Promise<{ hasPassword: boolean; expired?: boolean; newPassword?: string; expiresAt?: string }> {
     const setting = await prisma.setting.findUnique({ where: { key: "admin_password_hash" } });
-    return !!setting && setting.value.length > 0;
+    if (!setting || !setting.value) {
+      return { hasPassword: false };
+    }
+
+    const expiresAt = new Date(setting.updatedAt.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const isExpired = Date.now() > expiresAt.getTime();
+
+    if (isExpired) {
+      const newPassword = this._generatePassword();
+      const hash = await bcrypt.hash(newPassword, 12);
+      await prisma.setting.update({
+        where: { key: "admin_password_hash" },
+        data: { value: hash, updatedAt: new Date() },
+      });
+      return {
+        hasPassword: true,
+        expired: true,
+        newPassword,
+        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+    }
+
+    return { hasPassword: true, expired: false, expiresAt: expiresAt.toISOString() };
   }
 
   async setupPassword(password: string, adminUserId: string): Promise<string> {
-    const exists = await this.hasPassword();
-    if (exists) throw new AppError("Admin password already set", 400);
+    const exists = await prisma.setting.findUnique({ where: { key: "admin_password_hash" } });
+    if (exists?.value) throw new AppError("Admin password already set", 400);
     if (password.length < 6) throw new AppError("Password must be at least 6 characters", 400);
     const hash = await bcrypt.hash(password, 12);
     await prisma.setting.upsert({ where: { key: "admin_password_hash" }, create: { key: "admin_password_hash", value: hash, type: "string", group: "system", label: "Admin Password Hash" }, update: { value: hash } });

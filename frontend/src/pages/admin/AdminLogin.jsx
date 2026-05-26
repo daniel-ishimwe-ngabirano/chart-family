@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useAdminAuthStore } from "../../stores/adminAuthStore.js";
-import { Shield, Lock, Key, Mail, Loader2, Eye, EyeOff, ArrowLeft, Copy, Check } from "lucide-react";
+import { Shield, Lock, Key, Mail, Loader2, Eye, EyeOff, ArrowLeft, Copy, Check, Clock, RefreshCw } from "lucide-react";
 
-function generatePassword(length = 16) {
+function generatePassword(length = 20) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*";
   let pwd = "";
   for (let i = 0; i < length; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
@@ -18,12 +18,12 @@ export default function AdminLogin() {
   const [mode, setMode] = useState("loading");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [copied, setCopied] = useState(false);
+  const [expiresAt, setExpiresAt] = useState("");
 
   useEffect(() => {
     if (!authUser) { setMode("login"); return; }
@@ -32,14 +32,20 @@ export default function AdminLogin() {
   }, [authUser]);
 
   const init = async () => {
-    const has = await checkPasswordStatus();
-    if (has) {
-      setMode("admin-login");
-    } else {
+    const result = await checkPasswordStatus();
+    if (!result.hasPassword) {
       const pwd = generatePassword();
       setGeneratedPassword(pwd);
       setPassword(pwd);
       setMode("admin-setup");
+    } else if (result.expired && result.newPassword) {
+      setGeneratedPassword(result.newPassword);
+      setPassword(result.newPassword);
+      setExpiresAt(result.expiresAt || "");
+      setMode("admin-rotated");
+    } else {
+      setExpiresAt(result.expiresAt || "");
+      setMode("admin-login");
     }
   };
 
@@ -83,6 +89,12 @@ export default function AdminLogin() {
     } else {
       setError(result.error);
     }
+  };
+
+  const copyPassword = (pwd) => {
+    navigator.clipboard.writeText(pwd);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -140,7 +152,7 @@ export default function AdminLogin() {
             <div className="admin-password-reveal">
               <Key size={20} />
               <span>Your generated admin password:</span>
-              <div className="admin-password-box" onClick={() => { navigator.clipboard.writeText(generatedPassword); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+              <div className="admin-password-box" onClick={() => copyPassword(generatedPassword)}>
                 <code>{generatedPassword}</code>
                 {copied ? <Check size={18} /> : <Copy size={18} />}
               </div>
@@ -158,6 +170,42 @@ export default function AdminLogin() {
           </>
         )}
 
+        {mode === "admin-rotated" && (
+          <>
+            <h1>Password Expired</h1>
+            <p className="admin-login-sub">
+              <RefreshCw size={16} />
+              A new admin password has been generated
+            </p>
+            <div className="admin-password-reveal">
+              <Key size={20} />
+              <span>Your new admin password:</span>
+              <div className="admin-password-box" onClick={() => copyPassword(generatedPassword)}>
+                <code>{generatedPassword}</code>
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+              </div>
+              <div className="admin-password-expiry">
+                <Clock size={14} />
+                <span>Expires in 2 days{expiresAt ? ` (${new Date(expiresAt).toLocaleDateString()})` : ""}</span>
+              </div>
+              <p className="admin-password-warning">
+                Copy this password now. The previous password is no longer valid.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="admin-login-btn"
+              onClick={() => { setPassword(generatedPassword); setMode("admin-login"); }}
+            >
+              <Shield size={18} />
+              I Copied It — Login Now
+            </button>
+            <button className="admin-login-back" onClick={() => navigate("/chat")}>
+              Back to Chat
+            </button>
+          </>
+        )}
+
         {mode === "admin-login" && (
           <>
             <h1>Welcome, Admin</h1>
@@ -166,6 +214,12 @@ export default function AdminLogin() {
               <p className="admin-login-desc">
                 <Lock size={16} />
                 Enter your admin password to access the panel
+                {expiresAt && (
+                  <span className="admin-login-expiry">
+                    <Clock size={12} />
+                    Expires: {new Date(expiresAt).toLocaleDateString()}
+                  </span>
+                )}
               </p>
               <div className="admin-login-field">
                 <Lock size={18} />
