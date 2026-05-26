@@ -11,6 +11,7 @@ router.get("/auth/status", protectRoute, adminController.checkAdminPasswordStatu
 router.post("/auth/setup", protectRoute, adminController.setupAdminPassword);
 router.post("/auth/login", protectRoute, adminController.loginAdmin);
 router.post("/auth/logout", protectRoute, adminController.logoutAdmin);
+router.put("/auth/change-password", protectRoute, adminController.changeAdminPassword);
 router.get("/auth/verify", protectRoute, adminController.verifyAdminSession);
 
 // Dashboard

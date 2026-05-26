@@ -47,8 +47,8 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
     const allDevices = req.query.all === "true";
     await authService.logout(req.sessionId, allDevices, req.userId);
-    res.clearCookie("jwt");
-    res.clearCookie("refreshToken");
+    res.clearCookie("jwt", COOKIE_OPTS);
+    res.clearCookie("refreshToken", COOKIE_OPTS);
     res.json({ message: "Logged out successfully" });
   } catch (err) { next(err); }
 }

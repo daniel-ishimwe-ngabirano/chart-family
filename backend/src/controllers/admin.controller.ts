@@ -19,7 +19,12 @@ function setAdminCookie(res: Response, token: string) {
 }
 
 function clearAdminCookie(res: Response) {
-  res.clearCookie(ADMIN_AUTH_COOKIE);
+  res.clearCookie(ADMIN_AUTH_COOKIE, {
+    httpOnly: true,
+    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    secure: env.NODE_ENV === "production",
+    path: "/",
+  });
 }
 
 async function checkAdmin(req: Request) {
@@ -195,6 +200,20 @@ export async function loginAdmin(req: Request, res: Response, next: NextFunction
     const token = await adminService.loginPassword(password, req.userId);
     setAdminCookie(res, token);
     res.json({ success: true, message: "Admin authenticated" });
+  } catch (err) { next(err); }
+}
+
+export async function changeAdminPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.userId) throw new AppError("Unauthorized", 401);
+    await adminService.requireAdmin(req.userId);
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword) throw new AppError("Current password is required", 400);
+    if (!newPassword) throw new AppError("New password is required", 400);
+    if (newPassword.length < 6) throw new AppError("New password must be at least 6 characters", 400);
+    const token = await adminService.changePassword(currentPassword, newPassword, req.userId);
+    setAdminCookie(res, token);
+    res.json({ success: true, message: "Admin password changed" });
   } catch (err) { next(err); }
 }
 

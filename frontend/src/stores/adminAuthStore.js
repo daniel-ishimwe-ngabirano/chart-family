@@ -45,6 +45,15 @@ export const useAdminAuthStore = create((set) => ({
     }
   },
 
+  changeAdminPassword: async (currentPassword, newPassword) => {
+    try {
+      await axios.put("/admin/auth/change-password", { currentPassword, newPassword });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || "Password change failed" };
+    }
+  },
+
   logoutAdmin: async () => {
     try {
       await axios.post("/admin/auth/logout");

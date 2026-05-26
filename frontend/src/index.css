@@ -3940,6 +3940,48 @@ input, textarea {
   justify-content: flex-end;
 }
 
+/* Admin Password Change */
+.admin-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 420px;
+}
+
+.admin-password-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.admin-password-input-wrap .admin-input {
+  width: 100%;
+}
+
+.admin-password-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-password-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-password-toggle input {
+  display: none;
+}
+
 /* Switch Toggle */
 .admin-switch {
   position: relative;
