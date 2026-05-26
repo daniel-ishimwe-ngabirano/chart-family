@@ -36,7 +36,9 @@ export default function AdminNavigation() {
     try {
       await axios.put(`/admin/nav-items/${item.id}`, { isVisible: !item.isVisible });
       loadItems();
-    } catch {}
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to toggle visibility");
+    }
   };
 
   const handleDelete = async (id) => {
@@ -45,15 +47,29 @@ export default function AdminNavigation() {
     loadItems();
   };
 
-  const handleMoveUp = async (item, index) => {
-    if (index === 0) return;
-    const siblings = items.filter((i) => i.parentId === item.parentId);
-    const prev = siblings[index - 1];
-    if (!prev) return;
+  const handleMoveUp = async (item) => {
+    const siblings = items.filter((i) => i.parentId === item.parentId).sort((a, b) => a.position - b.position);
+    const idx = siblings.findIndex((s) => s.id === item.id);
+    if (idx <= 0) return;
+    const prev = siblings[idx - 1];
     await axios.put("/admin/nav-items/reorder", {
       items: [
         { id: item.id, position: prev.position },
         { id: prev.id, position: item.position },
+      ],
+    });
+    loadItems();
+  };
+
+  const handleMoveDown = async (item) => {
+    const siblings = items.filter((i) => i.parentId === item.parentId).sort((a, b) => a.position - b.position);
+    const idx = siblings.findIndex((s) => s.id === item.id);
+    if (idx < 0 || idx >= siblings.length - 1) return;
+    const next = siblings[idx + 1];
+    await axios.put("/admin/nav-items/reorder", {
+      items: [
+        { id: item.id, position: next.position },
+        { id: next.id, position: item.position },
       ],
     });
     loadItems();
@@ -99,7 +115,7 @@ export default function AdminNavigation() {
       )}
 
       <div className="admin-nav-list">
-        {items.filter((i) => !i.parentId).map((item, idx) => (
+        {items.filter((i) => !i.parentId).map((item, idx, arr) => (
           <div key={item.id} className="admin-nav-item-row">
             <div className="admin-nav-item-main">
               <GripVertical size={16} className="admin-nav-grip" />
@@ -111,8 +127,11 @@ export default function AdminNavigation() {
               <button onClick={() => handleToggleVisibility(item)} title={item.isVisible ? "Hide" : "Show"}>
                 {item.isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
-              <button onClick={() => handleMoveUp(item, idx)} disabled={idx === 0} title="Move up">
+              <button onClick={() => handleMoveUp(item)} disabled={idx === 0} title="Move up">
                 ↑
+              </button>
+              <button onClick={() => handleMoveDown(item)} disabled={idx === arr.length - 1} title="Move down">
+                ↓
               </button>
               <button onClick={() => handleDelete(item.id)} title="Delete">
                 <Trash2 size={16} />

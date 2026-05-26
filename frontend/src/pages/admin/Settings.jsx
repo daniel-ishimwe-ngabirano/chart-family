@@ -78,7 +78,7 @@ export default function AdminSettings() {
                     />
                     <span className="admin-switch-slider" />
                   </label>
-                ) : IMAGE_SETTING_KEYS.some((k) => setting.key.toLowerCase().includes(k)) ? (
+                ) : IMAGE_SETTING_KEYS.some((k) => setting.key.toLowerCase().includes(k) || k.toLowerCase().includes(setting.key)) ? (
                   <AdminImageUpload
                     value={local[setting.key] ?? ""}
                     onChange={(val) => setLocal({ ...local, [setting.key]: val })}

@@ -27,6 +27,10 @@ export const useFeatureStore = create((set, get) => ({
   },
 
   toggleFeature: async (name, enabled) => {
+    const prev = get().features.find((f) => f.name === name);
+    set((state) => ({
+      features: state.features.map((f) => (f.name === name ? { ...f, enabled } : f)),
+    }));
     try {
       const res = await axios.put(`/admin/features/${name}`, { enabled });
       set((state) => ({
@@ -34,6 +38,11 @@ export const useFeatureStore = create((set, get) => ({
       }));
       return { success: true };
     } catch (error) {
+      if (prev) {
+        set((state) => ({
+          features: state.features.map((f) => (f.name === name ? prev : f)),
+        }));
+      }
       return { success: false, error: error.response?.data?.error || "Failed to toggle" };
     }
   },

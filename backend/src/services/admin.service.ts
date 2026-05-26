@@ -110,7 +110,10 @@ export class AdminService {
   async deleteUser(userId: string, adminUserId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new AppError("User not found", 404);
-    if (user.role === "admin") throw new AppError("Cannot delete an admin user", 400);
+    if (user.role === "admin") {
+      const adminCount = await prisma.user.count({ where: { role: "admin" } });
+      if (adminCount <= 1) throw new AppError("Cannot delete the last admin user", 400);
+    }
     await prisma.user.delete({ where: { id: userId } });
     await prisma.adminLog.create({ data: { userId: adminUserId, action: "user.delete", resource: `user:${userId}`, details: `Deleted user: ${user.email}` } });
     return { message: "User deleted" };
@@ -437,7 +440,7 @@ export class AdminService {
   }
 
   async updateUserRole(userId: string, role: string, adminUserId: string) {
-    if (!["user", "admin", "moderator", "manager", "support"].includes(role)) {
+    if (!["user", "admin", "moderator", "manager", "support", "banned"].includes(role)) {
       throw new AppError("Invalid role", 400);
     }
     const updated = await prisma.user.update({ where: { id: userId }, data: { role } });

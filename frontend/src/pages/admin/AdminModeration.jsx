@@ -24,8 +24,13 @@ export default function AdminModeration() {
   }, [tab, page]);
 
   const handleResolve = async (reportId, status) => {
-    await axios.put(`/admin/reports/${reportId}`, { status });
-    setReports(reports.map((r) => r.id === reportId ? { ...r, status } : r));
+    if (status === "action_taken" && !confirm("This will ban the reported user. Continue?")) return;
+    try {
+      await axios.put(`/admin/reports/${reportId}`, { status });
+      setReports(reports.map((r) => r.id === reportId ? { ...r, status } : r));
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to resolve report");
+    }
   };
 
   const addBadWord = async () => {
@@ -62,10 +67,10 @@ export default function AdminModeration() {
       </div>
 
       <div className="admin-tabs-bar">
-        <button className={`admin-tab-btn ${tab === "reports" ? "active" : ""}`} onClick={() => setTab("reports")}>
+        <button className={`admin-tab-btn ${tab === "reports" ? "active" : ""}`} onClick={() => { setTab("reports"); setPage(1); }}>
           <Flag size={16} /> Reports
         </button>
-        <button className={`admin-tab-btn ${tab === "badwords" ? "active" : ""}`} onClick={() => setTab("badwords")}>
+        <button className={`admin-tab-btn ${tab === "badwords" ? "active" : ""}`} onClick={() => { setTab("badwords"); setPage(1); }}>
           <ShieldAlert size={16} /> Bad Words
         </button>
       </div>

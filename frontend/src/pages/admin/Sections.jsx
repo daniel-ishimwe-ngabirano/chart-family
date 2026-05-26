@@ -21,7 +21,7 @@ export default function AdminSections() {
   const { sections, loading, fetchSections, upsertSection } = usePageSectionStore();
   const [edit, setEdit] = useState({});
   const [saving, setSaving] = useState({});
-  const [message, setMessage] = useState(null);
+  const [messages, setMessages] = useState({});
 
   useEffect(() => { fetchSections(); }, []);
 
@@ -40,16 +40,14 @@ export default function AdminSections() {
 
   const handleSave = async (slug) => {
     setSaving((s) => ({ ...s, [slug]: true }));
-    setMessage(null);
     const data = edit[slug];
     const result = await upsertSection(slug, data);
-    if (result.success) {
-      setMessage({ type: "success", text: `${SECTION_META[slug]?.label || slug} saved` });
-    } else {
-      setMessage({ type: "error", text: result.error });
-    }
+    setMessages((m) => ({
+      ...m,
+      [slug]: { type: result.success ? "success" : "error", text: result.success ? `${SECTION_META[slug]?.label || slug} saved` : result.error },
+    }));
     setSaving((s) => ({ ...s, [slug]: false }));
-    setTimeout(() => setMessage(null), 3000);
+    setTimeout(() => setMessages((m) => ({ ...m, [slug]: null })), 3000);
   };
 
   if (loading && sections.length === 0) {
@@ -63,18 +61,14 @@ export default function AdminSections() {
         <p>Edit what visitors see when they click links in the footer</p>
       </div>
 
-      {message && (
-        <div className={`admin-message ${message.type}`}>
-          {message.text}
-        </div>
-      )}
-
       {DEFAULT_SLUGS.map((slug) => {
         const meta = SECTION_META[slug];
         const data = edit[slug];
+        const msg = messages[slug];
         if (!data) return null;
         return (
           <div key={slug} className="admin-section">
+            {msg && <div className={`admin-message ${msg.type}`}>{msg.text}</div>}
             <div className="admin-section-header">
               <h2 className="admin-section-title">{meta?.label || slug}</h2>
               <p className="admin-section-desc">{meta?.desc}</p>

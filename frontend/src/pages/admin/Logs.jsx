@@ -1,21 +1,23 @@
 import { useState, useEffect } from "react";
 import axios from "../../lib/axios.js";
-import { Loader2, Clock } from "lucide-react";
+import { Loader2, Clock, AlertCircle } from "lucide-react";
 
 export default function AdminLogs() {
   const [logs, setLogs] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     axios.get("/admin/logs", { params: { page } })
       .then((r) => {
         setLogs(r.data.logs);
         setTotalPages(r.data.totalPages);
       })
-      .catch(() => {})
+      .catch(() => setError("Failed to load audit logs"))
       .finally(() => setLoading(false));
   }, [page]);
 
@@ -33,7 +35,9 @@ export default function AdminLogs() {
         <p>Track all admin actions and system changes</p>
       </div>
 
-      {loading ? (
+      {error ? (
+        <div className="admin-empty"><AlertCircle size={48} /><p>{error}</p></div>
+      ) : loading ? (
         <div className="loading-center"><Loader2 size={32} className="spin" /></div>
       ) : logs.length === 0 ? (
         <div className="admin-empty">

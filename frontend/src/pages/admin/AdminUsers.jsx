@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "../../lib/axios.js";
 import { Users, Plus, Search, Pencil, Trash2, Ban, Check, X, Loader2, ArrowLeft, ArrowRight, Shield } from "lucide-react";
 
@@ -8,38 +8,48 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(null); // "create" | "edit" | null
+  const [searchTrigger, setSearchTrigger] = useState(0);
+  const [showModal, setShowModal] = useState(null);
   const [editUser, setEditUser] = useState(null);
   const [form, setForm] = useState({ fullName: "", email: "", password: "", username: "", role: "user" });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const prevSearch = useRef(search);
 
-  const fetchUsers = () => {
+  const fetchUsers = useCallback(() => {
     setLoading(true);
+    setError(null);
     axios.get("/admin/users", { params: { page, limit: 15, search } })
       .then((r) => { setUsers(r.data.users); setTotalPages(r.data.totalPages); })
-      .catch(() => {})
+      .catch(() => setError("Failed to load users"))
       .finally(() => setLoading(false));
-  };
+  }, [page, search]);
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setSearchTrigger((t) => t + 1);
     setPage(1);
   };
 
-  useEffect(() => { fetchUsers(); }, [page]);
+  useEffect(() => { fetchUsers(); }, [page, searchTrigger]);
 
   const openCreate = () => {
     setForm({ fullName: "", email: "", password: "", username: "", role: "user" });
+    setError(null);
     setShowModal("create");
   };
 
   const openEdit = (user) => {
     setForm({ fullName: user.fullName, email: user.email, password: "", username: user.username || "", role: user.role });
     setEditUser(user);
+    setError(null);
     setShowModal("edit");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setError(null);
     try {
       if (showModal === "create") {
         await axios.post("/admin/users", form);
@@ -52,7 +62,9 @@ export default function AdminUsers() {
       setEditUser(null);
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.error || "Operation failed");
+      setError(err.response?.data?.error || "Operation failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -62,25 +74,27 @@ export default function AdminUsers() {
       await axios.delete(`/admin/users/${user.id}`);
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.error || "Delete failed");
+      setError(err.response?.data?.error || "Delete failed");
     }
   };
 
   const handleBan = async (user) => {
+    if (!confirm(`Ban user "${user.fullName}" (${user.email})? They will lose access immediately.`)) return;
     try {
       await axios.post(`/admin/users/${user.id}/ban`, { reason: "Banned by admin" });
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.error || "Ban failed");
+      setError(err.response?.data?.error || "Ban failed");
     }
   };
 
   const handleUnban = async (user) => {
+    if (!confirm(`Unban user "${user.fullName}" (${user.email})?`)) return;
     try {
       await axios.post(`/admin/users/${user.id}/unban`);
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.error || "Unban failed");
+      setError(err.response?.data?.error || "Unban failed");
     }
   };
 
@@ -98,6 +112,8 @@ export default function AdminUsers() {
         </form>
         <button className="admin-btn-primary" onClick={openCreate}><Plus size={18} /> Create User</button>
       </div>
+
+      {error && !showModal && <div className="admin-message error">{error}</div>}
 
       <div className="admin-table-wrap">
         {loading ? (
@@ -166,6 +182,7 @@ export default function AdminUsers() {
               <button onClick={() => { setShowModal(null); setEditUser(null); }}><X size={22} /></button>
             </div>
             <form onSubmit={handleSubmit} className="modal-body admin-user-form">
+              {error && <div className="admin-message error">{error}</div>}
               <div className="input-group">
                 <label>Full Name</label>
                 <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required />
@@ -194,7 +211,10 @@ export default function AdminUsers() {
               </div>
               <div className="edit-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowModal(null); setEditUser(null); }}>Cancel</button>
-                <button type="submit" className="btn-primary"><Shield size={18} /> {showModal === "create" ? "Create User" : "Save Changes"}</button>
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                  {submitting ? <Loader2 size={18} className="spin" /> : <Shield size={18} />}
+                  {showModal === "create" ? "Create User" : "Save Changes"}
+                </button>
               </div>
             </form>
           </div>

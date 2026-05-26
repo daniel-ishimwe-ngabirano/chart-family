@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
 import axios from "../../lib/axios.js";
-import { Users, MessageCircle, Phone, Globe, Activity, Loader2 } from "lucide-react";
+import { Users, MessageCircle, Phone, Globe, Activity, Loader2, AlertCircle } from "lucide-react";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [server, setServer] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get("/admin/stats").then((r) => setStats(r.data)).catch(() => {});
+    axios.get("/admin/stats").then((r) => setStats(r.data)).catch(() => setError("Failed to load stats"));
     axios.get("/admin/server").then((r) => setServer(r.data)).catch(() => {});
   }, []);
+
+  if (error && !stats) {
+    return <div className="admin-empty"><AlertCircle size={48} /><p>{error}</p><button className="btn primary" onClick={() => window.location.reload()}>Retry</button></div>;
+  }
 
   if (!stats) {
     return <div className="loading-center"><Loader2 size={32} className="spin" /></div>;

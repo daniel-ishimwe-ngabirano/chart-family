@@ -56,13 +56,37 @@
 
 html {
   height: 100%;
-  overflow: hidden;
+  overflow-y: scroll;
 }
 
 body, #root {
   height: 100%;
   width: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+}
+
+/* Global custom scrollbar */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 .app-layout {

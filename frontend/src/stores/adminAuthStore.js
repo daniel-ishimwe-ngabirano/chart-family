@@ -30,7 +30,6 @@ export const useAdminAuthStore = create((set) => ({
   setupPassword: async (password) => {
     try {
       await axios.post("/admin/auth/setup", { password });
-      set({ adminSession: true });
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || "Setup failed" };
@@ -40,7 +39,6 @@ export const useAdminAuthStore = create((set) => ({
   loginAdmin: async (password) => {
     try {
       await axios.post("/admin/auth/login", { password });
-      set({ adminSession: true });
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.error || "Login failed" };

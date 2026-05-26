@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useAdminAuthStore } from "../../stores/adminAuthStore.js";
 import {
@@ -45,8 +45,7 @@ export default function AdminLayout({ children }) {
   }
 
   if (!adminSession) {
-    navigate("/admin/login");
-    return null;
+    return <Navigate to="/admin/login" replace />;
   }
 
   const handleLogout = async () => {
