@@ -55,12 +55,11 @@
 }
 
 html {
-  height: 100%;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 body, #root {
-  min-height: 100%;
+  min-height: 100vh;
   width: 100%;
 }
 
@@ -4367,13 +4366,25 @@ input, textarea {
   margin-top: 4px;
 }
 
-.admin-login-expiry {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-left: 8px;
+.admin-env-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(0, 168, 132, 0.08);
+  border: 1px solid rgba(0, 168, 132, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.admin-env-notice code {
+  background: var(--bg-tertiary);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: var(--accent);
 }
 
 /* ===== Admin Tabs Bar ===== */

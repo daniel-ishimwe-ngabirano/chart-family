@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useAdminAuthStore } from "../../stores/adminAuthStore.js";
-import { Shield, Lock, Key, Mail, Loader2, Eye, EyeOff, ArrowLeft, Copy, Check, Clock, RefreshCw } from "lucide-react";
+import { Shield, Lock, Key, Mail, Loader2, Eye, EyeOff, ArrowLeft, Copy, Check, Globe } from "lucide-react";
 
 function generatePassword(length = 20) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*";
@@ -23,7 +23,6 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [copied, setCopied] = useState(false);
-  const [expiresAt, setExpiresAt] = useState("");
 
   useEffect(() => {
     if (!authUser) { setMode("login"); return; }
@@ -33,18 +32,14 @@ export default function AdminLogin() {
 
   const init = async () => {
     const result = await checkPasswordStatus();
-    if (!result.hasPassword) {
+    if (result.fromEnv) {
+      setMode("admin-env-login");
+    } else if (!result.hasPassword) {
       const pwd = generatePassword();
       setGeneratedPassword(pwd);
       setPassword(pwd);
       setMode("admin-setup");
-    } else if (result.expired && result.newPassword) {
-      setGeneratedPassword(result.newPassword);
-      setPassword(result.newPassword);
-      setExpiresAt(result.expiresAt || "");
-      setMode("admin-rotated");
     } else {
-      setExpiresAt(result.expiresAt || "");
       setMode("admin-login");
     }
   };
@@ -170,36 +165,37 @@ export default function AdminLogin() {
           </>
         )}
 
-        {mode === "admin-rotated" && (
+        {mode === "admin-env-login" && (
           <>
-            <h1>Password Expired</h1>
-            <p className="admin-login-sub">
-              <RefreshCw size={16} />
-              A new admin password has been generated
-            </p>
-            <div className="admin-password-reveal">
-              <Key size={20} />
-              <span>Your new admin password:</span>
-              <div className="admin-password-box" onClick={() => copyPassword(generatedPassword)}>
-                <code>{generatedPassword}</code>
-                {copied ? <Check size={18} /> : <Copy size={18} />}
+            <h1>Admin Panel</h1>
+            <p className="admin-login-sub">{authUser?.fullName}</p>
+            <form onSubmit={handleAdminLogin} className="admin-login-form">
+              <div className="admin-env-notice">
+                <Globe size={16} />
+                <span>
+                  Password is set via <code>ADMIN_PANEL_SECRET</code> environment variable.
+                  Check your Render dashboard for the current value.
+                </span>
               </div>
-              <div className="admin-password-expiry">
-                <Clock size={14} />
-                <span>Expires in 2 days{expiresAt ? ` (${new Date(expiresAt).toLocaleDateString()})` : ""}</span>
+              <div className="admin-login-field">
+                <Lock size={18} />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter ADMIN_PANEL_SECRET from Render"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoFocus
+                />
+                <button type="button" className="admin-login-toggle" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-              <p className="admin-password-warning">
-                Copy this password now. The previous password is no longer valid.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="admin-login-btn"
-              onClick={() => { setPassword(generatedPassword); setMode("admin-login"); }}
-            >
-              <Shield size={18} />
-              I Copied It — Login Now
-            </button>
+              {error && <p className="admin-login-error">{error}</p>}
+              <button type="submit" className="admin-login-btn" disabled={loading}>
+                {loading ? <Loader2 size={18} className="spin" /> : null}
+                Enter Admin Panel
+              </button>
+            </form>
             <button className="admin-login-back" onClick={() => navigate("/chat")}>
               Back to Chat
             </button>
@@ -214,12 +210,6 @@ export default function AdminLogin() {
               <p className="admin-login-desc">
                 <Lock size={16} />
                 Enter your admin password to access the panel
-                {expiresAt && (
-                  <span className="admin-login-expiry">
-                    <Clock size={12} />
-                    Expires: {new Date(expiresAt).toLocaleDateString()}
-                  </span>
-                )}
               </p>
               <div className="admin-login-field">
                 <Lock size={18} />

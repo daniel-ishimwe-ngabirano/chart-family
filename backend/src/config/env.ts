@@ -52,6 +52,7 @@ class EnvConfig {
   get TWILIO_ACCOUNT_SID() { return this._get("TWILIO_ACCOUNT_SID", ""); }
   get TWILIO_AUTH_TOKEN() { return this._get("TWILIO_AUTH_TOKEN", ""); }
   get TWILIO_PHONE_NUMBER() { return this._get("TWILIO_PHONE_NUMBER", ""); }
+  get ADMIN_PANEL_SECRET() { return this._get("ADMIN_PANEL_SECRET", ""); }
   get FRONTEND_URL() { return this._get("FRONTEND_URL", "http://localhost:5173"); }
 }
 

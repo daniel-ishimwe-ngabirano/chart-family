@@ -246,31 +246,25 @@ export class AdminService {
     return pwd;
   }
 
-  async checkPasswordStatus(): Promise<{ hasPassword: boolean; expired?: boolean; newPassword?: string; expiresAt?: string }> {
+  async checkPasswordStatus(): Promise<{ hasPassword: boolean; fromEnv?: boolean }> {
+    const envPassword = process.env.ADMIN_PANEL_SECRET;
+
+    if (envPassword) {
+      const hash = await bcrypt.hash(envPassword, 12);
+      await prisma.setting.upsert({
+        where: { key: "admin_password_hash" },
+        create: { key: "admin_password_hash", value: hash, type: "string", group: "system", label: "Admin Password Hash" },
+        update: { value: hash, updatedAt: new Date() },
+      });
+      return { hasPassword: true, fromEnv: true };
+    }
+
     const setting = await prisma.setting.findUnique({ where: { key: "admin_password_hash" } });
     if (!setting || !setting.value) {
       return { hasPassword: false };
     }
 
-    const expiresAt = new Date(setting.updatedAt.getTime() + 2 * 24 * 60 * 60 * 1000);
-    const isExpired = Date.now() > expiresAt.getTime();
-
-    if (isExpired) {
-      const newPassword = this._generatePassword();
-      const hash = await bcrypt.hash(newPassword, 12);
-      await prisma.setting.update({
-        where: { key: "admin_password_hash" },
-        data: { value: hash, updatedAt: new Date() },
-      });
-      return {
-        hasPassword: true,
-        expired: true,
-        newPassword,
-        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-    }
-
-    return { hasPassword: true, expired: false, expiresAt: expiresAt.toISOString() };
+    return { hasPassword: true };
   }
 
   async setupPassword(password: string, adminUserId: string): Promise<string> {
