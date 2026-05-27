@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { userService } from "../services/user.service.js";
 import { mediaService } from "../services/media.service.js";
+import { pushService } from "../services/push.service.js";
 
 export async function getUsers(req: Request, res: Response, next: NextFunction) {
   try {
@@ -98,5 +99,36 @@ export async function unstarMessage(req: Request, res: Response, next: NextFunct
   try {
     await userService.unstarMessage(req.userId!, req.params.messageId as string);
     res.json({ message: "Message unstarred" });
+  } catch (err) { next(err); }
+}
+
+export async function getVapidPublicKey(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const key = await pushService.getPublicKey();
+    res.json({ publicKey: key });
+  } catch (err) { next(err); }
+}
+
+export async function savePushSubscription(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { endpoint, keys } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      res.status(400).json({ error: "Invalid subscription" });
+      return;
+    }
+    await pushService.saveSubscription(req.userId!, { endpoint, keys });
+    res.json({ success: true });
+  } catch (err) { next(err); }
+}
+
+export async function removePushSubscription(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { endpoint } = req.body;
+    if (endpoint) {
+      await pushService.removeSubscription(req.userId!, endpoint);
+    } else {
+      await pushService.removeAllSubscriptions(req.userId!);
+    }
+    res.json({ success: true });
   } catch (err) { next(err); }
 }

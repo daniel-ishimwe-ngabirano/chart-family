@@ -3,9 +3,15 @@ import { useAuthStore } from "../stores/authStore.js";
 import { useThemePrefStore } from "../stores/themePrefStore.js";
 import { useLocaleStore, locales_list } from "../stores/localeStore.js";
 import { useTranslate } from "../hooks/useTranslate.js";
+import {
+  registerServiceWorker,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "../utils/push.js";
 import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages } from "lucide-react";
 
 const SETTINGS_KEY = "wavechat_user_settings";
+let swRegistration = null;
 
 function loadSettings() {
   try {
@@ -39,6 +45,12 @@ export default function ProfileModal({ onClose }) {
   useEffect(() => {
     saveSettings({ notifications, lastSeen });
   }, [notifications, lastSeen]);
+
+  useEffect(() => {
+    registerServiceWorker().then((reg) => {
+      swRegistration = reg;
+    });
+  }, []);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -172,7 +184,15 @@ export default function ProfileModal({ onClose }) {
               <div className="setting-info">
                 <span>{t("settings.pushNotifications", "Push Notifications")}</span>
                 <label className="toggle">
-                  <input type="checkbox" checked={notifications} onChange={() => setNotifications(!notifications)} />
+                  <input type="checkbox" checked={notifications} onChange={async () => {
+                    const next = !notifications;
+                    setNotifications(next);
+                    if (next) {
+                      await subscribeToPush(swRegistration);
+                    } else {
+                      await unsubscribeFromPush(swRegistration);
+                    }
+                  }} />
                   <span className="toggle-slider" />
                 </label>
               </div>

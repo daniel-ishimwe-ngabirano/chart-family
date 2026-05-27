@@ -46,6 +46,7 @@ model User {
   reportsMade       Report[]              @relation("Reporter")
   reportsReceived   Report[]              @relation("ReportedUser")
   broadcastReads    BroadcastRead[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Session {
@@ -388,6 +389,19 @@ model PageSection {
   published Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @map("_id") @default(uuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
 }
 
 model NavItem {

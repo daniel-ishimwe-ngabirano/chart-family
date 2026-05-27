@@ -53,6 +53,9 @@ class EnvConfig {
   get TWILIO_AUTH_TOKEN() { return this._get("TWILIO_AUTH_TOKEN", ""); }
   get TWILIO_PHONE_NUMBER() { return this._get("TWILIO_PHONE_NUMBER", ""); }
   get ADMIN_PANEL_SECRET() { return this._get("ADMIN_PANEL_SECRET", ""); }
+  get VAPID_PUBLIC_KEY() { return this._get("VAPID_PUBLIC_KEY", ""); }
+  get VAPID_PRIVATE_KEY() { return this._get("VAPID_PRIVATE_KEY", ""); }
+  get VAPID_SUBJECT() { return this._get("VAPID_SUBJECT", "mailto:admin@wavechat.com"); }
   get FRONTEND_URL() { return this._get("FRONTEND_URL", "http://localhost:5173"); }
 }
 

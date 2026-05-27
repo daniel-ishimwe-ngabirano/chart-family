@@ -16,5 +16,8 @@ router.get("/blocked/list", protectRoute, userController.getBlockedUsers);
 router.get("/starred/messages", protectRoute, userController.getStarredMessages);
 router.post("/starred/:messageId", protectRoute, userController.starMessage);
 router.delete("/starred/:messageId", protectRoute, userController.unstarMessage);
+router.get("/push/vapid-key", userController.getVapidPublicKey);
+router.put("/push/subscription", protectRoute, userController.savePushSubscription);
+router.delete("/push/subscription", protectRoute, userController.removePushSubscription);
 
 export default router;

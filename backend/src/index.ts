@@ -8,6 +8,7 @@ import { connectRedis } from "./config/redis.js";
 import { env } from "./config/env.js";
 import { startBackgroundJobs } from "./events/index.js";
 import { adminService } from "./services/admin.service.js";
+import { pushService } from "./services/push.service.js";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@wavechat.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@123";
@@ -39,6 +40,7 @@ async function start() {
   }
 
   await seedAdminDefaults();
+  await pushService.init();
   await setupSocket(httpServer);
 
   startBackgroundJobs();

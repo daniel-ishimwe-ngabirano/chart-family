@@ -5,6 +5,7 @@ import { useChatStore } from "./stores/chatStore.js";
 import { useFeatureStore } from "./stores/featureStore.js";
 import { useThemeStore } from "./stores/themeStore.js";
 import { connectSocket, disconnectSocket } from "./stores/socketStore.js";
+import { registerServiceWorker, subscribeToPush } from "./utils/push.js";
 import LandingPage from "./pages/LandingPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
@@ -55,6 +56,14 @@ function App() {
         loadTheme();
       } else {
         fetchPublicFeatures();
+      }
+      const settings = JSON.parse(localStorage.getItem("wavechat_user_settings") || "{}");
+      if (settings.notifications !== false) {
+        registerServiceWorker().then((reg) => {
+          if (reg) {
+            subscribeToPush(reg);
+          }
+        });
       }
     } else {
       disconnectSocket();

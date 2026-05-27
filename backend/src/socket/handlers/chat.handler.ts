@@ -1,6 +1,8 @@
 import { Server as SocketServer, Socket } from "socket.io";
 import { getUserSocketIds } from "../index.js";
 import { messageService } from "../../services/message.service.js";
+import { pushService } from "../../services/push.service.js";
+import { prisma } from "../../config/prisma.js";
 import type { SocketWithUser } from "../../types/index.js";
 
 export function setupChatHandlers(io: SocketServer, socket: SocketWithUser) {
@@ -27,6 +29,26 @@ export function setupChatHandlers(io: SocketServer, socket: SocketWithUser) {
       });
 
       io.to(data.conversationId).emit("message:new", message);
+
+      try {
+        const conv = await prisma.conversation.findUnique({
+          where: { id: data.conversationId },
+          select: { members: { select: { userId: true, user: { select: { fullName: true, username: true } } } } },
+        });
+        const senderP = conv?.members.find((p) => p.userId === userId);
+        const senderName = senderP?.user?.fullName || senderP?.user?.username || "Someone";
+        const textPreview = data.text ? data.text.slice(0, 200) : (data.type === "image" ? "📷 Photo" : data.type === "file" ? "📎 File" : "New message");
+        for (const p of conv?.members || []) {
+          if (p.userId !== userId) {
+            pushService.sendToUser(p.userId, {
+              title: senderName,
+              body: textPreview,
+              icon: "/favicon.png",
+              data: { url: "/chat", conversationId: data.conversationId },
+            }).catch(() => {});
+          }
+        }
+      } catch {}
     } catch (err) {
       socket.emit("error", { message: (err as Error).message });
     }
