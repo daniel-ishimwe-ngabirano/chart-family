@@ -137,7 +137,7 @@ export async function getSettings(req: Request, res: Response, next: NextFunctio
   try {
     await checkAdmin(req);
     const group = typeof req.query.group === "string" ? req.query.group : undefined;
-    res.json(await adminService.getSettings(group));
+    res.json(await adminService.getEditableSettings(group));
   } catch (err) { next(err); }
 }
 

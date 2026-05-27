@@ -184,9 +184,15 @@ export class AdminService {
     return prisma.setting.findMany({ where, orderBy: { key: "asc" } });
   }
 
+  async getEditableSettings(group?: string) {
+    const where = group ? { group, NOT: { key: "admin_password_hash" } } : { NOT: { key: "admin_password_hash" } };
+    return prisma.setting.findMany({ where, orderBy: { key: "asc" } });
+  }
+
   async updateSettings(settings: Array<{ key: string; value: string }>, adminUserId: string) {
     const results = [];
-    for (const s of settings) {
+    const filtered = settings.filter((s) => s.key !== "admin_password_hash");
+    for (const s of filtered) {
       const updated = await prisma.setting.upsert({
         where: { key: s.key },
         create: { key: s.key, value: s.value },
@@ -194,7 +200,7 @@ export class AdminService {
       });
       results.push(updated);
     }
-    await prisma.adminLog.create({ data: { userId: adminUserId, action: "settings.update", resource: "settings", details: JSON.stringify(settings.map((s) => s.key)) } });
+    await prisma.adminLog.create({ data: { userId: adminUserId, action: "settings.update", resource: "settings", details: JSON.stringify(filtered.map((s) => s.key)) } });
     return results;
   }
 
