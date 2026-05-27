@@ -2183,6 +2183,7 @@ input, textarea {
   min-height: 100vh;
   background: var(--bg-primary);
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .landing-navbar {
