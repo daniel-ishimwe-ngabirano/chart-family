@@ -5,6 +5,7 @@ import { useFeatureStore } from "../../stores/featureStore.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
 import { Search, UserPlus, MessageSquare, Users, Archive } from "lucide-react";
 import NewConversationModal from "../NewConversationModal.jsx";
+import GroupModal from "../GroupModal.jsx";
 
 export default function ChatList({ onSelectChat, groupFilter }) {
   const { authUser } = useAuthStore();
@@ -17,6 +18,7 @@ export default function ChatList({ onSelectChat, groupFilter }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(groupFilter ? "groups" : "all");
   const [showNewConv, setShowNewConv] = useState(false);
+  const [showGroup, setShowGroup] = useState(false);
 
   useEffect(() => {
     if (groupFilter) setFilter("groups");
@@ -63,7 +65,12 @@ export default function ChatList({ onSelectChat, groupFilter }) {
     <div className="chat-list-panel">
       <div className="chat-list-header">
         <h2>{t("nav.chats", "Chats")}</h2>
-        <button className="icon-btn" onClick={() => setShowNewConv(true)}><UserPlus size={20} /></button>
+        <div style={{ display: "flex", gap: 4 }}>
+          <button className="icon-btn" onClick={() => setShowNewConv(true)} title="New chat"><UserPlus size={20} /></button>
+          {groupsEnabled && (
+            <button className="icon-btn" onClick={() => setShowGroup(true)} title="Create group"><Users size={20} /></button>
+          )}
+        </div>
       </div>
       <div className="chat-list-search">
         <Search size={18} />
@@ -107,6 +114,7 @@ export default function ChatList({ onSelectChat, groupFilter }) {
         ))}
       </div>
       {showNewConv && <NewConversationModal onClose={() => setShowNewConv(false)} />}
+      {showGroup && <GroupModal onClose={() => setShowGroup(false)} />}
     </div>
   );
 }
