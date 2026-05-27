@@ -53,7 +53,12 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      set({ remoteStream: e.streams[0] });
+      const existing = get().remoteStream;
+      if (existing) {
+        e.streams[0]?.getTracks().forEach((t) => existing.addTrack(t));
+      } else {
+        set({ remoteStream: e.streams[0] });
+      }
     };
 
     pc.onnegotiationneeded = () => {};
@@ -124,7 +129,12 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      set({ remoteStream: e.streams[0] });
+      const existing = get().remoteStream;
+      if (existing) {
+        e.streams[0]?.getTracks().forEach((t) => existing.addTrack(t));
+      } else {
+        set({ remoteStream: e.streams[0] });
+      }
     };
 
     pc.onnegotiationneeded = () => {};
@@ -160,7 +170,7 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
-    set({
+    const stateUpdates = {
       status: "calling",
       type: incomingType,
       remoteUser,
@@ -175,10 +185,14 @@ export const useCallStore = create((set, get) => ({
       incomingCallerId: null,
       incomingType: null,
       incomingConversationId: null,
-      pendingOffer: null,
-      pendingCallerId: null,
       error: null,
-    });
+    };
+
+    if (answered) {
+      stateUpdates.pendingOffer = null;
+      stateUpdates.pendingCallerId = null;
+    }
+    set(stateUpdates);
 
     const socket = getSocket();
     if (socket) {
@@ -186,7 +200,18 @@ export const useCallStore = create((set, get) => ({
     }
 
     if (!answered) {
-      console.log("acceptCall: pendingOffer not yet available, answer will be created by handleSignalOffer");
+      const retryOffer = get().pendingOffer;
+      if (retryOffer) {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(retryOffer));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket?.emit("signal:answer", { to: callerId, answer });
+          set({ pendingOffer: null, pendingCallerId: null });
+        } catch (err) {
+          console.error("Failed to handle late offer:", err);
+        }
+      }
     }
   },
 
