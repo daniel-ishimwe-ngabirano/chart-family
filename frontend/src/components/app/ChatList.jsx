@@ -6,6 +6,7 @@ import { useTranslate } from "../../hooks/useTranslate.js";
 import { Search, UserPlus, MessageSquare, Users, Archive } from "lucide-react";
 import NewConversationModal from "../NewConversationModal.jsx";
 import GroupModal from "../GroupModal.jsx";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function ChatList({ onSelectChat, groupFilter }) {
   const { authUser } = useAuthStore();
@@ -97,7 +98,7 @@ export default function ChatList({ onSelectChat, groupFilter }) {
             onClick={() => { selectConv(c); onSelectChat?.(); }}
           >
             <div className="chat-list-avatar">
-              <img src={getAvatar(c)} alt="" />
+              <img src={getAvatar(c)} alt="" onError={(e) => handleAvatarError(e, getName(c))} />
               {isOnline(c) && <span className="online-badge" />}
             </div>
             <div className="chat-list-info">

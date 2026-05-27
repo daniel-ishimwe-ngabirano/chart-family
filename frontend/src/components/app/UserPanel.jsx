@@ -4,6 +4,7 @@ import { useAuthStore } from "../../stores/authStore.js";
 import { X, Image, FileText, Link as LinkIcon, Users, Bell, Shield, Ban, Loader2 } from "lucide-react";
 import MediaViewer from "../MediaViewer.jsx";
 import axios from "../../lib/axios.js";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function UserPanel({ onClose }) {
   const { selectedConversation } = useChatStore();
@@ -41,7 +42,7 @@ export default function UserPanel({ onClose }) {
   return (
     <div className="user-panel">
       <div className="user-panel-header">
-        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="user-panel-avatar" />
+        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="user-panel-avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown")} />
         <h3>{selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown"}</h3>
         <button className="icon-btn" onClick={onClose}><X size={20} /></button>
       </div>
@@ -102,7 +103,7 @@ export default function UserPanel({ onClose }) {
           <div className="up-member-list">
             {selectedConversation.members?.map((m) => (
               <div key={m.user?.id} className="up-member">
-                <img src={m.user?.avatar} alt="" className="up-member-avatar" />
+                <img src={m.user?.avatar} alt="" className="up-member-avatar" onError={(e) => handleAvatarError(e, m.user?.fullName)} />
                 <span>{m.user?.fullName}</span>
               </div>
             ))}

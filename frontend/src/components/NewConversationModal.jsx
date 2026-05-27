@@ -3,6 +3,7 @@ import { useAuthStore } from "../stores/authStore.js";
 import { useChatStore } from "../stores/chatStore.js";
 import { X, Search, MessageSquare } from "lucide-react";
 import { useTranslate } from "../hooks/useTranslate.js";
+import { handleAvatarError } from "../utils/avatar.js";
 
 export default function NewConversationModal({ onClose }) {
   const { authUser } = useAuthStore();
@@ -51,7 +52,7 @@ export default function NewConversationModal({ onClose }) {
                   onClick={() => handleSelect(user.id)}
                 >
                   <div className="avatar-wrapper">
-                    <img src={user.avatar || "/avatar-placeholder.png"} alt="" className="avatar" />
+                    <img src={user.avatar || "/avatar-placeholder.png"} alt="" className="avatar" onError={(e) => handleAvatarError(e, user.fullName)} />
                     {onlineUsers.has(user.id) && <span className="online-dot" />}
                   </div>
                   <div className="user-select-info">

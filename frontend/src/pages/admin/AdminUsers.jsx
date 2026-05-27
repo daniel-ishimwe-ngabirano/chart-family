@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "../../lib/axios.js";
 import { Users, Plus, Search, Pencil, Trash2, Ban, Check, X, Loader2, ArrowLeft, ArrowRight, Shield } from "lucide-react";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -134,7 +135,7 @@ export default function AdminUsers() {
               {users.map((u) => (
                 <tr key={u.id}>
                   <td className="admin-user-cell">
-                    <img src={u.avatar || "/default-avatar.svg"} alt="" className="admin-user-avatar" />
+                    <img src={u.avatar || "/default-avatar.svg"} alt="" className="admin-user-avatar" onError={(e) => handleAvatarError(e, u.fullName)} />
                     {u.fullName}
                   </td>
                   <td>{u.email}</td>

@@ -6,6 +6,7 @@ import { useTranslate } from "../../hooks/useTranslate.js";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, MessageSquare, Phone, Users, Settings, Bell, LogOut, Shield } from "lucide-react";
 import ProfileModal from "../ProfileModal.jsx";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function LeftSidebar({ activeNav, onNavChange }) {
   const { authUser, logout } = useAuthStore();
@@ -57,7 +58,7 @@ export default function LeftSidebar({ activeNav, onNavChange }) {
           </button>
         )}
         <button className="sidebar-nav-item" onClick={() => setShowProfile(true)} title={t("nav.profile", "Profile")}>
-          <img src={authUser?.avatar || "/default-avatar.svg"} alt="" className="sidebar-avatar" />
+          <img src={authUser?.avatar || "/default-avatar.svg"} alt="" className="sidebar-avatar" onError={(e) => handleAvatarError(e, authUser?.fullName)} />
         </button>
         <button className="sidebar-nav-item" onClick={logout} title={t("nav.logout", "Logout")}>
           <LogOut size={20} />

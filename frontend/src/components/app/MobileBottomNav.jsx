@@ -3,6 +3,7 @@ import { MessageCircle, Users, Phone, Bell, LogOut } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
 import ProfileModal from "../ProfileModal.jsx";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function MobileBottomNav({ activeNav, onNavChange }) {
   const { authUser, logout } = useAuthStore();
@@ -40,6 +41,7 @@ export default function MobileBottomNav({ activeNav, onNavChange }) {
               src={authUser?.avatar || "/default-avatar.svg"}
               alt=""
               className="mobile-nav-avatar-img"
+              onError={(e) => handleAvatarError(e, authUser?.fullName)}
             />
           </button>
           <button className="mobile-nav-item" onClick={logout}>

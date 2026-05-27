@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "../../lib/axios.js";
 import { useAuthStore } from "../../stores/authStore.js";
 import { Shield, Check, Loader2 } from "lucide-react";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 const BANNED_ROLE = { id: "banned", label: "Banned", permissions: [] };
 
@@ -76,7 +77,7 @@ export default function AdminRoles() {
         <div className="admin-user-list">
           {users.map((u) => (
             <div key={u.id} className="admin-role-user-item">
-              <img src={u.avatar} alt="" className="avatar" />
+              <img src={u.avatar} alt="" className="avatar" onError={(e) => handleAvatarError(e, u.fullName)} />
               <div className="admin-user-info">
                 <span>{u.fullName}</span>
                 <span>{u.email}</span>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useChatStore } from "../stores/chatStore.js";
 import { X, Search, Check, Send } from "lucide-react";
 import axios from "../lib/axios.js";
+import { handleAvatarError } from "../utils/avatar.js";
 
 export default function ForwardModal({ message, onClose }) {
   const { conversations, authUser } = useChatStore();
@@ -56,6 +57,7 @@ export default function ForwardModal({ message, onClose }) {
                     src={c.isGroup ? c.groupAvatar : c.members?.find((m) => m.user?.id !== authUser.id)?.user?.avatar || ""}
                     alt=""
                     className="avatar"
+                    onError={(e) => handleAvatarError(e, c.isGroup ? c.groupName : c.members?.find((m) => m.user?.id !== authUser.id)?.user?.fullName || "Unknown")}
                   />
                   <span>{name}</span>
                   {selected === c.id && <Check size={18} className="check-icon" />}

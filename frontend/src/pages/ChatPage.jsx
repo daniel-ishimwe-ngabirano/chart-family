@@ -8,6 +8,7 @@ import UserPanel from "../components/app/UserPanel.jsx";
 import CallOverlay from "../components/app/CallOverlay.jsx";
 import IncomingCall from "../components/app/IncomingCall.jsx";
 import { useAuthStore } from "../stores/authStore.js";
+import { handleAvatarError } from "../utils/avatar.js";
 
 function CallsPanel() {
   const [calls, setCalls] = useState([]);
@@ -32,7 +33,7 @@ function CallsPanel() {
           calls.map((call, i) => (
             <div key={i} className="chat-list-item">
               <div className="chat-list-avatar">
-                <img src={call.avatar || ""} alt="" />
+                <img src={call.avatar || ""} alt="" onError={(e) => handleAvatarError(e, call.name || "Unknown")} />
               </div>
               <div className="chat-list-info">
                 <div className="chat-list-top">
@@ -67,7 +68,7 @@ function NotificationsPanel({ notifications }) {
           notifications.map((n, i) => (
             <div key={i} className="chat-list-item">
               <div className="chat-list-avatar">
-                <img src={n.avatar || ""} alt="" />
+                <img src={n.avatar || ""} alt="" onError={(e) => handleAvatarError(e, n.title)} />
               </div>
               <div className="chat-list-info">
                 <div className="chat-list-top">

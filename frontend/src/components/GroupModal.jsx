@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useChatStore } from "../stores/chatStore.js";
 import { X, Search, Check, Loader2, Users } from "lucide-react";
 import axios from "../lib/axios.js";
+import { handleAvatarError } from "../utils/avatar.js";
 
 export default function GroupModal({ onClose }) {
   const { users, setSelectedConversation } = useChatStore();
@@ -80,7 +81,7 @@ export default function GroupModal({ onClose }) {
                 className={`user-select-item ${selected.has(user.id) ? "selected" : ""}`}
                 onClick={() => toggleUser(user.id)}
               >
-                <img src={user.avatar} alt="" className="avatar" />
+                <img src={user.avatar} alt="" className="avatar" onError={(e) => handleAvatarError(e, user.fullName)} />
                 <span>{user.fullName}</span>
                 {selected.has(user.id) && <Check size={18} className="check-icon" />}
               </div>

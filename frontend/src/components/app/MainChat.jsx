@@ -8,6 +8,7 @@ import { joinConversation, leaveConversation, emitMarkAsRead } from "../../store
 import MessageInput from "../MessageInput.jsx";
 import MessageBubble from "../MessageBubble.jsx";
 import { ArrowLeft, Info, Phone, Video, Loader2, Search, MoreVertical } from "lucide-react";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function MainChat({ onTogglePanel, onBack }) {
   const { selectedConversation, messages, isMessagesLoading, isLoadingMore, nextCursor, getMessages, onlineUsers, typingUsers } = useChatStore();
@@ -89,7 +90,7 @@ export default function MainChat({ onTogglePanel, onBack }) {
         <button className="mobile-back" onClick={() => { useChatStore.getState().setSelectedConversation(null); onBack?.(); }}>
           <ArrowLeft size={24} />
         </button>
-        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="chat-header-avatar" />
+        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="chat-header-avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown")} />
         <div className="chat-header-info">
           <div className="chat-header-name">{selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown"}</div>
           <div className="chat-header-status">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "../../lib/axios.js";
 import { Loader2, Clock, AlertCircle } from "lucide-react";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function AdminLogs() {
   const [logs, setLogs] = useState([]);
@@ -50,7 +51,7 @@ export default function AdminLogs() {
             <div key={log.id} className="admin-log-item">
               <div className="admin-log-avatar">
                 {log.user?.avatar ? (
-                  <img src={log.user.avatar} alt="" />
+                  <img src={log.user.avatar} alt="" onError={(e) => handleAvatarError(e, log.user.fullName)} />
                 ) : (
                   <div className="admin-log-avatar-placeholder">
                     {log.user?.fullName?.charAt(0) || "?"}

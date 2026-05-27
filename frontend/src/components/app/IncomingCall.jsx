@@ -1,6 +1,7 @@
 import { useCallStore } from "../../stores/callStore.js";
 import { useChatStore } from "../../stores/chatStore.js";
 import { Phone, X, Video, PhoneOff, AlertCircle } from "lucide-react";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function IncomingCall() {
   const {
@@ -23,7 +24,7 @@ export default function IncomingCall() {
       <div className="incoming-call-content">
         <div className="incoming-call-avatar-wrapper">
           <div className="incoming-avatar-ring">
-            <img src={callerAvatar || "/default-avatar.svg"} alt="" className="incoming-caller-img" />
+            <img src={callerAvatar || "/default-avatar.svg"} alt="" className="incoming-caller-img" onError={(e) => handleAvatarError(e, caller?.fullName || "Incoming Call")} />
           </div>
         </div>
         <div className="incoming-call-name">{callerName}</div>

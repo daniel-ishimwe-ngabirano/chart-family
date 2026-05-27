@@ -5,6 +5,7 @@ import { joinConversation, leaveConversation, emitMarkAsRead } from "../stores/s
 import MessageInput from "./MessageInput.jsx";
 import MessageBubble from "./MessageBubble.jsx";
 import { ArrowLeft, Info, Loader2 } from "lucide-react";
+import { handleAvatarError } from "../utils/avatar.js";
 
 export default function ChatWindow() {
   const {
@@ -96,7 +97,7 @@ export default function ChatWindow() {
         <button className="mobile-back" onClick={() => setSelectedConversation(null)}>
           <ArrowLeft size={24} />
         </button>
-        <img src={getHeaderAvatar()} alt="" className="avatar" />
+        <img src={getHeaderAvatar()} alt="" className="avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation?.groupName : otherUser?.fullName)} />
         <div className="chat-header-info">
           <div className="chat-header-name">{getHeaderName()}</div>
           <div className="chat-header-status">{getHeaderStatus()}</div>

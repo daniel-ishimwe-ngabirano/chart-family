@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../stores/authStore.js";
 import { Users, BarChart3, Server, Flag, Ban, Search, ArrowLeft, Loader2 } from "lucide-react";
 import axios from "../lib/axios.js";
+import { handleAvatarError } from "../utils/avatar.js";
 
 function Tab({ icon, label, active, onClick }) {
   return (
@@ -94,7 +95,7 @@ export default function AdminPanel({ onClose }) {
                 <div className="admin-user-list">
                   {users.map((u) => (
                     <div key={u.id} className="admin-user-item">
-                      <img src={u.avatar} alt="" className="avatar" />
+                      <img src={u.avatar} alt="" className="avatar" onError={(e) => handleAvatarError(e, u.fullName)} />
                       <div className="admin-user-info">
                         <span className="admin-user-name">{u.fullName}</span>
                         <span className="admin-user-detail">{u.email || u.phone} · {u.role}</span>

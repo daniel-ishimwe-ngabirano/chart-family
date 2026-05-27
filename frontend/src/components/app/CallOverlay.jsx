@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useCallStore } from "../../stores/callStore.js";
 import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, AlertCircle } from "lucide-react";
+import { handleAvatarError } from "../../utils/avatar.js";
 
 export default function CallOverlay() {
   const {

@@ -9,6 +9,7 @@ import {
   unsubscribeFromPush,
 } from "../utils/push.js";
 import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages } from "lucide-react";
+import { handleAvatarError } from "../utils/avatar.js";
 
 const SETTINGS_KEY = "wavechat_user_settings";
 let swRegistration = null;
@@ -82,7 +83,7 @@ export default function ProfileModal({ onClose }) {
         <div className="modal-body">
           <div className="profile-section">
             <div className="profile-avatar-section">
-              <img src={authUser?.avatar || "/avatar-placeholder.png"} alt="" className="profile-avatar" />
+              <img src={authUser?.avatar || "/avatar-placeholder.png"} alt="" className="profile-avatar" onError={(e) => handleAvatarError(e, authUser?.fullName)} />
               <button className="avatar-edit" onClick={() => fileRef.current?.click()} disabled={uploadingAvatar}>
                 {uploadingAvatar ? <span className="avatar-spinner" /> : <Camera size={18} />}
               </button>
