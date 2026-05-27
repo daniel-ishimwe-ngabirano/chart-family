@@ -56,7 +56,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
 export async function getMe(req: Request, res: Response, next: NextFunction) {
   try {
     const user = await authService.getMe(req.userId!);
-    res.json(user);
+    res.json({ user, accessToken: req.cookies?.jwt || null });
   } catch (err) { next(err); }
 }
 
