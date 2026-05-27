@@ -3602,6 +3602,8 @@ input, textarea {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .admin-nav-item {
