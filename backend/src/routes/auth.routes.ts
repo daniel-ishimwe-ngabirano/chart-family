@@ -84,4 +84,9 @@ router.get("/google/callback", (req, res, next) => {
 router.post("/send-otp", otpSendLimiter, authController.sendOtp);
 router.post("/verify-otp", otpVerifyLimiter, authController.verifyOtp);
 
+// CSRF token endpoint (needed for cross-origin SPA — cookie can't be read cross-domain)
+router.get("/csrf-token", (req, res) => {
+  res.json({ csrfToken: req.cookies?.["csrf-token"] || "" });
+});
+
 export default router;
