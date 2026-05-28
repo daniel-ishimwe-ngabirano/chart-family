@@ -10,14 +10,11 @@ import { startBackgroundJobs } from "./events/index.js";
 import { adminService } from "./services/admin.service.js";
 import { pushService } from "./services/push.service.js";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@wavechat.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@123";
-
 async function seedAdminDefaults() {
   try {
     await adminService.seedDefaultFeatures();
     await adminService.seedDefaultSettings();
-    await adminService.seedDefaultAdmin(ADMIN_EMAIL, ADMIN_PASSWORD);
+    await adminService.seedAdminUser();
   } catch {
     // silently fail - tables might not exist yet
   }

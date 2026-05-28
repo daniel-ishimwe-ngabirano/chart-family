@@ -252,8 +252,34 @@ export class AdminService {
     return pwd;
   }
 
+  async seedAdminUser(): Promise<void> {
+    const adminEmail = env.ADMIN_EMAIL;
+    const adminPassword = env.ADMIN_PASSWORD;
+    if (!adminEmail || !adminPassword) return;
+
+    const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
+    if (existing) {
+      if (existing.role !== "admin") {
+        await prisma.user.update({ where: { id: existing.id }, data: { role: "admin" } });
+      }
+      return;
+    }
+
+    const hash = await bcrypt.hash(adminPassword, 12);
+    await prisma.user.create({
+      data: {
+        email: adminEmail,
+        fullName: "Admin",
+        username: "admin",
+        password: hash,
+        role: "admin",
+        isVerified: true,
+      },
+    });
+  }
+
   async checkPasswordStatus(): Promise<{ hasPassword: boolean; fromEnv?: boolean }> {
-    const envPassword = process.env.ADMIN_PANEL_SECRET;
+    const envPassword = env.ADMIN_PANEL_SECRET;
 
     if (envPassword) {
       const hash = await bcrypt.hash(envPassword, 12);
@@ -283,21 +309,54 @@ export class AdminService {
     return jwt.sign({ adminId: adminUserId, type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
   }
 
-  async loginPassword(password: string, adminUserId: string): Promise<string> {
+  async loginPassword(password: string): Promise<{ token: string; user: { id: string; fullName: string; email: string; avatar: string | null } }> {
+    const envPassword = env.ADMIN_PANEL_SECRET;
+    const adminEmail = env.ADMIN_EMAIL;
+
+    const findAdmin = () => adminEmail
+      ? prisma.user.findUnique({ where: { email: adminEmail }, select: { id: true, fullName: true, email: true, avatar: true } })
+      : null;
+
+    if (envPassword) {
+      if (password !== envPassword) throw new AppError("Invalid admin password", 401);
+      const adminUser = await findAdmin();
+      if (adminUser) {
+        const token = jwt.sign({ adminId: adminUser.id, type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
+        return { token, user: { id: adminUser.id, fullName: adminUser.fullName, email: adminUser.email || "", avatar: adminUser.avatar } };
+      }
+      const token = jwt.sign({ adminId: "env-admin", type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
+      return { token, user: { id: "env-admin", fullName: "Admin", email: adminEmail || "admin@wavechat.com", avatar: null } };
+    }
+
     const setting = await prisma.setting.findUnique({ where: { key: "admin_password_hash" } });
     if (!setting) throw new AppError("No admin password set. Set up admin password first.", 400);
     const valid = await bcrypt.compare(password, setting.value);
     if (!valid) throw new AppError("Invalid admin password", 401);
-    return jwt.sign({ adminId: adminUserId, type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
+
+    const adminUser = await findAdmin();
+    if (!adminUser) {
+      const token = jwt.sign({ adminId: "env-admin", type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
+      return { token, user: { id: "env-admin", fullName: "Admin", email: adminEmail || "admin@wavechat.com", avatar: null } };
+    }
+    const token = jwt.sign({ adminId: adminUser.id, type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
+    return { token, user: { id: adminUser.id, fullName: adminUser.fullName, email: adminUser.email || "", avatar: adminUser.avatar } };
   }
 
-  async changePassword(oldPassword: string, newPassword: string, adminUserId: string): Promise<string> {
-    await this.loginPassword(oldPassword, adminUserId);
+  async changePassword(oldPassword: string, newPassword: string): Promise<string> {
+    const envPassword = env.ADMIN_PANEL_SECRET;
+    if (envPassword) {
+      if (oldPassword !== envPassword) throw new AppError("Invalid current password", 401);
+      throw new AppError("Cannot change password set via environment variable", 400);
+    }
+    const setting = await prisma.setting.findUnique({ where: { key: "admin_password_hash" } });
+    if (!setting) throw new AppError("No admin password set", 400);
+    const valid = await bcrypt.compare(oldPassword, setting.value);
+    if (!valid) throw new AppError("Invalid current password", 401);
     if (newPassword.length < 6) throw new AppError("Password must be at least 6 characters", 400);
     const hash = await bcrypt.hash(newPassword, 12);
     await prisma.setting.upsert({ where: { key: "admin_password_hash" }, create: { key: "admin_password_hash", value: hash, type: "string", group: "system", label: "Admin Password Hash" }, update: { value: hash } });
-    await prisma.adminLog.create({ data: { userId: adminUserId, action: "admin.password.change", resource: "admin", details: "Admin password changed" } });
-    return jwt.sign({ adminId: adminUserId, type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
+    await prisma.adminLog.create({ data: { userId: "env-admin", action: "admin.password.change", resource: "admin", details: "Admin password changed" } });
+    return jwt.sign({ adminId: "env-admin", type: "admin" }, env.ADMIN_JWT_SECRET, { expiresIn: "24h" });
   }
 
   verifyAdminToken(token: string): { adminId: string } | null {
@@ -305,6 +364,9 @@ export class AdminService {
   }
 
   async getAdminUser(userId: string) {
+    if (userId === "env-admin") {
+      return { id: "env-admin", fullName: "Admin", email: env.ADMIN_EMAIL || "admin@wavechat.com", avatar: null, role: "admin" };
+    }
     return prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, email: true, avatar: true, role: true } });
   }
 
@@ -478,21 +540,20 @@ export class AdminService {
   }
 
   async seedDefaultAdmin(email: string, password: string) {
-    const existing = await prisma.user.findFirst({ where: { role: "admin" } });
+    const hash = await bcrypt.hash(password, 12);
+    const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      console.log(`  ℹ️  Admin already exists: ${existing.email}`);
+      if (existing.role !== "admin") {
+        await prisma.user.update({ where: { id: existing.id }, data: { role: "admin" } });
+      }
       return;
     }
-    const hash = await bcrypt.hash(password, 12);
     const ts = Date.now();
     try {
       await prisma.user.create({
-        data: { email, password: hash, fullName: "Super Admin", username: `admin_${ts}`, role: "admin", isVerified: true },
+        data: { email, password: hash, fullName: "Admin", username: `admin_${ts}`, role: "admin", isVerified: true },
       });
-      console.log(`\n  ✅ Default admin created: ${email} / ${password}\n`);
-    } catch (err) {
-      console.error("  ❌ Failed to create admin:", (err as Error).message);
-    }
+    } catch {}
   }
 
   async getAvailableRoles() {

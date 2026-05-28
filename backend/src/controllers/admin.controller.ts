@@ -182,11 +182,10 @@ export async function checkAdminPasswordStatus(_req: Request, res: Response, nex
 
 export async function setupAdminPassword(req: Request, res: Response, next: NextFunction) {
   try {
-    if (!req.userId) throw new AppError("Unauthorized", 401);
-    await adminService.requireAdmin(req.userId);
+    if (env.ADMIN_PANEL_SECRET) throw new AppError("Admin password is set via environment variable", 400);
     const { password } = req.body;
     if (!password) throw new AppError("Password is required", 400);
-    const token = await adminService.setupPassword(password, req.userId);
+    const token = await adminService.setupPassword(password, "env-admin");
     setAdminCookie(res, token);
     res.json({ success: true, message: "Admin password created" });
   } catch (err) { next(err); }
@@ -194,25 +193,21 @@ export async function setupAdminPassword(req: Request, res: Response, next: Next
 
 export async function loginAdmin(req: Request, res: Response, next: NextFunction) {
   try {
-    if (!req.userId) throw new AppError("Unauthorized", 401);
-    await adminService.requireAdmin(req.userId);
     const { password } = req.body;
     if (!password) throw new AppError("Password is required", 400);
-    const token = await adminService.loginPassword(password, req.userId);
+    const { token, user } = await adminService.loginPassword(password);
     setAdminCookie(res, token);
-    res.json({ success: true, message: "Admin authenticated" });
+    res.json({ success: true, user, message: "Admin authenticated" });
   } catch (err) { next(err); }
 }
 
 export async function changeAdminPassword(req: Request, res: Response, next: NextFunction) {
   try {
-    if (!req.userId) throw new AppError("Unauthorized", 401);
-    await adminService.requireAdmin(req.userId);
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword) throw new AppError("Current password is required", 400);
     if (!newPassword) throw new AppError("New password is required", 400);
     if (newPassword.length < 6) throw new AppError("New password must be at least 6 characters", 400);
-    const token = await adminService.changePassword(currentPassword, newPassword, req.userId);
+    const token = await adminService.changePassword(currentPassword, newPassword);
     setAdminCookie(res, token);
     res.json({ success: true, message: "Admin password changed" });
   } catch (err) { next(err); }

@@ -6,13 +6,13 @@ import { protectRoute } from "../middleware/auth.js";
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Admin Auth
-router.get("/auth/status", protectRoute, adminController.checkAdminPasswordStatus);
-router.post("/auth/setup", protectRoute, adminController.setupAdminPassword);
-router.post("/auth/login", protectRoute, adminController.loginAdmin);
-router.post("/auth/logout", protectRoute, adminController.logoutAdmin);
-router.put("/auth/change-password", protectRoute, adminController.changeAdminPassword);
-router.get("/auth/verify", protectRoute, adminController.verifyAdminSession);
+// Admin Auth (no protectRoute — uses env vars directly)
+router.get("/auth/status", adminController.checkAdminPasswordStatus);
+router.post("/auth/setup", adminController.setupAdminPassword);
+router.post("/auth/login", adminController.loginAdmin);
+router.post("/auth/logout", adminController.logoutAdmin);
+router.put("/auth/change-password", adminController.changeAdminPassword);
+router.get("/auth/verify", adminController.verifyAdminSession);
 
 // Dashboard
 router.get("/stats", protectRoute, adminController.getDashboardStats);

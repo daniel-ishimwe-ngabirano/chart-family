@@ -25,10 +25,8 @@ export default function AdminLogin() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!authUser) { setMode("login"); return; }
-    if (authUser.role !== "admin") { navigate("/chat"); return; }
     init();
-  }, [authUser]);
+  }, []);
 
   const init = async () => {
     const result = await checkPasswordStatus();
@@ -40,6 +38,8 @@ export default function AdminLogin() {
       setPassword(pwd);
       setMode("admin-setup");
     } else {
+      if (!authUser) { setMode("login"); return; }
+      if (authUser.role !== "admin") { navigate("/chat"); return; }
       setMode("admin-login");
     }
   };
