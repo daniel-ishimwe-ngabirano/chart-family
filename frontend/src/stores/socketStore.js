@@ -34,10 +34,25 @@ export const connectSocket = () => {
   socket = io(SOCKET_URL, {
     auth: { token: useAuthStore.getState().token },
     transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 10000,
+    timeout: 20000,
+    forceNew: true,
   });
 
   socket.on("connect", () => {
     notifyConnection(true);
+  });
+
+  socket.on("connect_error", (err) => {
+    console.warn("Socket connection error:", err.message);
+    if (err.message === "Invalid token" || err.message === "Authentication required") {
+      const token = useAuthStore.getState().token;
+      if (token) socket.auth = { token };
+      socket.connect();
+    }
   });
 
   socket.on("message:new", (message) => {

@@ -35,6 +35,9 @@ export async function setupSocket(httpServer: HttpServer): Promise<SocketServer>
     },
     pingInterval: 10000,
     pingTimeout: 5000,
+    transports: ["websocket", "polling"],
+    allowUpgrades: true,
+    cookie: false,
   });
   _io = io;
 
