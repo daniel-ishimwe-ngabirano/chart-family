@@ -26,11 +26,13 @@ export default function AdminLogin() {
 
   useEffect(() => {
     init();
-  }, []);
+  }, [authUser]);
 
   const init = async () => {
     const result = await checkPasswordStatus();
     if (result.fromEnv) {
+      if (!authUser) { setMode("login"); return; }
+      if (authUser.role !== "admin") { navigate("/chat"); return; }
       setMode("admin-env-login");
     } else if (!result.hasPassword) {
       const pwd = generatePassword();
