@@ -10,23 +10,9 @@ const axiosInstance = axios.create({
 
 let csrfTokenPromise = null;
 
-function readCsrfCookie() {
-  const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]*)/);
-  return match ? match[1] : null;
-}
-
 async function getCsrfToken() {
   if (!csrfTokenPromise) {
-    csrfTokenPromise = (async () => {
-      let token = readCsrfCookie();
-      if (token) return token;
-      try {
-        await axiosInstance.get("/health");
-        return readCsrfCookie();
-      } catch {
-        return null;
-      }
-    })();
+    csrfTokenPromise = axiosInstance.get("/csrf-token").then(res => res.data.csrfToken).catch(() => null);
     setTimeout(() => { csrfTokenPromise = null; }, 5 * 60 * 1000);
   }
   return csrfTokenPromise;
