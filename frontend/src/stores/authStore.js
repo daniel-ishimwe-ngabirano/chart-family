@@ -68,9 +68,7 @@ export const useAuthStore = create((set) => ({
     const formData = new FormData();
     formData.append("avatar", file);
     try {
-      const res = await axios.post("/users/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await axios.post("/users/avatar", formData);
       set({ authUser: res.data });
       return { success: true };
     } catch (error) {
