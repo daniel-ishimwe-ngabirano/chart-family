@@ -99,7 +99,7 @@ app.use("/api/conversations", messageLimiter);
 // CSRF token cookie + protection (skipped for public endpoints)
 app.use(setCsrfToken);
 app.use((req, res, next) => {
-  if (req.path === "/api/health" || req.path.startsWith("/api/public")) {
+  if (req.path === "/api/health" || req.path.startsWith("/api/public") || req.path.startsWith("/api/auth") || req.path.startsWith("/api/admin/auth")) {
     return next();
   }
   csrfProtection(req, res, next);
