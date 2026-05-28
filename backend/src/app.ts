@@ -11,7 +11,6 @@ import { env } from "./config/env.js";
 import passport from "passport";
 import "./config/passport.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import crypto from "crypto";
 import { setCsrfToken } from "./middleware/csrf.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -119,18 +118,9 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// CSRF token endpoint
+// CSRF token endpoint (reads token set by setCsrfToken middleware)
 app.get("/api/csrf-token", (req, res) => {
-  let token = req.cookies?.["csrf-token"];
-  if (!token) {
-    token = crypto.randomBytes(32).toString("hex");
-    res.cookie("csrf-token", token, {
-      httpOnly: false,
-      sameSite: env.NODE_ENV === "production" ? "none" : "strict",
-      secure: env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-  }
+  const token = req.cookies?.["csrf-token"] || res.locals["csrf-token"] || null;
   res.json({ csrfToken: token });
 });
 

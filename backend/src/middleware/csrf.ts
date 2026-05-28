@@ -32,6 +32,7 @@ export function setCsrfToken(req: Request, res: Response, next: NextFunction) {
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });
+    res.locals[CSRF_COOKIE] = token;
   }
   next();
 }

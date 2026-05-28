@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { onConnectionChange } from "../stores/socketStore.js";
+import { getSocket, onConnectionChange } from "../stores/socketStore.js";
 import { WifiOff } from "lucide-react";
 
 export default function ConnectionStatus() {
   const [connected, setConnected] = useState(true);
 
   useEffect(() => {
-    return onConnectionChange(setConnected);
+    return onConnectionChange((status) => {
+      if (getSocket()) setConnected(status);
+    });
   }, []);
 
   if (connected) return null;
