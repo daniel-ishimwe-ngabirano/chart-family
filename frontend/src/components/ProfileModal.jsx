@@ -8,8 +8,8 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
 } from "../utils/push.js";
-import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages } from "lucide-react";
-import { handleAvatarError } from "../utils/avatar.js";
+import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages, Sparkles } from "lucide-react";
+import { handleAvatarError, generateAvatarSvg } from "../utils/avatar.js";
 
 const SETTINGS_KEY = "wavechat_user_settings";
 let swRegistration = null;
@@ -72,6 +72,18 @@ export default function ProfileModal({ onClose }) {
     setEditing(false);
   };
 
+  const handleGenerateAvatar = async () => {
+    setUploadingAvatar(true);
+    try {
+      const svg = generateAvatarSvg(authUser?.fullName || "User", 200);
+      const blob = new Blob([svg], { type: "image/svg+xml" });
+      const file = new File([blob], "avatar.svg", { type: "image/svg+xml" });
+      await uploadAvatar(file);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content profile-modal" onClick={(e) => e.stopPropagation()}>
@@ -84,8 +96,11 @@ export default function ProfileModal({ onClose }) {
           <div className="profile-section">
             <div className="profile-avatar-section">
               <img src={authUser?.avatar || "/avatar-placeholder.png"} alt="" className="profile-avatar" onError={(e) => handleAvatarError(e, authUser?.fullName)} />
-              <button className="avatar-edit" onClick={() => fileRef.current?.click()} disabled={uploadingAvatar}>
+              <button className="avatar-edit" onClick={() => fileRef.current?.click()} disabled={uploadingAvatar} title="Upload photo">
                 {uploadingAvatar ? <span className="avatar-spinner" /> : <Camera size={18} />}
+              </button>
+              <button className="avatar-edit avatar-generate" onClick={handleGenerateAvatar} disabled={uploadingAvatar} title="Generate cartoon avatar">
+                <Sparkles size={18} />
               </button>
               <input ref={fileRef} type="file" hidden accept="image/*" onChange={handleAvatarChange} />
             </div>

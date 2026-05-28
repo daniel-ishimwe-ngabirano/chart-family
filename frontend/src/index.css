@@ -1679,6 +1679,16 @@ input, textarea {
   background: var(--accent-hover);
 }
 
+.avatar-generate {
+  right: auto;
+  left: 0;
+  background: var(--accent-secondary, #8b5cf6);
+}
+
+.avatar-generate:hover {
+  background: var(--accent-secondary-hover, #7c3aed);
+}
+
 .profile-info {
   text-align: center;
 }
