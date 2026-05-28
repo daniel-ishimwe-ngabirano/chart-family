@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
@@ -202,36 +203,72 @@ export class AuthService {
     };
   }
 
-  async sendPhoneOtp(phone: string): Promise<string> {
+  private otpStore = new Map<string, { otp: string; expiresAt: number }>();
+
+  async sendPhoneOtp(phone: string): Promise<void> {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    this.otpStore.set(phone, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
     // In production, integrate with Twilio:
     // await twilioClient.messages.create({ body: `Your WaveChat OTP: ${otp}`, from: env.TWILIO_PHONE_NUMBER, to: phone });
     console.log(`[OTP] Sent to ${phone}: ${otp}`);
-    return otp;
   }
 
-  async verifyPhoneOtp(phone: string, otp: string, storedOtp: string): Promise<boolean> {
-    return otp === storedOtp;
+  async verifyPhoneOtp(phone: string, otp: string): Promise<boolean> {
+    const stored = this.otpStore.get(phone);
+    if (!stored || Date.now() > stored.expiresAt) {
+      this.otpStore.delete(phone);
+      return false;
+    }
+    const valid = stored.otp === otp;
+    if (valid) this.otpStore.delete(phone);
+    return valid;
   }
 
-  async phoneSignup(data: { fullName: string; phone: string; username?: string }) {
-    const existing = await prisma.user.findFirst({ where: { phone: data.phone } });
-    if (existing) throw new AppError("Phone already in use", 400);
+  async requestPasswordReset(email: string): Promise<string> {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new AppError("If that email exists, a reset link was sent", 200);
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetExpires = new Date(Date.now() + 60 * 60 * 1000);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordResetToken: resetToken, passwordResetExpires: resetExpires },
+    });
+    return resetToken;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await prisma.user.findFirst({
+      where: { passwordResetToken: token, passwordResetExpires: { gt: new Date() } },
+    });
+    if (!user) throw new AppError("Invalid or expired reset token", 400);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword, passwordResetToken: null, passwordResetExpires: null },
+    });
+  }
+
+  async phoneSignup(data: { fullName: string; phone?: string; email?: string; username?: string }) {
+    const existing = data.phone
+      ? await prisma.user.findFirst({ where: { phone: data.phone } })
+      : data.email ? await prisma.user.findFirst({ where: { email: data.email } }) : null;
+    if (existing) throw new AppError(data.phone ? "Phone already in use" : "Email already in use", 400);
 
     const username = data.username || `user_${Math.random().toString(36).slice(2, 8)}`;
 
-    const user = await prisma.user.create({
-      data: {
-        fullName: data.fullName,
-        phone: data.phone,
-        username,
-        isVerified: true,
-        avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(data.fullName)}`,
-        bio: "Hey there! I am using WaveChat",
-      },
-    });
+    const createData: Record<string, unknown> = {
+      fullName: data.fullName,
+      username,
+      isVerified: true,
+      avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(data.fullName)}`,
+      bio: "Hey there! I am using WaveChat",
+    };
+    if (data.phone) createData.phone = data.phone;
+    if (data.email) createData.email = data.email;
 
-    return { id: user.id, fullName: user.fullName, phone: user.phone, username: user.username, avatar: user.avatar };
+    const user = await prisma.user.create({ data: createData as any });
+
+    return { id: user.id, fullName: user.fullName, phone: user.phone, email: user.email, username: user.username, avatar: user.avatar };
   }
 }
 

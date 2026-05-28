@@ -4,14 +4,16 @@ import axios from "../lib/axios.js";
 export const useFeatureStore = create((set, get) => ({
   features: [],
   loading: false,
+  error: null,
 
   fetchFeatures: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const res = await axios.get("/admin/features");
       set({ features: res.data });
-    } catch {
-      // silently fail
+    } catch (error) {
+      console.error("Failed to fetch features:", error.response?.data?.error || error.message);
+      set({ error: "Failed to load features" });
     } finally {
       set({ loading: false });
     }
@@ -21,8 +23,8 @@ export const useFeatureStore = create((set, get) => ({
     try {
       const res = await axios.get("/admin/features/public");
       set({ features: res.data });
-    } catch {
-      // silently fail
+    } catch (error) {
+      console.error("Failed to fetch public features:", error.response?.data?.error || error.message);
     }
   },
 

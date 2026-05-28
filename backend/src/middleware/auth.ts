@@ -13,10 +13,14 @@ export async function protectRoute(req: Request, _res: Response, next: NextFunct
     }
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as { userId: string; sessionId?: string };
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { id: true } });
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { id: true, role: true } });
 
     if (!user) {
       throw new AppError("User not found", 404);
+    }
+
+    if (user.role === "banned") {
+      throw new AppError("Your account has been banned", 403);
     }
 
     req.userId = decoded.userId;

@@ -9,11 +9,12 @@ import CallOverlay from "../components/app/CallOverlay.jsx";
 import IncomingCall from "../components/app/IncomingCall.jsx";
 import { useAuthStore } from "../stores/authStore.js";
 import { handleAvatarError } from "../utils/avatar.js";
+import { STORAGE_KEYS } from "../lib/constants.js";
 
 function CallsPanel() {
   const [calls, setCalls] = useState([]);
   useEffect(() => {
-    const stored = localStorage.getItem("wavechat_call_history");
+    const stored = localStorage.getItem(STORAGE_KEYS.CALL_HISTORY);
     if (stored) {
       try { setCalls(JSON.parse(stored)); } catch {}
     }
@@ -97,7 +98,7 @@ export default function ChatPage() {
   const handleBackToList = useCallback(() => setMobileView("list"), []);
 
   useEffect(() => {
-    const stored = localStorage.getItem(`wavechat_notifications_${authUser?.id}`);
+    const stored = localStorage.getItem(`${STORAGE_KEYS.NOTIFICATIONS}_${authUser?.id}`);
     if (stored) {
       try { setNotifications(JSON.parse(stored)); } catch {}
     }
@@ -108,7 +109,7 @@ export default function ChatPage() {
       const n = e.detail;
       setNotifications((prev) => {
         const updated = [n, ...prev].slice(0, 50);
-        localStorage.setItem(`wavechat_notifications_${authUser?.id}`, JSON.stringify(updated));
+        localStorage.setItem(`${STORAGE_KEYS.NOTIFICATIONS}_${authUser?.id}`, JSON.stringify(updated));
         return updated;
       });
     };

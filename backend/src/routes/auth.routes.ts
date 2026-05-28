@@ -24,7 +24,7 @@ const signupLimiter = rateLimit({
   message: { error: "Too many accounts from this IP, try again later" },
 });
 
-const otpLimiter = rateLimit({
+const otpSendLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 3,
   standardHeaders: true,
@@ -32,9 +32,36 @@ const otpLimiter = rateLimit({
   message: { error: "Too many OTP requests, try again later" },
 });
 
+const otpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many OTP verification attempts, try again later" },
+});
+
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many refresh requests, try again later" },
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many password reset requests, try again later" },
+});
+
+router.post("/forgot-password", passwordResetLimiter, authController.requestPasswordReset);
+router.post("/reset-password", passwordResetLimiter, authController.resetPassword);
+
 router.post("/signup", signupLimiter, validate(signupSchema), authController.signup);
 router.post("/login", loginLimiter, validate(loginSchema), authController.login);
-router.post("/refresh", authController.refreshToken);
+router.post("/refresh", refreshLimiter, authController.refreshToken);
 router.post("/logout", protectRoute, authController.logout);
 router.get("/me", protectRoute, authController.getMe);
 router.get("/sessions", protectRoute, authController.getSessions);
@@ -54,7 +81,7 @@ router.get("/google/callback", (req, res, next) => {
 }, authController.googleCallback);
 
 // Phone OTP
-router.post("/send-otp", otpLimiter, authController.sendOtp);
-router.post("/verify-otp", otpLimiter, authController.verifyOtp);
+router.post("/send-otp", otpSendLimiter, authController.sendOtp);
+router.post("/verify-otp", otpVerifyLimiter, authController.verifyOtp);
 
 export default router;

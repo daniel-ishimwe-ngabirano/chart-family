@@ -3,48 +3,67 @@ import { getUserSocketIds } from "../index.js";
 import { messageService } from "../../services/message.service.js";
 import { pushService } from "../../services/push.service.js";
 import { prisma } from "../../config/prisma.js";
+import { validateSocketEvent } from "../../utils/socket-validate.js";
+import { rateLimitSocket } from "../../utils/socket-rate-limit.js";
+import {
+  socketSendMessageSchema,
+  socketEditMessageSchema,
+  socketDeleteMessageSchema,
+  socketReactSchema,
+  socketReadSchema,
+  socketForwardSchema,
+  socketPinSchema,
+  socketTypingSchema,
+} from "../../types/schemas.js";
 import type { SocketWithUser } from "../../types/index.js";
 
 export function setupChatHandlers(io: SocketServer, socket: SocketWithUser) {
   const userId = socket.userId!;
 
   socket.on("conversation:join", (conversationId: string) => {
+    if (typeof conversationId !== "string" || !conversationId) return;
     socket.join(conversationId);
   });
 
   socket.on("conversation:leave", (conversationId: string) => {
+    if (typeof conversationId !== "string" || !conversationId) return;
     socket.leave(conversationId);
   });
 
   socket.on("message:send", async (data) => {
+    if (!rateLimitSocket(socket.id, "message:send", 30, 60_000)) {
+      socket.emit("error", { message: "Too many messages, slow down" });
+      return;
+    }
     try {
+      const validated = validateSocketEvent(socketSendMessageSchema, data);
       const message = await messageService.sendMessage({
-        conversationId: data.conversationId,
+        conversationId: validated.conversationId,
         senderId: userId,
-        text: data.text,
-        type: data.type,
-        replyToId: data.replyToId,
-        metadata: data.metadata,
-        attachments: data.attachments,
+        text: validated.text,
+        type: validated.type,
+        replyToId: validated.replyToId,
+        metadata: validated.metadata,
+        attachments: validated.attachments,
       });
 
-      io.to(data.conversationId).emit("message:new", message);
+      io.to(validated.conversationId).emit("message:new", message);
 
       try {
         const conv = await prisma.conversation.findUnique({
-          where: { id: data.conversationId },
+          where: { id: validated.conversationId },
           select: { members: { select: { userId: true, user: { select: { fullName: true, username: true } } } } },
         });
         const senderP = conv?.members.find((p) => p.userId === userId);
         const senderName = senderP?.user?.fullName || senderP?.user?.username || "Someone";
-        const textPreview = data.text ? data.text.slice(0, 200) : (data.type === "image" ? "📷 Photo" : data.type === "file" ? "📎 File" : "New message");
+        const textPreview = validated.text ? validated.text.slice(0, 200) : (validated.type === "image" ? "📷 Photo" : validated.type === "file" ? "📎 File" : "New message");
         for (const p of conv?.members || []) {
           if (p.userId !== userId) {
             pushService.sendToUser(p.userId, {
               title: senderName,
               body: textPreview,
               icon: "/favicon.png",
-              data: { url: "/chat", conversationId: data.conversationId },
+              data: { url: "/chat", conversationId: validated.conversationId },
             }).catch(() => {});
           }
         }
@@ -54,32 +73,35 @@ export function setupChatHandlers(io: SocketServer, socket: SocketWithUser) {
     }
   });
 
-  socket.on("message:edit", async ({ messageId, text }) => {
+  socket.on("message:edit", async (data) => {
     try {
-      const message = await messageService.editMessage(messageId, userId, text);
+      const validated = validateSocketEvent(socketEditMessageSchema, data);
+      const message = await messageService.editMessage(validated.messageId, userId, validated.text);
       io.to(message.conversationId).emit("message:updated", message);
     } catch (err) {
       socket.emit("error", { message: (err as Error).message });
     }
   });
 
-  socket.on("message:delete", async ({ messageId, deleteForEveryone }) => {
+  socket.on("message:delete", async (data) => {
     try {
-      const message = await messageService.deleteMessage(messageId, userId, deleteForEveryone);
+      const validated = validateSocketEvent(socketDeleteMessageSchema, data);
+      const message = await messageService.deleteMessage(validated.messageId, userId, validated.deleteForEveryone);
       const conversationId = message.conversationId;
-      io.to(conversationId).emit("message:deleted", { messageId, conversationId, deleteForEveryone });
+      io.to(conversationId).emit("message:deleted", { messageId: validated.messageId, conversationId, deleteForEveryone: validated.deleteForEveryone });
     } catch (err) {
       socket.emit("error", { message: (err as Error).message });
     }
   });
 
-  socket.on("message:react", async ({ messageId, emoji, conversationId }) => {
+  socket.on("message:react", async (data) => {
     try {
-      const result = await messageService.reactToMessage(messageId, userId, emoji);
+      const validated = validateSocketEvent(socketReactSchema, data);
+      const result = await messageService.reactToMessage(validated.messageId, userId, validated.emoji);
       if (result) {
-        io.to(conversationId).emit("message:reacted", {
-          messageId,
-          emoji,
+        io.to(validated.conversationId).emit("message:reacted", {
+          messageId: validated.messageId,
+          emoji: validated.emoji,
           userId,
           reactions: result.reactions,
         });
@@ -89,19 +111,21 @@ export function setupChatHandlers(io: SocketServer, socket: SocketWithUser) {
     }
   });
 
-  socket.on("message:read", async ({ conversationId, messageId }) => {
+  socket.on("message:read", async (data) => {
     try {
-      await messageService.markAsRead(messageId, userId);
-      io.to(conversationId).emit("message:read", { messageId, userId, conversationId });
+      const validated = validateSocketEvent(socketReadSchema, data);
+      await messageService.markAsRead(validated.messageId, userId);
+      io.to(validated.conversationId).emit("message:read", { messageId: validated.messageId, userId, conversationId: validated.conversationId });
     } catch (err) {
       socket.emit("error", { message: (err as Error).message });
     }
   });
 
-  socket.on("message:forward", async ({ messageId, toConversationId }) => {
+  socket.on("message:forward", async (data) => {
     try {
-      const message = await messageService.forwardMessage(messageId, toConversationId, userId);
-      io.to(toConversationId).emit("message:new", message);
+      const validated = validateSocketEvent(socketForwardSchema, data);
+      const message = await messageService.forwardMessage(validated.messageId, validated.toConversationId, userId);
+      io.to(validated.toConversationId).emit("message:new", message);
       const senderSockets = getUserSocketIds(userId);
       senderSockets.forEach((sid) => {
         if (sid !== socket.id) {
@@ -113,10 +137,11 @@ export function setupChatHandlers(io: SocketServer, socket: SocketWithUser) {
     }
   });
 
-  socket.on("message:pin", async ({ conversationId, messageId }) => {
+  socket.on("message:pin", async (data) => {
     try {
-      const result = await messageService.pinMessage(conversationId, messageId, userId);
-      io.to(conversationId).emit("message:pinned", { conversationId, messageId, userId, ...result });
+      const validated = validateSocketEvent(socketPinSchema, data);
+      const result = await messageService.pinMessage(validated.conversationId, validated.messageId, userId);
+      io.to(validated.conversationId).emit("message:pinned", { conversationId: validated.conversationId, messageId: validated.messageId, userId, ...result });
     } catch (err) {
       socket.emit("error", { message: (err as Error).message });
     }

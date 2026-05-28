@@ -180,7 +180,7 @@ export class AdminService {
   // ========== SETTINGS ==========
 
   async getSettings(group?: string) {
-    const where = group ? { group } : {};
+    const where = group ? { group, NOT: { key: "admin_password_hash" } } : { NOT: { key: "admin_password_hash" } };
     return prisma.setting.findMany({ where, orderBy: { key: "asc" } });
   }
 

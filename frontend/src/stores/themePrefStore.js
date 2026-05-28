@@ -1,16 +1,17 @@
 import { create } from "zustand";
+import { STORAGE_KEYS, DEFAULT_SETTINGS } from "../lib/constants.js";
 
 function getInitialTheme() {
   try {
-    const stored = localStorage.getItem("wavechat_theme");
+    const stored = localStorage.getItem(STORAGE_KEYS.THEME);
     if (stored === "light" || stored === "dark") return stored;
   } catch {}
-  return "dark";
+  return DEFAULT_SETTINGS.THEME;
 }
 
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  try { localStorage.setItem("wavechat_theme", theme); } catch {}
+  try { localStorage.setItem(STORAGE_KEYS.THEME, theme); } catch {}
 }
 
 export const useThemePrefStore = create((set, get) => ({

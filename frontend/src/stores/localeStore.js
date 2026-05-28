@@ -2,6 +2,7 @@ import { create } from "zustand";
 import en from "../locales/en.json";
 import fr from "../locales/fr.json";
 import rw from "../locales/rw.json";
+import { STORAGE_KEYS, DEFAULT_SETTINGS } from "../lib/constants.js";
 
 const locales = { en, fr, rw };
 
@@ -10,14 +11,14 @@ function getBrowserLocale() {
     const lang = navigator.language?.split("-")[0];
     if (locales[lang]) return lang;
   } catch {}
-  return "en";
+  return DEFAULT_SETTINGS.LOCALE;
 }
 
 function getStoredLocale() {
   try {
-    return localStorage.getItem("wavechat_locale") || getBrowserLocale();
+    return localStorage.getItem(STORAGE_KEYS.LOCALE) || getBrowserLocale();
   } catch {
-    return "en";
+    return DEFAULT_SETTINGS.LOCALE;
   }
 }
 
@@ -27,7 +28,7 @@ export const useLocaleStore = create((set, get) => ({
 
   setLocale: (locale) => {
     if (locales[locale]) {
-      try { localStorage.setItem("wavechat_locale", locale); } catch {}
+      try { localStorage.setItem(STORAGE_KEYS.LOCALE, locale); } catch {}
       set({ locale, translations: locales[locale] });
     }
   },

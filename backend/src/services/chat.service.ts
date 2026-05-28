@@ -29,12 +29,28 @@ export class ChatService {
       },
     });
 
-    return conversations.map((conv) => ({
-      ...conv,
-      id: conv.id,
-      members: conv.members,
-      lastMessage: conv.messages[0] || null,
-      messages: undefined,
+    return await Promise.all(conversations.map(async (conv) => {
+      const myMembership = conv.members.find((m) => m.userId === userId);
+      let unreadCount = 0;
+      if (myMembership) {
+        unreadCount = await prisma.message.count({
+          where: {
+            conversationId: conv.id,
+            senderId: { not: userId },
+            createdAt: { gt: myMembership.lastReadAt || new Date(0) },
+            isDeleted: false,
+            deletedForEveryone: false,
+          },
+        });
+      }
+      return {
+        ...conv,
+        id: conv.id,
+        members: conv.members,
+        lastMessage: conv.messages[0] || null,
+        messages: undefined,
+        unreadCount,
+      };
     }));
   }
 
@@ -225,6 +241,14 @@ export class ChatService {
       where: { conversationId, userId },
       data: { lastReadAt: new Date() },
     });
+  }
+
+  async muteConversation(userId: string, conversationId: string, muted: boolean) {
+    await prisma.conversationMember.updateMany({
+      where: { conversationId, userId },
+      data: { isMuted: muted },
+    });
+    return { muted };
   }
 }
 

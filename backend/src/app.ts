@@ -28,8 +28,32 @@ const httpServer = createServer(app);
 // Trust proxy (Render places you behind a proxy)
 app.set("trust proxy", 1);
 
-// Security
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+// Security headers
+const frontendUrls = env.FRONTEND_URL.split(",").map(s => s.trim()).filter(Boolean);
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    useDefaults: false,
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "ws:", "wss:", ...frontendUrls, "http://localhost:5173"],
+      imgSrc: ["'self'", "data:", "blob:", "https://api.dicebear.com", "https://res.cloudinary.com", "*"],
+      mediaSrc: ["'self'", "data:", "blob:", "*"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  frameguard: { action: "deny" },
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  noSniff: true,
+  xssFilter: true,
+  hidePoweredBy: true,
+  ieNoOpen: true,
+  permittedCrossDomainPolicies: { permittedPolicies: "none" },
+}));
 
 const corsOrigins = env.FRONTEND_URL
   .split(",")
@@ -42,18 +66,44 @@ app.use(cors({
   credentials: true,
 }));
 
-// Rate limiting
-const limiter = rateLimit({
+// Global rate limiting (100 req/15 min per IP)
+const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please try again later" },
 });
-app.use("/api/auth", limiter);
+app.use(globalLimiter);
 
-// CSRF token cookie
+// Auth rate limit (stricter)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many auth requests, try again later" },
+});
+app.use("/api/auth", authLimiter);
+
+// Message rate limit (prevent spam)
+const messageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many messages, slow down" },
+});
+app.use("/api/conversations", messageLimiter);
+
+// CSRF token cookie + protection (skipped for public endpoints)
 app.use(setCsrfToken);
+app.use((req, res, next) => {
+  if (req.path === "/api/health" || req.path.startsWith("/api/public")) {
+    return next();
+  }
+  csrfProtection(req, res, next);
+});
 
 // Passport
 app.use(passport.initialize());

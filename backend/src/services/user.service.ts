@@ -92,6 +92,19 @@ export class UserService {
       where: { userId_messageId: { userId, messageId } },
     }).catch(() => {});
   }
+
+  async reportUser(reporterId: string, reportedId: string, reason: string, messageId?: string) {
+    if (reporterId === reportedId) throw new AppError("Cannot report yourself", 400);
+    return prisma.report.create({
+      data: {
+        reporterId,
+        reportedId,
+        reason,
+        messageId,
+        status: "pending",
+      },
+    });
+  }
 }
 
 export const userService = new UserService();

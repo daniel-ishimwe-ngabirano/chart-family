@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service.js";
+import { notificationService } from "../services/notification.service.js";
 
 export async function signup(req: Request, res: Response, next: NextFunction) {
   try {
     const { user, accessToken, refreshToken, sessionId } = await authService.signup(req.body);
     res.cookie("jwt", accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
     res.cookie("refreshToken", refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.status(201).json({ user, accessToken, refreshToken, sessionId });
+    res.status(201).json({ user, accessToken, sessionId });
   } catch (err) { next(err); }
 }
 
@@ -24,7 +25,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     res.cookie("jwt", accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
     res.cookie("refreshToken", refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-    res.json({ user, accessToken, refreshToken, sessionId });
+    res.json({ user, accessToken, sessionId });
   } catch (err) { next(err); }
 }
 
@@ -60,6 +61,29 @@ export async function getMe(req: Request, res: Response, next: NextFunction) {
   } catch (err) { next(err); }
 }
 
+export async function requestPasswordReset(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email } = req.body;
+    if (!email) { res.status(400).json({ error: "Email is required" }); return; }
+    const token = await authService.requestPasswordReset(email);
+    try {
+      await notificationService.sendEmail(email, "WaveChat - Password Reset",
+        `<h2>Reset Your Password</h2><p>Click <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password?token=${token}">here</a> to reset your password.</p><p>This link expires in 1 hour.</p>`);
+    } catch {}
+    res.json({ message: "If that email exists, a reset link was sent" });
+  } catch (err) { next(err); }
+}
+
+export async function resetPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) { res.status(400).json({ error: "Token and password are required" }); return; }
+    if (password.length < 6) { res.status(400).json({ error: "Password must be at least 6 characters" }); return; }
+    await authService.resetPassword(token, password);
+    res.json({ message: "Password reset successfully" });
+  } catch (err) { next(err); }
+}
+
 export async function getSessions(req: Request, res: Response, next: NextFunction) {
   try {
     const sessions = await authService.getSessions(req.userId!);
@@ -84,42 +108,53 @@ export async function googleCallback(req: Request, res: Response, next: NextFunc
 
 export async function sendOtp(req: Request, res: Response, next: NextFunction) {
   try {
-    const { phone } = req.body;
-    if (!phone) {
-      res.status(400).json({ error: "Phone number required" });
-      return;
+    const { phone, email } = req.body;
+    if (email) {
+      const otp = await notificationService.sendEmailOtp(email);
+      res.json({ message: "OTP sent to email" });
+    } else if (phone) {
+      await authService.sendPhoneOtp(phone);
+      res.json({ message: "OTP sent successfully" });
+    } else {
+      res.status(400).json({ error: "Phone or email required" });
     }
-    const otp = await authService.sendPhoneOtp(phone);
-    // Store OTP in memory/cache for verification (in production, use Redis with TTL)
-    // For demo, returning OTP (in production, send via SMS only)
-    res.json({ message: "OTP sent successfully", otp: process.env.NODE_ENV === "development" ? otp : undefined });
   } catch (err) { next(err); }
 }
 
 export async function verifyOtp(req: Request, res: Response, next: NextFunction) {
   try {
-    const { phone, otp, storedOtp, fullName, username } = req.body;
-    if (!phone || !otp) {
-      res.status(400).json({ error: "Phone and OTP required" });
+    const { phone, email, otp, fullName, username } = req.body;
+    if ((!phone && !email) || !otp) {
+      res.status(400).json({ error: "Phone/email and OTP required" });
       return;
     }
 
-    const isValid = await authService.verifyPhoneOtp(phone, otp, storedOtp);
+    const isValid = email
+      ? await notificationService.verifyOtp(email, otp)
+      : await authService.verifyPhoneOtp(phone, otp);
+
     if (!isValid) {
       res.status(400).json({ error: "Invalid OTP" });
       return;
     }
 
     if (fullName) {
-      const user = await authService.phoneSignup({ fullName, phone, username });
-      const session = await authService.login({ phone, password: otp }) as any;
-      res.json({ user, ...session });
+      const userData = email ? { fullName, email, username } : { fullName, phone, username };
+      const user = await authService.phoneSignup(userData);
+      const loginData = email ? { email, password: otp } : { phone, password: otp };
+      const session = await authService.login(loginData) as any;
+      res.cookie("jwt", session.accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
+      res.cookie("refreshToken", session.refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      res.json({ user, accessToken: session.accessToken, sessionId: session.sessionId });
     } else {
-      const existingUser = await authService.login({ phone, password: otp }).catch(() => null);
+      const loginData = email ? { email, password: otp } : { phone, password: otp };
+      const existingUser = await authService.login(loginData).catch(() => null);
       if (existingUser) {
-        res.json(existingUser);
+        res.cookie("jwt", existingUser.accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
+        res.cookie("refreshToken", existingUser.refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.json({ user: existingUser.user, accessToken: existingUser.accessToken, sessionId: existingUser.sessionId });
       } else {
-        res.json({ phone, otpVerified: true, requiresSignup: true });
+        res.json({ ...(email ? { email } : { phone }), otpVerified: true, requiresSignup: true });
       }
     }
   } catch (err) { next(err); }

@@ -12,7 +12,7 @@ export default function ChatList({ onSelectChat, groupFilter }) {
   const { authUser } = useAuthStore();
   const {
     conversations, selectedConversation,
-    setSelectedConversation: selectConv, onlineUsers,
+    setSelectedConversation: selectConv, onlineUsers, typingUsers,
   } = useChatStore();
   const features = useFeatureStore();
   const t = useTranslate();
@@ -50,6 +50,10 @@ export default function ChatList({ onSelectChat, groupFilter }) {
   };
 
   const getLastMsg = (c) => {
+    const typing = typingUsers[c.id]?.filter((u) => u.userId !== authUser.id);
+    if (typing?.length > 0) {
+      return `✍️ ${typing[0].fullName}${typing.length > 1 ? ` and ${typing.length - 1} other${typing.length > 2 ? "s" : ""}` : ""} typing...`;
+    }
     if (!c.lastMessage) return t("chat.noMessages", "No messages yet");
     if (c.lastMessage.isDeleted) return "Message deleted";
     return c.lastMessage.text || (c.lastMessage.type === "IMAGE" ? "📷 Image" : c.lastMessage.type === "VIDEO" ? "🎥 Video" : "Media");

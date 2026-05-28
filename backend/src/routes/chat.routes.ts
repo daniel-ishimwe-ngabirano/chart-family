@@ -1,6 +1,8 @@
 import { Router } from "express";
 import * as chatController from "../controllers/chat.controller.js";
 import { protectRoute } from "../middleware/auth.js";
+import { validate } from "../middleware/validate.js";
+import { sendMessageSchema } from "../types/schemas.js";
 import multer from "multer";
 
 const router = Router();
@@ -20,8 +22,11 @@ router.get("/:conversationId/pinned", protectRoute, chatController.getPinnedMess
 router.get("/:conversationId/media", protectRoute, chatController.getMedia);
 router.get("/:conversationId/messages", protectRoute, chatController.getMessages);
 router.get("/:conversationId/search", protectRoute, chatController.searchMessages);
-router.post("/:conversationId/messages", protectRoute, upload.array("files", 10), chatController.sendMessage);
+router.post("/:conversationId/messages", protectRoute, upload.array("files", 10), validate(sendMessageSchema), chatController.sendMessage);
 router.post("/:conversationId/read", protectRoute, chatController.markRead);
+
+// Mute
+router.post("/:conversationId/mute", protectRoute, chatController.muteConversation);
 
 // Drafts
 router.get("/:conversationId/draft", protectRoute, chatController.getDraft);

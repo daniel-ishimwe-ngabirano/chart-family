@@ -132,3 +132,15 @@ export async function removePushSubscription(req: Request, res: Response, next: 
     res.json({ success: true });
   } catch (err) { next(err); }
 }
+
+export async function reportUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { reportedId, reason, messageId } = req.body;
+    if (!reportedId || !reason) {
+      res.status(400).json({ error: "Reported user and reason are required" });
+      return;
+    }
+    const report = await userService.reportUser(req.userId!, reportedId, reason, messageId);
+    res.status(201).json(report);
+  } catch (err) { next(err); }
+}

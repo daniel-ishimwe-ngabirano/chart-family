@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../stores/authStore.js";
 import { useLocaleStore } from "../stores/localeStore.js";
 import { useTranslate } from "../hooks/useTranslate.js";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { MessageCircle, Eye, EyeOff, Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
 
 function GoogleButton({ label }) {
@@ -27,9 +27,9 @@ function LoginForm({ onNavigate }) {
   const [otp, setOtp] = useState("");
   const [mode, setMode] = useState("email");
   const [otpSent, setOtpSent] = useState(false);
-  const [storedOtp, setStoredOtp] = useState("");
   const { login, isLoggingIn } = useAuthStore();
   const t = useTranslate();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,15 +41,13 @@ function LoginForm({ onNavigate }) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone }), credentials: "include",
     });
-    const data = await res.json();
-    setStoredOtp(data.otp);
-    setOtpSent(true);
+    if (res.ok) setOtpSent(true);
   };
 
   const verifyOtp = async () => {
     const res = await fetch("/api/auth/verify-otp", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, otp, storedOtp }), credentials: "include",
+      body: JSON.stringify({ phone, otp }), credentials: "include",
     });
     const data = await res.json();
     if (data.accessToken) window.location.reload();
@@ -84,9 +82,12 @@ function LoginForm({ onNavigate }) {
               </button>
             </div>
           </div>
-          <button type="submit" className="btn-primary" disabled={isLoggingIn}>
-            {isLoggingIn ? <Loader2 size={20} className="spin" /> : t("auth.login", "Sign In")}
-          </button>
+          <div className="auth-forgot-row">
+            <button type="submit" className="btn-primary" disabled={isLoggingIn}>
+              {isLoggingIn ? <Loader2 size={20} className="spin" /> : t("auth.login", "Sign In")}
+            </button>
+            <button type="button" className="forgot-password-link" onClick={() => navigate("/reset-password")}>Forgot password?</button>
+          </div>
         </form>
       ) : (
         <div className="auth-form">

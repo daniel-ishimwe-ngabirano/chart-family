@@ -154,3 +154,10 @@ export async function deleteDraft(req: Request, res: Response, next: NextFunctio
     res.json({ message: "Draft deleted" });
   } catch (err) { next(err); }
 }
+
+export async function muteConversation(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await chatService.muteConversation(req.userId!, req.params.conversationId as string, req.body.muted !== false);
+    res.json(result);
+  } catch (err) { next(err); }
+}

@@ -4,14 +4,16 @@ import axios from "../lib/axios.js";
 export const usePageSectionStore = create((set, get) => ({
   sections: [],
   loading: false,
+  error: null,
 
   fetchSections: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const res = await axios.get("/admin/page-sections");
       set({ sections: res.data });
-    } catch {
-      // silently fail
+    } catch (error) {
+      console.error("Failed to fetch sections:", error.response?.data?.error || error.message);
+      set({ error: "Failed to load sections" });
     } finally {
       set({ loading: false });
     }

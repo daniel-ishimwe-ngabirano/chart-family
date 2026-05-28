@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./stores/authStore.js";
 import { useChatStore } from "./stores/chatStore.js";
@@ -6,6 +6,9 @@ import { useFeatureStore } from "./stores/featureStore.js";
 import { useThemeStore } from "./stores/themeStore.js";
 import { connectSocket, disconnectSocket } from "./stores/socketStore.js";
 import { registerServiceWorker, subscribeToPush } from "./utils/push.js";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import ConnectionStatus from "./components/ConnectionStatus.jsx";
+import { STORAGE_KEYS } from "./lib/constants.js";
 import LandingPage from "./pages/LandingPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
@@ -22,6 +25,7 @@ import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import AdminSettings from "./pages/admin/Settings.jsx";
 import AdminLogs from "./pages/admin/Logs.jsx";
 import AdminSections from "./pages/admin/Sections.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }) {
@@ -43,8 +47,14 @@ function App() {
   const { getConversations, getUsers } = useChatStore();
   const { fetchFeatures, fetchPublicFeatures } = useFeatureStore();
   const { loadTheme } = useThemeStore();
+  const authCheckedRef = useRef(false);
 
-  useEffect(() => { checkAuth(); }, []);
+  useEffect(() => {
+    if (!authCheckedRef.current) {
+      authCheckedRef.current = true;
+      checkAuth();
+    }
+  }, [checkAuth]);
 
   useEffect(() => {
     if (authUser) {
@@ -57,7 +67,7 @@ function App() {
       } else {
         fetchPublicFeatures();
       }
-      const settings = JSON.parse(localStorage.getItem("wavechat_user_settings") || "{}");
+      const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_SETTINGS) || "{}");
       if (settings.notifications !== false) {
         registerServiceWorker().then((reg) => {
           if (reg) {
@@ -65,17 +75,21 @@ function App() {
           }
         });
       }
+      return () => disconnectSocket();
     } else {
       disconnectSocket();
     }
-  }, [authUser]);
+  }, [authUser, getConversations, getUsers, fetchFeatures, fetchPublicFeatures, loadTheme]);
 
   return (
     <BrowserRouter>
+      <ErrorBoundary>
+      <ConnectionStatus />
       <Routes>
         <Route path="/" element={authUser ? <Navigate to="/chat" /> : <LandingPage />} />
         <Route path="/login" element={authUser ? <Navigate to="/chat" /> : <AuthPage />} />
         <Route path="/register" element={authUser ? <Navigate to="/chat" /> : <AuthPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
@@ -90,6 +104,7 @@ function App() {
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
         <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
       </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

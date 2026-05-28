@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useChatStore } from "../../stores/chatStore.js";
 import { useAuthStore } from "../../stores/authStore.js";
-import { X, Image, FileText, Link as LinkIcon, Users, Bell, Shield, Ban, Loader2 } from "lucide-react";
+import { X, Image, FileText, Link as LinkIcon, Users, Bell, Shield, Ban, Loader2, Check } from "lucide-react";
 import MediaViewer from "../MediaViewer.jsx";
 import axios from "../../lib/axios.js";
 import { handleAvatarError } from "../../utils/avatar.js";
@@ -32,6 +32,33 @@ export default function UserPanel({ onClose }) {
       console.error("Failed to load media:", err);
     } finally {
       setMediaLoading(false);
+    }
+  };
+
+  const [actionMsg, setActionMsg] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const doAction = async (type) => {
+    if (!selectedConversation || actionLoading) return;
+    setActionLoading(true);
+    setActionMsg(null);
+    try {
+      const otherId = otherUser?.id;
+      if (type === "mute") {
+        await axios.post(`/conversations/${selectedConversation.id}/mute`, { muted: true });
+        setActionMsg("Conversation muted");
+      } else if (type === "block" && otherId) {
+        await axios.post(`/users/block/${otherId}`);
+        setActionMsg("User blocked");
+      } else if (type === "report" && otherId) {
+        await axios.post("/users/report", { reportedId: otherId, reason: "Reported" });
+        setActionMsg("User reported");
+      }
+    } catch (err) {
+      setActionMsg(err.response?.data?.error || "Action failed");
+    } finally {
+      setActionLoading(false);
+      setTimeout(() => setActionMsg(null), 3000);
     }
   };
 
@@ -101,20 +128,57 @@ export default function UserPanel({ onClose }) {
         {tab === "links" && <div className="up-empty">No shared links</div>}
         {tab === "members" && selectedConversation?.isGroup && (
           <div className="up-member-list">
-            {selectedConversation.members?.map((m) => (
-              <div key={m.user?.id} className="up-member">
-                <img src={m.user?.avatar} alt="" className="up-member-avatar" onError={(e) => handleAvatarError(e, m.user?.fullName)} />
-                <span>{m.user?.fullName}</span>
-              </div>
-            ))}
+            {selectedConversation.members?.map((m) => {
+              const isMe = m.user?.id === authUser.id;
+              const isAdmin = selectedConversation.members?.find((me) => me.userId === authUser.id)?.role === "admin";
+              return (
+                <div key={m.user?.id} className="up-member">
+                  <img src={m.user?.avatar} alt="" className="up-member-avatar" onError={(e) => handleAvatarError(e, m.user?.fullName)} />
+                  <div className="up-member-info">
+                    <span className="up-member-name">{m.user?.fullName}{isMe ? " (you)" : ""}</span>
+                    {m.role === "admin" && <span className="up-member-role">admin</span>}
+                  </div>
+                  {isAdmin && !isMe && (
+                    <button className="icon-btn" title="Remove" onClick={async () => {
+                      try {
+                        await axios.delete(`/groups/${selectedConversation.id}/members/${m.user?.id}`);
+                        useChatStore.getState().getConversations();
+                      } catch {}
+                    }}><X size={14} /></button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
       <div className="user-panel-actions">
-        <button className="up-action" onClick={() => alert("Mute feature coming soon")}><Bell size={18} /> Mute</button>
-        <button className="up-action" onClick={() => alert("Block feature coming soon")}><Shield size={18} /> Block</button>
-        <button className="up-action" onClick={() => alert("Report feature coming soon")}><Ban size={18} /> Report</button>
+        {actionMsg && <div className="up-action-msg">{actionMsg}</div>}
+        <button className="up-action" onClick={() => doAction("mute")} disabled={actionLoading}><Bell size={18} /> {actionLoading ? "..." : "Mute"}</button>
+        {selectedConversation?.isGroup && (
+          <button className="up-action" onClick={async () => {
+            if (actionLoading) return;
+            setActionLoading(true);
+            try {
+              await axios.post(`/groups/${selectedConversation.id}/leave`);
+              useChatStore.getState().setSelectedConversation(null);
+              useChatStore.getState().getConversations();
+              onClose();
+            } catch (err) {
+              setActionMsg(err.response?.data?.error || "Failed to leave group");
+            } finally {
+              setActionLoading(false);
+              setTimeout(() => setActionMsg(null), 3000);
+            }
+          }} disabled={actionLoading}><X size={18} /> {actionLoading ? "..." : "Leave Group"}</button>
+        )}
+        {otherUser && (
+          <>
+            <button className="up-action" onClick={() => doAction("block")} disabled={actionLoading}><Shield size={18} /> {actionLoading ? "..." : "Block"}</button>
+            <button className="up-action" onClick={() => doAction("report")} disabled={actionLoading}><Ban size={18} /> {actionLoading ? "..." : "Report"}</button>
+          </>
+        )}
       </div>
 
       {viewerUrl && (

@@ -1,8 +1,18 @@
 import { create } from "zustand";
 import { getSocket } from "../stores/socketStore.js";
 import { useChatStore } from "./chatStore.js";
+import { STORAGE_KEYS } from "../lib/constants.js";
 
-const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    ...(import.meta.env.VITE_TURN_URL ? [{
+      urls: import.meta.env.VITE_TURN_URL,
+      username: import.meta.env.VITE_TURN_USERNAME || "",
+      credential: import.meta.env.VITE_TURN_CREDENTIAL || "",
+    }] : []),
+  ],
+};
 
 export const useCallStore = create((set, get) => ({
   status: "idle",
@@ -249,7 +259,7 @@ export const useCallStore = create((set, get) => ({
       socket?.emit("call:end", { receiverId: remoteUser.id });
 
       const direction = state.incomingCallerId || state.pendingCallerId ? "incoming" : "outgoing";
-      const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
+      const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.CALL_HISTORY) || "[]");
       history.unshift({
         id: Date.now(),
         name: remoteUser.fullName || "Unknown",
@@ -259,7 +269,7 @@ export const useCallStore = create((set, get) => ({
         duration: state.callDuration,
         callType: type,
       });
-      localStorage.setItem("wavechat_call_history", JSON.stringify(history.slice(0, 50)));
+      localStorage.setItem(STORAGE_KEYS.CALL_HISTORY, JSON.stringify(history.slice(0, 50)));
     }
 
     set({
@@ -339,7 +349,7 @@ export const useCallStore = create((set, get) => ({
 
     if (remoteUser && state.status !== "calling") {
       const direction = state.incomingCallerId || state.pendingCallerId ? "incoming" : "outgoing";
-      const history = JSON.parse(localStorage.getItem("wavechat_call_history") || "[]");
+      const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.CALL_HISTORY) || "[]");
       history.unshift({
         id: Date.now(),
         name: remoteUser.fullName || "Unknown",
@@ -349,7 +359,7 @@ export const useCallStore = create((set, get) => ({
         duration: 0,
         callType: type,
       });
-      localStorage.setItem("wavechat_call_history", JSON.stringify(history.slice(0, 50)));
+      localStorage.setItem(STORAGE_KEYS.CALL_HISTORY, JSON.stringify(history.slice(0, 50)));
     }
     set({
       status: "idle",

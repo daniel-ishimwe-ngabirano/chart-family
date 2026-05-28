@@ -1,4 +1,6 @@
 import { prisma } from "../config/prisma.js";
+import { messageService } from "../services/message.service.js";
+import { getIO } from "../socket/index.js";
 
 export interface AppEvent {
   type: string;
@@ -37,6 +39,37 @@ class EventBus {
 }
 
 export const eventBus = new EventBus();
+
+// Wire up scheduled message delivery
+export function setupScheduledMessageHandler() {
+  eventBus.on("message:send", async (event) => {
+    const { messageId } = event.payload;
+    if (!messageId) return;
+
+    try {
+      const message = await prisma.message.findUnique({
+        where: { id: messageId as string },
+        include: {
+          sender: { select: { id: true, fullName: true, username: true, avatar: true } },
+          replyTo: { select: { id: true, text: true, type: true, sender: { select: { id: true, fullName: true } } } },
+          attachments: true,
+          reactions: true,
+          readReceipts: { select: { userId: true, readAt: true } },
+        },
+      });
+
+      if (message && !message.isDeleted) {
+        try {
+          getIO().to(message.conversationId).emit("message:new", message);
+        } catch {
+          console.warn("Socket not available for scheduled message delivery");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to deliver scheduled message:", (err as Error).message);
+    }
+  });
+}
 
 // Scheduled message processor
 export async function processScheduledMessages() {
@@ -80,20 +113,16 @@ export async function cleanupDisappearingMessages() {
   }
 }
 
-// Run cleanup every minute (in production, use a job scheduler like Bull)
-let cleanupInterval: ReturnType<typeof setInterval> | null = null;
+const intervals: ReturnType<typeof setInterval>[] = [];
 
 export function startBackgroundJobs() {
-  // Check scheduled messages every 30 seconds
-  setInterval(processScheduledMessages, 30000);
-  // Clean up disappearing messages every minute
-  setInterval(cleanupDisappearingMessages, 60000);
+  setupScheduledMessageHandler();
+  intervals.push(setInterval(processScheduledMessages, 30000));
+  intervals.push(setInterval(cleanupDisappearingMessages, 60000));
   console.log("Background jobs started");
 }
 
 export function stopBackgroundJobs() {
-  if (cleanupInterval) {
-    clearInterval(cleanupInterval);
-    cleanupInterval = null;
-  }
+  intervals.forEach(clearInterval);
+  intervals.length = 0;
 }

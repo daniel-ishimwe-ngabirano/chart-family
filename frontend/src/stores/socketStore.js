@@ -11,7 +11,21 @@ const SOCKET_URL = import.meta.env.VITE_API_URL || "";
 let socket = null;
 let stopRingtone = null;
 
+const connectionListeners = new Set();
+let isConnected = false;
+
 export const getSocket = () => socket;
+export const getSocketStatus = () => isConnected;
+export const onConnectionChange = (listener) => {
+  connectionListeners.add(listener);
+  listener(isConnected);
+  return () => connectionListeners.delete(listener);
+};
+
+const notifyConnection = (status) => {
+  isConnected = status;
+  connectionListeners.forEach((l) => l(status));
+};
 
 export const connectSocket = () => {
   const authUser = useAuthStore.getState().authUser;
@@ -23,7 +37,7 @@ export const connectSocket = () => {
   });
 
   socket.on("connect", () => {
-    console.log("Socket connected");
+    notifyConnection(true);
   });
 
   socket.on("message:new", (message) => {
@@ -164,7 +178,7 @@ export const connectSocket = () => {
   });
 
   socket.on("disconnect", () => {
-    console.log("Socket disconnected");
+    notifyConnection(false);
   });
 };
 

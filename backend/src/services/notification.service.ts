@@ -24,8 +24,11 @@ export class NotificationService {
     return this.transporter;
   }
 
+  private otpStore = new Map<string, { otp: string; expiresAt: number }>();
+
   async sendEmailOtp(email: string): Promise<string> {
-    const otp = authenticator.generate(env.JWT_SECRET + email);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    this.otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
     const transporter = this.getTransporter();
 
     if (transporter) {
@@ -41,11 +44,14 @@ export class NotificationService {
   }
 
   async verifyOtp(email: string, otp: string): Promise<boolean> {
-    try {
-      return authenticator.check(otp, env.JWT_SECRET + email);
-    } catch {
+    const stored = this.otpStore.get(email);
+    if (!stored || Date.now() > stored.expiresAt) {
+      this.otpStore.delete(email);
       return false;
     }
+    const valid = stored.otp === otp;
+    if (valid) this.otpStore.delete(email);
+    return valid;
   }
 
   async sendPushNotification(payload: NotificationPayload): Promise<void> {

@@ -16,7 +16,7 @@ export class MessageService {
     });
     if (!member) throw new AppError("Not a member of this conversation", 403);
 
-    const text = stripHtmlTags(data.text || "").slice(0, MAX_MESSAGE_LENGTH);
+    const text = sanitizeHtml(stripHtmlTags(data.text || "")).slice(0, MAX_MESSAGE_LENGTH);
     if (!text && !data.attachments?.length) {
       throw new AppError("Message text or attachment required", 400);
     }
@@ -77,7 +77,7 @@ export class MessageService {
     if (message.senderId !== userId) throw new AppError("Unauthorized", 403);
     if (message.isDeleted) throw new AppError("Cannot edit deleted message", 400);
 
-    const cleanText = stripHtmlTags(text).slice(0, MAX_MESSAGE_LENGTH);
+    const cleanText = sanitizeHtml(stripHtmlTags(text)).slice(0, MAX_MESSAGE_LENGTH);
     return prisma.message.update({
       where: { id: messageId },
       data: { text: cleanText, isEdited: true },

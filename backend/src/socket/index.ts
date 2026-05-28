@@ -7,6 +7,7 @@ import { prisma } from "../config/prisma.js";
 import { setupChatHandlers } from "./handlers/chat.handler.js";
 import { setupPresenceHandlers } from "./handlers/presence.handler.js";
 import { setupCallHandlers } from "./handlers/call.handler.js";
+import { rateLimitSocket } from "../utils/socket-rate-limit.js";
 import type { SocketWithUser } from "../types/index.js";
 
 const userSocketMap = new Map<string, Set<string>>();
@@ -69,6 +70,15 @@ export async function setupSocket(httpServer: HttpServer): Promise<SocketServer>
 
   io.on("connection", async (socket: SocketWithUser) => {
     const userId = socket.userId!;
+    const clientIp = socket.handshake.address;
+
+    // Rate limit: max 5 connections per IP per 60s
+    if (!rateLimitSocket(`conn:${clientIp}`, "socket:connect", 5, 60_000)) {
+      console.warn(`Connection rate limit exceeded for ${clientIp}`);
+      socket.emit("error", { message: "Connection rate limited" });
+      socket.disconnect(true);
+      return;
+    }
     console.log(`User connected: ${userId} (socket: ${socket.id})`);
 
     // Track user sockets

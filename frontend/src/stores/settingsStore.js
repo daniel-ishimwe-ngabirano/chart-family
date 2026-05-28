@@ -4,15 +4,17 @@ import axios from "../lib/axios.js";
 export const useSettingsStore = create((set, get) => ({
   settings: [],
   loading: false,
+  error: null,
 
   fetchSettings: async (group) => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const params = group ? { group } : {};
       const res = await axios.get("/admin/settings", { params });
       set({ settings: res.data });
-    } catch {
-      // silently fail
+    } catch (error) {
+      console.error("Failed to fetch settings:", error.response?.data?.error || error.message);
+      set({ error: "Failed to load settings" });
     } finally {
       set({ loading: false });
     }

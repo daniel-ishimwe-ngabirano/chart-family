@@ -6,6 +6,7 @@ import { emitTyping, emitStopTyping } from "../stores/socketStore.js";
 import { useTranslate } from "../hooks/useTranslate.js";
 import { playTyping, playMessageSent } from "../lib/sounds.js";
 import { SmilePlus, Send, Paperclip, X, Reply, Mic, Square } from "lucide-react";
+import axios from "../lib/axios.js";
 
 const EMOJI_CATEGORIES = [
   {
@@ -111,16 +112,24 @@ export default function MessageInput({ replyTo, onCancelReply }) {
     }
   };
 
+  const draftTimerRef = useRef(null);
+
   useEffect(() => {
+    if (selectedConversation) {
+      axios.get(`/conversations/${selectedConversation.id}/draft`).then((res) => {
+        if (res.data?.text) setText(res.data.text);
+      }).catch(() => {});
+    }
     return () => {
       clearTimeout(typingTimeoutRef.current);
       clearTimeout(typingSoundRef.current);
       clearInterval(recordingTimerRef.current);
-      if (mediaRecorderRef.current?.state === "recording") {
-        mediaRecorderRef.current.stop();
-      }
+      clearTimeout(draftTimerRef.current);
       if (selectedConversation) {
         emitStopTyping(selectedConversation.id, authUser.id);
+        if (text.trim()) {
+          axios.put(`/conversations/${selectedConversation.id}/draft`, { text }).catch(() => {});
+        }
       }
     };
   }, [selectedConversation?.id]);
@@ -142,6 +151,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
     setFilePreviews([]);
     onCancelReply?.();
     emitStopTyping(selectedConversation.id, authUser.id);
+    await axios.delete(`/conversations/${selectedConversation.id}/draft`).catch(() => {});
     playMessageSent();
   };
 
@@ -253,7 +263,16 @@ export default function MessageInput({ replyTo, onCancelReply }) {
         <textarea
           placeholder={t("chat.typeMessage", "Type a message")}
           value={text}
-          onChange={(e) => { setText(e.target.value); handleTyping(); }}
+          onChange={(e) => {
+            setText(e.target.value);
+            handleTyping();
+            clearTimeout(draftTimerRef.current);
+            draftTimerRef.current = setTimeout(() => {
+              if (selectedConversation && e.target.value.trim()) {
+                axios.put(`/conversations/${selectedConversation.id}/draft`, { text: e.target.value }).catch(() => {});
+              }
+            }, 2000);
+          }}
           onKeyDown={handleKeyDown}
           rows={1}
         />

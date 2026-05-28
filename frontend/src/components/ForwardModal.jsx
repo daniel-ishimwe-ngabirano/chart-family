@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useChatStore } from "../stores/chatStore.js";
+import { useAuthStore } from "../stores/authStore.js";
 import { X, Search, Check, Send } from "lucide-react";
 import axios from "../lib/axios.js";
 import { handleAvatarError } from "../utils/avatar.js";
 
 export default function ForwardModal({ message, onClose }) {
-  const { conversations, authUser } = useChatStore();
+  const { conversations } = useChatStore();
+  const { authUser } = useAuthStore();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [sending, setSending] = useState(false);
