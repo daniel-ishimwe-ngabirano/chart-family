@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/authStore.js";
 import { MoreVertical, Reply, Pencil, Trash2, SmilePlus, Check, CheckCheck, Forward, Image } from "lucide-react";
 import MediaViewer from "./MediaViewer.jsx";
 import ForwardModal from "./ForwardModal.jsx";
+import VoicePlayer from "./VoicePlayer.jsx";
 
 const EMOJI_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🙏"];
 
@@ -79,8 +80,7 @@ export default function MessageBubble({ message, isOwn, onReply }) {
 
       {isAudioAttachment && attachments[0]?.url && (
         <div className="message-audio">
-          <div className="message-audio-label">Voice Message</div>
-          <audio src={attachments[0].url} controls preload="metadata" />
+          <VoicePlayer src={attachments[0].url} isOwn={isOwn} />
         </div>
       )}
 

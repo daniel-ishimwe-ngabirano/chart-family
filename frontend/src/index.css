@@ -615,22 +615,112 @@ input, textarea {
 
 .message-audio {
   margin-bottom: 4px;
-  max-width: 300px;
+  max-width: 280px;
 }
 
-.message-audio-label {
-  font-size: 11px;
-  color: var(--text-muted, #999);
-  margin-bottom: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.voice-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
 }
 
-.message-audio audio {
+.voice-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.voice-play-btn:hover {
+  opacity: 0.85;
+}
+
+.voice-player.own .voice-play-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.voice-player.other .voice-play-btn {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text, #111);
+}
+
+.voice-track {
+  flex: 1;
+  height: 24px;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.voice-track-bg {
   width: 100%;
-  height: 50px;
-  border-radius: var(--radius);
-  background: var(--input-bg, #222);
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.voice-player.other .voice-track-bg {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.voice-track-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  height: 3px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.voice-player.own .voice-track-fill {
+  background: #fff;
+}
+
+.voice-player.other .voice-track-fill {
+  background: var(--primary, #667eea);
+}
+
+.voice-thumb {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.voice-player.own .voice-thumb {
+  background: #fff;
+}
+
+.voice-player.other .voice-thumb {
+  background: var(--primary, #667eea);
+}
+
+.voice-time {
+  font-size: 11px;
+  flex-shrink: 0;
+  min-width: 28px;
+  text-align: right;
+}
+
+.voice-player.own .voice-time {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.voice-player.other .voice-time {
+  color: var(--text-muted, #888);
 }
 
 .message-video {
