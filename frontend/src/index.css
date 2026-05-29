@@ -3724,6 +3724,22 @@ input, textarea {
   .profile-avatar-section { padding-top: 2rem; }
   .profile-avatar { width: 80px; height: 80px; }
 
+  .chat-list-header { padding: 12px 20px; }
+  .chat-list-filters { padding: 8px 16px; }
+  .chat-list-search { padding: 8px 16px; }
+  .chat-header-actions { gap: 4px; }
+  .message-wrapper { max-width: 85%; }
+
+  .incoming-call-content { width: 90%; max-width: 400px; }
+  .incoming-avatar-ring { width: 110px; height: 110px; }
+  .incoming-caller-img { width: 90px; height: 90px; }
+
+  .call-bottom-controls { gap: 12px; }
+  .user-panel-tabs { gap: 4px; }
+  .user-panel-tab { font-size: 13px; padding: 8px 12px; }
+  .setting-item { padding: 12px 16px; }
+
+  .main-chat-header .mobile-back:hover { background: var(--bg-hover); }
 }
 
 
@@ -5318,6 +5334,22 @@ input, textarea {
   text-decoration: underline;
 }
 
+/* ==============================================
+   RESPONSIVE — SMALL / MOBILE
+   ============================================== */
+
+@media (max-width: 600px) {
+  .incoming-call-content { width: 100%; max-width: 100%; border-radius: 0; margin: 0; padding: 32px 20px; height: 100%; justify-content: center; }
+  .incoming-call-overlay { align-items: stretch; }
+  .call-video-waiting .call-waiting-avatar img { width: 80px; height: 80px; }
+  .call-bottom-controls { gap: 8px; padding: 16px; }
+  .call-ctrl-circle { width: 48px; height: 48px; }
+  .call-ctrl-circle svg { width: 20px; height: 20px; }
+  .call-ctrl-btn.end .call-ctrl-circle { width: 56px; height: 56px; }
+  .call-ctrl-btn.end .call-ctrl-circle svg { width: 24px; height: 24px; }
+  .call-ctrl-btn span { font-size: 11px; }
+}
+
 @media (max-width: 480px) {
   .hero-actions { flex-direction: column; align-items: stretch; }
   .features-grid { grid-template-columns: 1fr !important; }
@@ -5327,4 +5359,128 @@ input, textarea {
   .admin-sidebar-header span { display: none; }
   .admin-toolbar { flex-direction: column; align-items: stretch; }
   .modal-content { margin: 12px; padding: 20px; }
+
+  .chat-list-header { padding: 12px 16px; }
+  .chat-list-filters { padding: 4px 8px; overflow-x: auto; gap: 4px; flex-wrap: nowrap; }
+  .chat-list-filters .filter-chip { flex-shrink: 0; font-size: 11px; padding: 4px 10px; }
+  .chat-list-search { padding: 8px 12px; }
+  .chat-list-search input { font-size: 13px; }
+  .chat-list-item { padding: 10px 12px; }
+  .chat-list-avatar img { width: 40px; height: 40px; }
+  .chat-list-name { font-size: 14px; }
+  .chat-list-preview { font-size: 12px; }
+  .chat-list-time { font-size: 10px; }
+  .unread-badge { min-width: 20px; height: 20px; font-size: 10px; }
+
+  .main-chat-header { padding: 8px 12px; min-height: 52px; }
+  .chat-header-avatar { width: 36px; height: 36px; }
+  .chat-header-name { font-size: 15px; }
+  .chat-header-actions { gap: 2px; }
+
+  .main-chat-messages { padding: 6px 2px; }
+  .message-wrapper { max-width: 92%; margin: 3px 0; }
+  .message-wrapper.own { max-width: 92%; }
+  .message-bubble { padding: 7px 10px; font-size: 14px; border-radius: 10px; }
+  .message-text { font-size: 14px; }
+  .message-time { font-size: 10px; }
+  .message-input-container { padding: 6px; gap: 4px; }
+  .input-form { gap: 6px; }
+  .input-form textarea { font-size: 14px; padding: 8px 10px; min-height: 40px; }
+  .input-attachments { gap: 4px; }
+  .input-attachment-preview { width: 48px; height: 48px; }
+  .send-btn { width: 38px; height: 38px; min-width: 38px; }
+  .send-btn svg { width: 18px; height: 18px; }
+
+  .mobile-bottom-nav { height: 56px; padding: 0 4px; gap: 2px; }
+  .mobile-nav-item { padding: 4px 8px; font-size: 9px; gap: 1px; }
+  .mobile-nav-item svg { width: 20px; height: 20px; }
+  .mobile-nav-label { font-size: 9px; }
+  .mobile-nav-avatar { width: 30px; height: 30px; }
+
+  .user-panel-header { padding: 16px; gap: 6px; }
+  .user-panel-avatar { width: 72px; height: 72px; }
+  .user-panel-name { font-size: 16px; }
+  .user-panel-tabs { padding: 0 8px; gap: 4px; overflow-x: auto; }
+  .user-panel-tab { font-size: 12px; padding: 8px 10px; white-space: nowrap; flex-shrink: 0; }
+  .user-panel-actions { padding: 12px; flex-direction: column; gap: 8px; }
+  .user-panel-action-btn { width: 100%; justify-content: center; }
+
+  .up-member-item { padding: 8px 12px; }
+  .up-member-avatar { width: 36px; height: 36px; }
+  .up-member-name { font-size: 13px; }
+
+  .profile-avatar-section { padding-top: 1.5rem; }
+  .profile-avatar { width: 72px; height: 72px; }
+  .avatar-edit { width: 28px; height: 28px; }
+  .avatar-edit svg { width: 14px; height: 14px; }
+
+  .call-ctrl-circle { width: 44px; height: 44px; }
+  .call-ctrl-circle svg { width: 18px; height: 18px; }
+  .call-ctrl-btn.end .call-ctrl-circle { width: 52px; height: 52px; }
+  .call-ctrl-btn.end .call-ctrl-circle svg { width: 22px; height: 22px; }
+  .call-bottom-controls { gap: 6px; padding: 12px; }
+  .call-ctrl-btn span { font-size: 10px; }
+  .call-voice-avatar { margin-bottom: 32px; }
+
+  .incoming-call-content { gap: 12px; }
+  .incoming-caller-img { width: 80px; height: 80px; }
+  .incoming-avatar-ring { width: 96px; height: 96px; }
+  .incoming-call-name { font-size: 18px; }
+  .incoming-call-label { font-size: 13px; }
+  .incoming-btn-circle { width: 56px; height: 56px; }
+  .incoming-btn-circle svg { width: 24px; height: 24px; }
+  .incoming-btn span { font-size: 12px; }
+
+  .chat-page-call-history { padding: 12px; }
+  .chat-page-notifications { padding: 12px; }
+  .notification-item { padding: 10px 12px; gap: 10px; }
+  .notification-avatar { width: 36px; height: 36px; }
+  .notification-text { font-size: 13px; }
+  .notification-time { font-size: 10px; }
+}
+
+@media (max-width: 360px) {
+  .app-main { padding-bottom: 52px; }
+  .mobile-bottom-nav { height: 48px; padding: 0 2px; gap: 0; }
+  .mobile-nav-item { padding: 2px 6px; }
+  .mobile-nav-item svg { width: 18px; height: 18px; }
+  .mobile-nav-label { font-size: 8px; }
+  .mobile-nav-avatar { width: 26px; height: 26px; }
+
+  .chat-list-header h2 { font-size: 16px; }
+  .chat-list-item { padding: 8px 10px; }
+  .chat-list-avatar img { width: 34px; height: 34px; }
+  .chat-list-name { font-size: 13px; }
+  .chat-list-preview { font-size: 11px; }
+  .unread-badge { min-width: 16px; height: 16px; font-size: 9px; }
+
+  .main-chat-header { padding: 6px 8px; min-height: 44px; }
+  .chat-header-avatar { width: 30px; height: 30px; }
+  .chat-header-name { font-size: 13px; }
+
+  .message-wrapper { max-width: 95%; }
+  .message-wrapper.own { max-width: 95%; }
+  .message-bubble { padding: 6px 8px; font-size: 13px; border-radius: 8px; }
+  .message-text { font-size: 13px; }
+
+  .message-input-container { padding: 4px; }
+  .input-form textarea { font-size: 13px; padding: 6px 8px; min-height: 36px; }
+  .send-btn { width: 34px; height: 34px; min-width: 34px; }
+  .send-btn svg { width: 16px; height: 16px; }
+
+  .profile-avatar { width: 60px; height: 60px; }
+
+  .call-ctrl-circle { width: 40px; height: 40px; }
+  .call-ctrl-circle svg { width: 16px; height: 16px; }
+  .call-ctrl-btn.end .call-ctrl-circle { width: 48px; height: 48px; }
+  .call-ctrl-btn.end .call-ctrl-circle svg { width: 20px; height: 20px; }
+  .call-bottom-controls { gap: 4px; padding: 8px; }
+  .call-voice-avatar { margin-bottom: 24px; }
+
+  .modal-header h2 { font-size: 16px; }
+  .setting-item { padding: 10px 12px; }
+  .setting-info span { font-size: 13px; }
+
+  .main-chat-header .mobile-back { width: 30px; height: 30px; }
+  .main-chat-header .mobile-back svg { width: 18px; height: 18px; }
 }
