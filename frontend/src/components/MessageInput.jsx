@@ -145,6 +145,14 @@ export default function MessageInput({ replyTo, onCancelReply }) {
     if (replyTo) formData.append("replyToId", replyTo.id);
     files.forEach((f) => formData.append("files", f));
 
+    if (files.length > 0) {
+      const mime = files[0].type;
+      if (mime.startsWith("audio/")) formData.append("type", "VOICE_NOTE");
+      else if (mime.startsWith("image/")) formData.append("type", "IMAGE");
+      else if (mime.startsWith("video/")) formData.append("type", "VIDEO");
+      else formData.append("type", "FILE");
+    }
+
     await sendMessage(formData);
     setText("");
     setFiles([]);

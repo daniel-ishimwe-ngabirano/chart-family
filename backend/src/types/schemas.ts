@@ -24,7 +24,7 @@ export const loginSchema = z.object({
 export const sendMessageSchema = z.object({
   conversationId: z.string().uuid(),
   text: z.string().max(5000).optional(),
-  type: z.enum(["TEXT", "IMAGE", "VIDEO", "VOICE_NOTE", "FILE", "STICKER", "GIF", "CONTACT", "LOCATION"]).default("TEXT"),
+  type: z.enum(["TEXT", "IMAGE", "VIDEO", "VOICE_NOTE", "FILE", "STICKER", "GIF", "CONTACT", "LOCATION"]).optional(),
   replyToId: z.string().uuid().optional(),
   scheduledAt: z.string().datetime().optional(),
   disappearsAt: z.string().datetime().optional(),

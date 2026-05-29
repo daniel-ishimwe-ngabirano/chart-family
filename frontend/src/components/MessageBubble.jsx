@@ -77,9 +77,9 @@ export default function MessageBubble({ message, isOwn, onReply }) {
         </div>
       )}
 
-      {isAudioAttachment && (
+      {isAudioAttachment && attachments[0]?.url && (
         <div className="message-audio">
-          <audio src={attachments[0]?.url} controls preload="metadata" style={{width:'100%',height:50,background:'#333'}} />
+          <audio src={attachments[0].url} controls preload="metadata" style={{width:'100%',height:50,background:'#333'}} />
         </div>
       )}
 
