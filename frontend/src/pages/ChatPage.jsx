@@ -133,8 +133,8 @@ export default function ChatPage() {
 
   return (
     <div className="app-layout">
-      <LeftSidebar activeNav={activeNav} onNavChange={setActiveNav} />
-      <MobileBottomNav activeNav={activeNav} onNavChange={setActiveNav} />
+      <LeftSidebar activeNav={activeNav} onNavChange={setActiveNav} onOpenStoryCreator={() => setShowStoryCreator(true)} />
+      <MobileBottomNav activeNav={activeNav} onNavChange={setActiveNav} onOpenStoryCreator={() => setShowStoryCreator(true)} />
       <div className={`app-main ${mobileView === "chat" ? "mobile-chat" : "mobile-list"}`}>
         {activeNav === "calls" ? (
           <CallsPanel />

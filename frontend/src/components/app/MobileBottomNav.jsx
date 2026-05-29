@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { MessageCircle, Users, Phone, Bell, LogOut } from "lucide-react";
+import { MessageCircle, Users, Phone, Bell, LogOut, Circle } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
 import ProfileModal from "../ProfileModal.jsx";
 import { handleAvatarError } from "../../utils/avatar.js";
 
-export default function MobileBottomNav({ activeNav, onNavChange }) {
+export default function MobileBottomNav({ activeNav, onNavChange, onOpenStoryCreator }) {
   const { authUser, logout } = useAuthStore();
   const t = useTranslate();
   const [showProfile, setShowProfile] = useState(false);
@@ -13,6 +13,7 @@ export default function MobileBottomNav({ activeNav, onNavChange }) {
   const items = [
     { id: "chats", icon: MessageCircle, label: t("nav.chats", "Chats") },
     { id: "groups", icon: Users, label: t("nav.groups", "Groups") },
+    { id: "status", icon: Circle, label: t("nav.status", "Status"), action: true },
     { id: "calls", icon: Phone, label: t("nav.calls", "Calls") },
     { id: "notifications", icon: Bell, label: t("nav.alerts", "Alerts") },
   ];
@@ -27,7 +28,7 @@ export default function MobileBottomNav({ activeNav, onNavChange }) {
               <button
                 key={item.id}
                 className={`mobile-nav-item ${activeNav === item.id ? "active" : ""}`}
-                onClick={() => onNavChange(item.id)}
+                onClick={() => item.action ? onOpenStoryCreator?.() : onNavChange(item.id)}
               >
                 <Icon size={22} />
                 <span>{item.label}</span>

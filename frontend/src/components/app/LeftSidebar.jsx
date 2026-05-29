@@ -4,11 +4,11 @@ import { useChatStore } from "../../stores/chatStore.js";
 import { useFeatureStore } from "../../stores/featureStore.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, MessageSquare, Phone, Users, Settings, Bell, LogOut, Shield } from "lucide-react";
+import { MessageCircle, MessageSquare, Phone, Users, Settings, Bell, LogOut, Shield, Circle } from "lucide-react";
 import ProfileModal from "../ProfileModal.jsx";
 import { handleAvatarError } from "../../utils/avatar.js";
 
-export default function LeftSidebar({ activeNav, onNavChange }) {
+export default function LeftSidebar({ activeNav, onNavChange, onOpenStoryCreator }) {
   const { authUser, logout } = useAuthStore();
   const features = useFeatureStore();
   const t = useTranslate();
@@ -18,6 +18,7 @@ export default function LeftSidebar({ activeNav, onNavChange }) {
   const navItems = [
     { icon: <MessageSquare size={22} />, label: t("nav.chats", "Chats"), key: "chats", flag: "chat_enabled" },
     { icon: <Users size={22} />, label: t("nav.groups", "Groups"), key: "groups", flag: "groups_enabled" },
+    { icon: <Circle size={22} />, label: t("nav.status", "Status"), key: "status", flag: "stories_enabled" },
     { icon: <Phone size={22} />, label: t("nav.calls", "Calls"), key: "calls", flag: "voice_calls" },
     { icon: <Bell size={22} />, label: t("nav.notifications", "Notifications"), key: "notifications", flag: "notifications_enabled" },
     { icon: <Settings size={22} />, label: t("nav.settings", "Settings"), key: "settings" },
@@ -26,6 +27,10 @@ export default function LeftSidebar({ activeNav, onNavChange }) {
   const handleNavClick = (key) => {
     if (key === "settings") {
       setShowProfile(true);
+      return;
+    }
+    if (key === "status") {
+      onOpenStoryCreator?.();
       return;
     }
     onNavChange(key);
