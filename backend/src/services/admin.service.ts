@@ -163,7 +163,7 @@ export class AdminService {
       { name: "groups_enabled", label: "Groups", description: "Enable group conversations", enabled: true, category: "core" },
       { name: "voice_calls", label: "Voice Calls", description: "Enable voice calls", enabled: true, category: "communication" },
       { name: "video_calls", label: "Video Calls", description: "Enable video calls", enabled: true, category: "communication" },
-      { name: "stories_enabled", label: "Stories", description: "Enable story sharing", enabled: false, category: "social" },
+      { name: "stories_enabled", label: "Stories", description: "Enable story sharing", enabled: true, category: "social" },
       { name: "ai_assistant", label: "AI Assistant", description: "Enable AI chat assistant", enabled: false, category: "ai" },
       { name: "file_sharing", label: "File Sharing", description: "Enable file attachments", enabled: true, category: "core" },
       { name: "emoji_reactions", label: "Reactions", description: "Enable emoji reactions on messages", enabled: true, category: "chat" },
