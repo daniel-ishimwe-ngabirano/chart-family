@@ -63,6 +63,8 @@ const STYLES = {
     label: "Bottts",
     desc: "Robot character",
     options: {
+      primaryColor: { label: "Color 1", values: ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", "#F7DC6F", "#85C1E9", "#F0B27A", "#82E0AA"] },
+      secondaryColor: { label: "Color 2", values: ["#4ECDC4", "#FF6B6B", "#45B7D1", "#96CEB4", "#F1948A", "#BB8FCE", "#98D8C8", "#A9CCE3", "#D7BDE2", "#73C6B6"] },
       texture: { label: "Texture", values: ["none", "diamond", "dots", "grid", "lines", "squares"] },
       mouth: { label: "Mouth", values: ["default", "smile", "open", "sad", "surprise", "grin"] },
     },
@@ -89,7 +91,7 @@ function styleKey(k) {
 function buildUrl(styleName, opts, seed) {
   const params = new URLSearchParams({ seed: seed || "User" });
   Object.entries(opts).forEach(([k, v]) => {
-    if (v) params.set(k, v.startsWith("#") ? v.slice(1) : v);
+    if (v && v !== "transparent") params.set(k, v.startsWith("#") ? v.slice(1) : v);
   });
   return `https://api.dicebear.com/9.x/${styleKey(styleName)}/svg?${params}`;
 }
@@ -110,14 +112,17 @@ export default function AvatarBuilder({ onClose }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const resp = await fetch(buildUrl(selected, { ...opts, size: 200 }, authUser?.fullName || "User"));
+      const url = buildUrl(selected, opts, authUser?.fullName || "User");
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`DiceBear returned ${resp.status}`);
       const svg = await resp.text();
       const blob = new Blob([svg], { type: "image/svg+xml" });
       const file = new File([blob], "avatar.svg", { type: "image/svg+xml" });
       await uploadAvatar(file);
       onClose();
-    } catch {
-      alert("Failed to generate avatar");
+    } catch (err) {
+      console.error("Avatar save error:", err);
+      alert(err.message || "Failed to generate avatar");
     } finally {
       setSaving(false);
     }
