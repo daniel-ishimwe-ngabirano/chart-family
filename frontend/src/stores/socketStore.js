@@ -11,6 +11,7 @@ const SOCKET_URL = import.meta.env.VITE_API_URL || "";
 
 let socket = null;
 let stopRingtone = null;
+let unsubCall = null;
 
 const connectionListeners = new Set();
 let isConnected = false;
@@ -42,6 +43,14 @@ export const connectSocket = () => {
     timeout: 20000,
     forceNew: true,
   });
+
+  if (!unsubCall) {
+    unsubCall = useCallStore.subscribe((state, prev) => {
+      if (prev.status === "ringing" && state.status !== "ringing") {
+        if (stopRingtone) { stopRingtone(); stopRingtone = null; }
+      }
+    });
+  }
 
   socket.on("connect", () => {
     notifyConnection(true);
