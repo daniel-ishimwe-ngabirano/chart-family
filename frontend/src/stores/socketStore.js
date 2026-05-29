@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import axios from "../lib/axios.js";
 import { useAuthStore } from "./authStore.js";
 import { useChatStore } from "./chatStore.js";
 import { useCallStore } from "./callStore.js";
@@ -46,11 +47,20 @@ export const connectSocket = () => {
     notifyConnection(true);
   });
 
-  socket.on("connect_error", (err) => {
+  socket.on("connect_error", async (err) => {
     console.warn("Socket connection error:", err.message);
     if (err.message === "Invalid token" || err.message === "Authentication required") {
-      const token = useAuthStore.getState().token;
-      if (token) socket.auth = { token };
+      try {
+        const res = await axios.post("/auth/refresh");
+        if (res.data?.accessToken) {
+          useAuthStore.setState({ token: res.data.accessToken });
+          socket.auth = { token: res.data.accessToken };
+        }
+      } catch {
+        useAuthStore.getState().checkAuth();
+        const token = useAuthStore.getState().token;
+        if (token) socket.auth = { token };
+      }
       socket.connect();
     }
   });
@@ -196,6 +206,10 @@ export const connectSocket = () => {
 
   socket.on("disconnect", () => {
     notifyConnection(false);
+    const callState = useCallStore.getState();
+    if (callState.status === "calling") {
+      callState.endCall();
+    }
   });
 };
 
