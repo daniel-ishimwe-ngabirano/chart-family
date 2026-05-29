@@ -80,6 +80,9 @@ export const useCallStore = create((set, get) => ({
       } else {
         set({ remoteStream: e.streams[0] });
       }
+      if (get().type === "VIDEO" && !e.streams[0]?.getVideoTracks().length) {
+        set({ type: "VOICE", isVideoEnabled: false });
+      }
     };
 
     pc.onnegotiationneeded = () => {};
@@ -166,6 +169,9 @@ export const useCallStore = create((set, get) => ({
         e.streams[0]?.getTracks().forEach((t) => existing.addTrack(t));
       } else {
         set({ remoteStream: e.streams[0] });
+      }
+      if (get().type === "VIDEO" && !e.streams[0]?.getVideoTracks().length) {
+        set({ type: "VOICE", isVideoEnabled: false });
       }
     };
 

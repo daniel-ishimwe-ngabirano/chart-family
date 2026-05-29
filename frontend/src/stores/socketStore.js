@@ -206,8 +206,9 @@ export const connectSocket = () => {
 
   socket.on("disconnect", () => {
     notifyConnection(false);
+    if (stopRingtone) { stopRingtone(); stopRingtone = null; }
     const callState = useCallStore.getState();
-    if (callState.status === "calling") {
+    if (callState.status === "calling" || callState.status === "ringing") {
       callState.endCall();
     }
   });

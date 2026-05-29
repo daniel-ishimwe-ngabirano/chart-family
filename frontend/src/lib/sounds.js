@@ -33,25 +33,35 @@ export function playMessageReceived() {
 
 export function playCallRingtone(loop = true) {
   let playing = true;
+  const timeouts = [];
+  function schedule(fn, delay) {
+    const id = setTimeout(() => { if (playing) fn(); }, delay);
+    timeouts.push(id);
+    return id;
+  }
   function ring() {
     if (!playing) return;
     playTone(440, 0.3, "sine", 0.2);
-    setTimeout(() => {
-      if (playing) playTone(440, 0.3, "sine", 0.2);
-      setTimeout(() => {
-        if (playing) playTone(540, 0.3, "sine", 0.2);
-        setTimeout(() => {
-          if (playing) playTone(540, 0.3, "sine", 0.2);
-          setTimeout(() => {
-            if (playing) playTone(440, 0.5, "sine", 0.2);
-            setTimeout(ring, 1000);
+    schedule(() => {
+      playTone(440, 0.3, "sine", 0.2);
+      schedule(() => {
+        playTone(540, 0.3, "sine", 0.2);
+        schedule(() => {
+          playTone(540, 0.3, "sine", 0.2);
+          schedule(() => {
+            playTone(440, 0.5, "sine", 0.2);
+            schedule(ring, 1000);
           }, 350);
         }, 100);
       }, 100);
     }, 100);
   }
   ring();
-  return () => { playing = false; };
+  return () => {
+    playing = false;
+    timeouts.forEach(clearTimeout);
+    timeouts.length = 0;
+  };
 }
 
 export function playCallConnected() {
