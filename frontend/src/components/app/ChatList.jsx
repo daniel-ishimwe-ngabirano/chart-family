@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useChatStore } from "../../stores/chatStore.js";
 import { useFeatureStore } from "../../stores/featureStore.js";
+import { useStoryStore } from "../../stores/storyStore.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
 import { Search, UserPlus, MessageSquare, Users, Archive } from "lucide-react";
 import NewConversationModal from "../NewConversationModal.jsx";
@@ -15,6 +16,7 @@ export default function ChatList({ onSelectChat, groupFilter }) {
     setSelectedConversation: selectConv, onlineUsers, typingUsers,
   } = useChatStore();
   const features = useFeatureStore();
+  const { groups, openViewer } = useStoryStore();
   const t = useTranslate();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(groupFilter ? "groups" : "all");
@@ -48,6 +50,15 @@ export default function ChatList({ onSelectChat, groupFilter }) {
     const other = c.members?.find((m) => m.user?.id !== authUser.id)?.user;
     return other ? onlineUsers.has(other.id) : false;
   };
+
+  const getOtherUserId = (c) => c.isGroup ? null : c.members?.find((m) => m.user?.id !== authUser.id)?.user?.id;
+
+  const storyMap = {};
+  for (const g of groups) {
+    if (g.user.id !== authUser?.id) {
+      storyMap[g.user.id] = { group: g, count: g.stories.length };
+    }
+  }
 
   const getLastMsg = (c) => {
     const typing = typingUsers[c.id]?.filter((u) => u.userId !== authUser.id);
@@ -95,28 +106,67 @@ export default function ChatList({ onSelectChat, groupFilter }) {
         ))}
       </div>
       <div className="chat-list-items">
-        {filtered.map((c) => (
-          <div
-            key={c.id}
-            className={`chat-list-item ${selectedConversation?.id === c.id ? "active" : ""}`}
-            onClick={() => { selectConv(c); onSelectChat?.(); }}
-          >
-            <div className="chat-list-avatar">
-              <img src={getAvatar(c)} alt="" onError={(e) => handleAvatarError(e, getName(c))} />
-              {isOnline(c) && <span className="online-badge" />}
-            </div>
-            <div className="chat-list-info">
-              <div className="chat-list-top">
-                <span className="chat-list-name">{getName(c)}</span>
-                <span className="chat-list-time">{c.lastMessage ? new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+        {filtered.map((c) => {
+          const otherId = getOtherUserId(c);
+          const storyData = otherId ? storyMap[otherId] : null;
+          const storyCount = storyData?.count || 0;
+          return (
+            <div
+              key={c.id}
+              className={`chat-list-item ${selectedConversation?.id === c.id ? "active" : ""}`}
+            >
+              <div className="chat-list-avatar-wrap"
+                onClick={(e) => {
+                  if (storyCount > 0) {
+                    e.stopPropagation();
+                    openViewer(otherId, 0);
+                  }
+                }}
+                style={{ cursor: storyCount > 0 ? "pointer" : "default" }}
+              >
+                <div className={`chat-list-avatar ${storyCount > 0 ? "has-story" : ""}`}>
+                  {storyCount > 0 && (
+                    <svg className="story-ring" viewBox="0 0 50 50" width="50" height="50">
+                      {storyCount === 1 ? (
+                        <circle cx="25" cy="25" r="23" fill="none" stroke="#25d366" strokeWidth="2.5" />
+                      ) : (
+                        Array.from({ length: storyCount }).map((_, i) => {
+                          const segAngle = 360 / storyCount;
+                          const startAngle = -90 + i * segAngle;
+                          const endAngle = startAngle + segAngle - 1.5;
+                          const startRad = (startAngle * Math.PI) / 180;
+                          const endRad = (endAngle * Math.PI) / 180;
+                          const x1 = 25 + 23 * Math.cos(startRad);
+                          const y1 = 25 + 23 * Math.sin(startRad);
+                          const x2 = 25 + 23 * Math.cos(endRad);
+                          const y2 = 25 + 23 * Math.sin(endRad);
+                          const largeArc = segAngle > 180 ? 1 : 0;
+                          return (
+                            <path key={i} d={`M ${x1} ${y1} A 23 23 0 ${largeArc} 1 ${x2} ${y2}`}
+                              fill="none" stroke="#25d366" strokeWidth="2.5" strokeLinecap="round"
+                            />
+                          );
+                        })
+                      )}
+                    </svg>
+                  )}
+                  <img src={getAvatar(c)} alt="" onError={(e) => handleAvatarError(e, getName(c))} />
+                  {isOnline(c) && <span className="online-badge" />}
+                </div>
               </div>
-              <div className="chat-list-bottom">
-                <span className="chat-list-preview">{getLastMsg(c)}</span>
-                {c.unreadCount > 0 && <span className="unread-badge">{c.unreadCount}</span>}
+              <div className="chat-list-info" onClick={() => { selectConv(c); onSelectChat?.(); }}>
+                <div className="chat-list-top">
+                  <span className="chat-list-name">{getName(c)}</span>
+                  <span className="chat-list-time">{c.lastMessage ? new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                </div>
+                <div className="chat-list-bottom">
+                  <span className="chat-list-preview">{getLastMsg(c)}</span>
+                  {c.unreadCount > 0 && <span className="unread-badge">{c.unreadCount}</span>}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {showNewConv && <NewConversationModal onClose={() => setShowNewConv(false)} />}
       {showGroup && <GroupModal onClose={() => setShowGroup(false)} />}

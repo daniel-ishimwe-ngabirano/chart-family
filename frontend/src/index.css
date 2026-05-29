@@ -5698,6 +5698,43 @@ input, textarea {
   white-space: nowrap;
 }
 
+/* Story ring on chat list avatar */
+.chat-list-avatar-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+}
+.chat-list-avatar.has-story {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-list-avatar.has-story .story-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: none;
+}
+.chat-list-avatar.has-story img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  position: relative;
+  z-index: 1;
+}
+.chat-list-avatar.has-story .online-badge {
+  z-index: 3;
+}
+
 /* Story Creator */
 .story-creator-overlay {
   position: fixed;
