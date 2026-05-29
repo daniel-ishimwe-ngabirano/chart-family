@@ -45,6 +45,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
   const [emojiCategory, setEmojiCategory] = useState(0);
   const [files, setFiles] = useState([]);
   const [filePreviews, setFilePreviews] = useState([]);
+  const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const typingTimeoutRef = useRef(null);
@@ -137,7 +138,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text.trim() && files.length === 0) return;
-    if (!selectedConversation) return;
+    if (!selectedConversation || sending) return;
 
     const formData = new FormData();
     formData.append("conversationId", selectedConversation.id);
@@ -153,7 +154,9 @@ export default function MessageInput({ replyTo, onCancelReply }) {
       else formData.append("type", "FILE");
     }
 
+    setSending(true);
     await sendMessage(formData);
+    setSending(false);
     setText("");
     setFiles([]);
     setFilePreviews([]);
@@ -287,9 +290,9 @@ export default function MessageInput({ replyTo, onCancelReply }) {
         <button
           type="submit"
           className="send-btn"
-          disabled={!text.trim() && files.length === 0}
+          disabled={(!text.trim() && files.length === 0) || sending}
         >
-          <Send size={20} />
+          {sending ? <span className="send-spinner" /> : <Send size={20} />}
         </button>
       </form>
     </div>

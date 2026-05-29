@@ -45,11 +45,22 @@ export const useCallStore = create((set, get) => ({
 
   startCall: async (remoteUser, type, conversationId) => {
     let stream;
+    let actualType = type;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === "VIDEO" });
     } catch (err) {
-      set({ error: `Cannot access microphone${type === "VIDEO" ? "/camera" : ""}: ${err.message || "Permission denied"}` });
-      return;
+      if (type === "VIDEO") {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          actualType = "VOICE";
+        } catch {
+          set({ error: `Cannot access microphone: ${err.message || "Permission denied"}` });
+          return;
+        }
+      } else {
+        set({ error: `Cannot access microphone: ${err.message || "Permission denied"}` });
+        return;
+      }
     }
 
     const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -95,13 +106,13 @@ export const useCallStore = create((set, get) => ({
 
     const socket = getSocket();
     if (socket) {
-      socket.emit("call:start", { receiverId: remoteUser.id, type, conversationId });
+      socket.emit("call:start", { receiverId: remoteUser.id, type: actualType, conversationId });
       socket.emit("signal:offer", { to: remoteUser.id, offer });
     }
 
     set({
       status: "calling",
-      type,
+      type: actualType,
       remoteUser,
       conversationId,
       localStream: stream,
@@ -110,7 +121,7 @@ export const useCallStore = create((set, get) => ({
       callDuration: 0,
       isMuted: false,
       isSpeakerOn: false,
-      isVideoEnabled: type === "VIDEO",
+      isVideoEnabled: actualType === "VIDEO",
       error: null,
     });
   },
@@ -121,11 +132,22 @@ export const useCallStore = create((set, get) => ({
     if (!callerId) return;
 
     let stream;
+    let actualType = incomingType;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: incomingType === "VIDEO" });
     } catch (err) {
-      set({ error: `Cannot access microphone${incomingType === "VIDEO" ? "/camera" : ""}: ${err.message || "Permission denied"}` });
-      return;
+      if (incomingType === "VIDEO") {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          actualType = "VOICE";
+        } catch {
+          set({ error: `Cannot access microphone: ${err.message || "Permission denied"}` });
+          return;
+        }
+      } else {
+        set({ error: `Cannot access microphone: ${err.message || "Permission denied"}` });
+        return;
+      }
     }
 
     const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -182,7 +204,7 @@ export const useCallStore = create((set, get) => ({
 
     const stateUpdates = {
       status: "calling",
-      type: incomingType,
+      type: actualType,
       remoteUser,
       conversationId: incomingConversationId,
       localStream: stream,
@@ -191,7 +213,7 @@ export const useCallStore = create((set, get) => ({
       callDuration: 0,
       isMuted: false,
       isSpeakerOn: false,
-      isVideoEnabled: incomingType === "VIDEO",
+      isVideoEnabled: actualType === "VIDEO",
       incomingCallerId: null,
       incomingType: null,
       incomingConversationId: null,
