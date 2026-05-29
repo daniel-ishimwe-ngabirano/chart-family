@@ -100,9 +100,8 @@ function skipCsrf(path: string): boolean {
   if (path === "/api/health") return true;
   if (path.startsWith("/api/public")) return true;
   if (path.startsWith("/api/auth")) return true;
-  if (path.startsWith("/api/admin/auth")) return true;
+  if (path.startsWith("/api/admin")) return true;
   if (path === "/api/users/avatar") return true;
-  if (path.startsWith("/api/admin/upload")) return true;
   if (path.startsWith("/api/conversations/") && (path.endsWith("/messages") || path.endsWith("/read"))) return true;
   return false;
 }
