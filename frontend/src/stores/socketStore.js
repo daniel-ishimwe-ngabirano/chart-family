@@ -188,6 +188,10 @@ export const connectSocket = () => {
     window.dispatchEvent(new CustomEvent("sections:updated"));
   });
 
+  socket.on("story:new", () => {
+    window.dispatchEvent(new CustomEvent("app:story"));
+  });
+
   socket.on("conversation:new", ({ conversation, forMembers }) => {
     if (forMembers?.includes(useAuthStore.getState().authUser?.id)) {
       useChatStore.getState().getConversations();

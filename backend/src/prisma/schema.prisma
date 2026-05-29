@@ -49,6 +49,8 @@ model User {
   reportsReceived   Report[]              @relation("ReportedUser")
   broadcastReads    BroadcastRead[]
   pushSubscriptions PushSubscription[]
+  stories           Story[]
+  storyViews        StoryView[]
 }
 
 model Session {
@@ -404,6 +406,38 @@ model PushSubscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, endpoint])
+}
+
+model Story {
+  id              String      @id @map("_id") @default(uuid())
+  userId          String
+  media           String?
+  caption         String?
+  type            String      @default("TEXT")
+  backgroundColor String      @default("#000000")
+  fontStyle       String      @default("sans-serif")
+  textColor       String      @default("#FFFFFF")
+  expiresAt       DateTime
+  createdAt       DateTime    @default(now())
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views StoryView[]
+
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model StoryView {
+  id        String   @id @map("_id") @default(uuid())
+  storyId   String
+  viewerId  String
+  viewedAt  DateTime @default(now())
+
+  story  Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  viewer User  @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, viewerId])
+  @@index([storyId])
 }
 
 model NavItem {

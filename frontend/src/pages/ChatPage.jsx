@@ -7,7 +7,12 @@ import MainChat from "../components/app/MainChat.jsx";
 import UserPanel from "../components/app/UserPanel.jsx";
 import CallOverlay from "../components/app/CallOverlay.jsx";
 import IncomingCall from "../components/app/IncomingCall.jsx";
+import StoriesBar from "../components/app/StoriesBar.jsx";
+import StoryCreator from "../components/app/StoryCreator.jsx";
+import StoryViewer from "../components/app/StoryViewer.jsx";
 import { useAuthStore } from "../stores/authStore.js";
+import { useStoryStore } from "../stores/storyStore.js";
+import { useFeatureStore } from "../stores/featureStore.js";
 import { handleAvatarError } from "../utils/avatar.js";
 import { STORAGE_KEYS } from "../lib/constants.js";
 
@@ -93,7 +98,10 @@ export default function ChatPage() {
   const [showPanel, setShowPanel] = useState(false);
   const [mobileView, setMobileView] = useState("list");
   const [notifications, setNotifications] = useState([]);
+  const [showStoryCreator, setShowStoryCreator] = useState(false);
   const { authUser } = useAuthStore();
+  const { fetchStories, viewingGroup } = useStoryStore();
+  const features = useFeatureStore();
   const handleSelectChat = useCallback(() => setMobileView("chat"), []);
   const handleBackToList = useCallback(() => setMobileView("list"), []);
 
@@ -117,6 +125,12 @@ export default function ChatPage() {
     return () => window.removeEventListener("app:notification", handler);
   }, [authUser?.id]);
 
+  useEffect(() => {
+    const handler = () => fetchStories();
+    window.addEventListener("app:story", handler);
+    return () => window.removeEventListener("app:story", handler);
+  }, [fetchStories]);
+
   return (
     <div className="app-layout">
       <LeftSidebar activeNav={activeNav} onNavChange={setActiveNav} />
@@ -129,6 +143,7 @@ export default function ChatPage() {
         ) : (
           <>
             <div className="chat-list-panel-wrap">
+              {features.isEnabled("stories_enabled") && <StoriesBar onOpenCreator={() => setShowStoryCreator(true)} />}
               <ChatList onSelectChat={handleSelectChat} groupFilter={activeNav === "groups"} />
             </div>
             <div className="main-chat-wrap">
@@ -144,6 +159,8 @@ export default function ChatPage() {
       )}
       <CallOverlay />
       <IncomingCall />
+      {showStoryCreator && <StoryCreator onClose={() => setShowStoryCreator(false)} />}
+      {viewingGroup && <StoryViewer />}
     </div>
   );
 }

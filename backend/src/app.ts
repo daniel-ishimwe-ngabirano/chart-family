@@ -18,6 +18,7 @@ import chatRoutes from "./routes/chat.routes.js";
 import groupRoutes from "./routes/group.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import publicRoutes from "./routes/public.routes.js";
+import storyRoutes from "./routes/story.routes.js";
 import { csrfProtection } from "./middleware/csrf.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -143,6 +144,7 @@ app.use("/api/conversations", chatRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/stories", storyRoutes);
 
 // Serve frontend in production (Docker/standalone)
 if (env.NODE_ENV === "production") {
