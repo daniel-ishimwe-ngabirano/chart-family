@@ -8,8 +8,9 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
 } from "../utils/push.js";
-import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages, Sparkles } from "lucide-react";
+import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages, Sparkles, Palette } from "lucide-react";
 import { handleAvatarError, generateAvatarSvg } from "../utils/avatar.js";
+import AvatarBuilder from "./AvatarBuilder.jsx";
 
 const SETTINGS_KEY = "wavechat_user_settings";
 let swRegistration = null;
@@ -39,6 +40,7 @@ export default function ProfileModal({ onClose }) {
   });
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showAvatarBuilder, setShowAvatarBuilder] = useState(false);
   const [notifications, setNotifications] = useState(() => loadSettings().notifications ?? true);
   const [lastSeen, setLastSeen] = useState(() => loadSettings().lastSeen ?? "everyone");
   const fileRef = useRef(null);
@@ -99,8 +101,11 @@ export default function ProfileModal({ onClose }) {
               <button className="avatar-edit" onClick={() => fileRef.current?.click()} disabled={uploadingAvatar} title="Upload photo">
                 {uploadingAvatar ? <span className="avatar-spinner" /> : <Camera size={18} />}
               </button>
-              <button className="avatar-edit avatar-generate" onClick={handleGenerateAvatar} disabled={uploadingAvatar} title="Generate cartoon avatar">
+              <button className="avatar-edit avatar-generate" onClick={handleGenerateAvatar} disabled={uploadingAvatar} title="Generate initials avatar">
                 <Sparkles size={18} />
+              </button>
+              <button className="avatar-edit avatar-builder-btn" onClick={() => setShowAvatarBuilder(true)} title="Create custom avatar">
+                <Palette size={18} />
               </button>
               <input ref={fileRef} type="file" hidden accept="image/*" onChange={handleAvatarChange} />
             </div>
@@ -223,6 +228,7 @@ export default function ProfileModal({ onClose }) {
           </button>
         </div>
       </div>
+      {showAvatarBuilder && <AvatarBuilder onClose={() => setShowAvatarBuilder(false)} />}
     </div>
   );
 }
