@@ -118,7 +118,8 @@ export default function AvatarBuilder({ onClose }) {
       const svg = await resp.text();
       const blob = new Blob([svg], { type: "image/svg+xml" });
       const file = new File([blob], "avatar.svg", { type: "image/svg+xml" });
-      await uploadAvatar(file);
+      const result = await uploadAvatar(file);
+      if (!result.success) throw new Error(result.error || "Upload failed");
       onClose();
     } catch (err) {
       console.error("Avatar save error:", err);
