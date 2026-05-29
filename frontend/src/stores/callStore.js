@@ -3,16 +3,28 @@ import { getSocket } from "../stores/socketStore.js";
 import { useChatStore } from "./chatStore.js";
 import { STORAGE_KEYS } from "../lib/constants.js";
 
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    ...(import.meta.env.VITE_TURN_URL ? [{
+let cachedIceServers = null;
+async function getIceServers() {
+  if (cachedIceServers) return cachedIceServers;
+  const json = import.meta.env.VITE_ICE_SERVERS;
+  if (json) {
+    try {
+      const parsed = JSON.parse(json);
+      cachedIceServers = { iceServers: Array.isArray(parsed) ? parsed : parsed.iceServers };
+      return cachedIceServers;
+    } catch {}
+  }
+  const result = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+  if (import.meta.env.VITE_TURN_URL) {
+    result.iceServers.push({
       urls: import.meta.env.VITE_TURN_URL,
       username: import.meta.env.VITE_TURN_USERNAME || "",
       credential: import.meta.env.VITE_TURN_CREDENTIAL || "",
-    }] : []),
-  ],
-};
+    });
+  }
+  cachedIceServers = result;
+  return result;
+}
 
 export const useCallStore = create((set, get) => ({
   status: "idle",
@@ -63,7 +75,8 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+    const iceServers = await getIceServers();
+    const pc = new RTCPeerConnection(iceServers);
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
     pc.onicecandidate = (e) => {
@@ -153,7 +166,8 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+    const iceServers = await getIceServers();
+    const pc = new RTCPeerConnection(iceServers);
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
     pc.onicecandidate = (e) => {
