@@ -202,6 +202,7 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
+    const currentRemoteStream = get().remoteStream;
     const stateUpdates = {
       status: "calling",
       type: actualType,
@@ -209,7 +210,7 @@ export const useCallStore = create((set, get) => ({
       conversationId: incomingConversationId,
       localStream: stream,
       peerConnection: pc,
-      remoteStream: null,
+      remoteStream: currentRemoteStream,
       callDuration: 0,
       isMuted: false,
       isSpeakerOn: false,
