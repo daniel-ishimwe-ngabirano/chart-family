@@ -96,12 +96,21 @@ const messageLimiter = rateLimit({
 });
 app.use("/api/conversations", messageLimiter);
 
-// CSRF token cookie + protection (skipped for public endpoints)
+function skipCsrf(path: string): boolean {
+  if (path === "/api/health") return true;
+  if (path.startsWith("/api/public")) return true;
+  if (path.startsWith("/api/auth")) return true;
+  if (path.startsWith("/api/admin/auth")) return true;
+  if (path === "/api/users/avatar") return true;
+  if (path.startsWith("/api/admin/upload")) return true;
+  if (path.startsWith("/api/conversations/") && path.endsWith("/messages")) return true;
+  return false;
+}
+
+// CSRF token cookie + protection (skipped for public & auth endpoints)
 app.use(setCsrfToken);
 app.use((req, res, next) => {
-  if (req.path === "/api/health" || req.path.startsWith("/api/public") || req.path.startsWith("/api/auth") || req.path.startsWith("/api/admin/auth") || req.path === "/api/users/avatar" || req.path.startsWith("/api/admin/upload")) {
-    return next();
-  }
+  if (skipCsrf(req.path)) return next();
   csrfProtection(req, res, next);
 });
 

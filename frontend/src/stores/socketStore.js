@@ -60,10 +60,12 @@ export const connectSocket = () => {
     if (message.senderId === authUser?.id) return;
     useChatStore.getState().addMessage(message);
     useChatStore.getState().getConversations();
-    playMessageReceived();
 
     const state = useChatStore.getState();
-    if (state.selectedConversation?.id !== message.conversationId) {
+    if (state.selectedConversation?.id === message.conversationId) {
+      emitMarkAsRead(message.conversationId, message.id, authUser.id);
+    } else {
+      playMessageReceived();
       const sender = message.sender;
       window.dispatchEvent(new CustomEvent("app:notification", {
         detail: {
@@ -87,8 +89,8 @@ export const connectSocket = () => {
     useChatStore.getState().removeMessage(messageId);
   });
 
-  socket.on("message:read", ({ messageId, userId }) => {
-    useChatStore.getState().markMessageRead(messageId, userId);
+  socket.on("message:read", ({ messageId, userId, conversationId }) => {
+    useChatStore.getState().markMessageRead(messageId, userId, conversationId);
   });
 
   socket.on("user:online", ({ userId }) => {

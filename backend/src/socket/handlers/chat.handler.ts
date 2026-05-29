@@ -115,6 +115,10 @@ export function setupChatHandlers(io: SocketServer, socket: SocketWithUser) {
     try {
       const validated = validateSocketEvent(socketReadSchema, data);
       await messageService.markAsRead(validated.messageId, userId);
+      await prisma.conversationMember.updateMany({
+        where: { conversationId: validated.conversationId, userId },
+        data: { lastReadAt: new Date() },
+      });
       io.to(validated.conversationId).emit("message:read", { messageId: validated.messageId, userId, conversationId: validated.conversationId });
     } catch (err) {
       socket.emit("error", { message: (err as Error).message });

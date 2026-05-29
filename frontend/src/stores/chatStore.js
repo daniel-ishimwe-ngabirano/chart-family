@@ -153,13 +153,20 @@ export const useChatStore = create((set, get) => ({
     }));
   },
 
-  markMessageRead: (messageId, userId) => {
+  markMessageRead: (messageId, userId, conversationId) => {
     set((state) => ({
       messages: state.messages.map((m) =>
         m.id === messageId
           ? { ...m, readBy: [...new Set([...(m.readBy || []), userId])] }
           : m
       ),
+      conversations: conversationId
+        ? state.conversations.map((c) =>
+            c.id === conversationId && c.unreadCount > 0
+              ? { ...c, unreadCount: c.unreadCount - 1 }
+              : c
+          )
+        : state.conversations,
     }));
   },
 
