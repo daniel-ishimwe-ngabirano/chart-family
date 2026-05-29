@@ -1738,6 +1738,19 @@ input, textarea {
   gap: 6px;
   white-space: nowrap;
 }
+.avatar-builder-preview-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.avatar-builder-preview-actions .btn-secondary,
+.avatar-builder-preview-actions .btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
 .avatar-builder-controls {
   flex: 1;
   min-width: 0;
