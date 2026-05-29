@@ -50,6 +50,7 @@ export default function MainChat({ onTogglePanel, onBack }) {
     if (selectedConversation) {
       getMessages(selectedConversation.id);
       joinConversation(selectedConversation.id);
+      axios.post(`/conversations/${selectedConversation.id}/read`).catch(() => {});
       prevMessageCountRef.current = 0;
       setShowSearch(false);
       setSearchQuery("");
