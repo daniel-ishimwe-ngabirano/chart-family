@@ -22,6 +22,7 @@ const sidebarItems = [
 ];
 
 export default function AdminLayout({ children }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { authUser, logout } = useAuthStore();
   const { adminSession, checking, checkAdminSession, logoutAdmin } = useAdminAuthStore();
   const navigate = useNavigate();
@@ -55,7 +56,8 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="admin-layout">
-      <aside className="admin-sidebar">
+      {mobileMenuOpen && <div className="admin-mobile-backdrop" onClick={() => setMobileMenuOpen(false)} />}
+      <aside className={`admin-sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="admin-sidebar-header">
           <Shield size={24} />
           <span>Admin Panel</span>
@@ -65,7 +67,7 @@ export default function AdminLayout({ children }) {
             <button
               key={item.path}
               className={`admin-nav-item ${location.pathname === item.path ? "active" : ""}`}
-              onClick={() => navigate(item.path)}
+              onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}
             >
               {item.icon}
               <span>{item.label}</span>
@@ -84,6 +86,9 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
       <main className="admin-main">
+        <button className="admin-mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <Menu size={22} />
+        </button>
         <div className="admin-main-inner">
           {children}
         </div>
