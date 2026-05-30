@@ -3646,14 +3646,13 @@ input, textarea {
 }
 
 .icon-btn {
-  width: 36px;
-  height: 36px;
+  padding: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
   color: var(--text-secondary);
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .icon-btn:hover {

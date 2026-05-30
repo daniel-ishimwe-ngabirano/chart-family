@@ -3,6 +3,7 @@ import { useChatStore } from "../../stores/chatStore.js";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useFeatureStore } from "../../stores/featureStore.js";
 import { useCallStore } from "../../stores/callStore.js";
+import { useStoryStore } from "../../stores/storyStore.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
 import { joinConversation, leaveConversation, emitMarkAsRead } from "../../stores/socketStore.js";
 import MessageInput from "../MessageInput.jsx";
@@ -18,6 +19,7 @@ export default function MainChat({ onTogglePanel, onBack }) {
   const t = useTranslate();
   const features = useFeatureStore();
   const { startCall } = useCallStore();
+  const { groups, openViewer } = useStoryStore();
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const [replyTo, setReplyTo] = useState(null);
@@ -101,6 +103,9 @@ export default function MainChat({ onTogglePanel, onBack }) {
   const isOnline = otherUser ? onlineUsers.has(otherUser.id) : false;
   const voiceCallsEnabled = features.isEnabled("voice_calls");
   const videoCallsEnabled = features.isEnabled("video_calls");
+  const storiesEnabled = features.isEnabled("stories_enabled");
+  const otherUserStory = otherUser && storiesEnabled ? groups.find((g) => g.user.id === otherUser.id) : null;
+  const hasStory = otherUserStory && otherUserStory.stories.length > 0;
   const handleVoiceCall = () => {
     if (!otherUser || !selectedConversation) return;
     startCall(otherUser, "VOICE", selectedConversation.id);
@@ -132,6 +137,14 @@ export default function MainChat({ onTogglePanel, onBack }) {
         <div className="chat-header-actions">
           {voiceCallsEnabled && <button className="icon-btn" title="Voice call" onClick={handleVoiceCall}><Phone size={20} /></button>}
           {videoCallsEnabled && <button className="icon-btn" title="Video call" onClick={handleVideoCall}><Video size={20} /></button>}
+          {hasStory && (
+            <button className="icon-btn status-header-btn" title="View status" onClick={() => openViewer(otherUser.id, 0)}>
+              <svg width="20" height="20" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="var(--accent)" strokeWidth="2" />
+                <circle cx="12" cy="12" r="6" fill="var(--accent)" stroke="none" />
+              </svg>
+            </button>
+          )}
           {selectedConversation?.isGroup && features.isEnabled("polls_enabled") && (
             <button className="icon-btn" title="Create poll" onClick={() => setShowPoll(true)}><BarChart3 size={20} /></button>
           )}
