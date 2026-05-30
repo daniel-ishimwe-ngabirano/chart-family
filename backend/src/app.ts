@@ -97,6 +97,14 @@ const messageLimiter = rateLimit({
 });
 app.use("/api/conversations", messageLimiter);
 
+// Body parsing (must be before CSRF so cookies/body are available)
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Passport
+app.use(passport.initialize());
+
 function skipCsrf(path: string): boolean {
   if (path === "/api/health") return true;
   if (path.startsWith("/api/public")) return true;
@@ -114,14 +122,6 @@ app.use((req, res, next) => {
   if (skipCsrf(req.path)) return next();
   csrfProtection(req, res, next);
 });
-
-// Passport
-app.use(passport.initialize());
-
-// Body parsing
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 // Health check
 app.get("/api/health", (_req, res) => {
