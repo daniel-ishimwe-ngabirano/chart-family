@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useStoryStore } from "../../stores/storyStore.js";
-import { X, Image, Type, Loader2 } from "lucide-react";
+import { X, Image, Type, Loader2, AlertCircle } from "lucide-react";
 
 const BG_COLORS = ["#000000", "#1a1a2e", "#16213e", "#0f3460", "#533483", "#e94560", "#ff6b6b", "#ffa502", "#2ed573", "#1e90ff", "#a29bfe", "#fd79a8"];
 
@@ -11,6 +11,7 @@ export default function StoryCreator({ onClose }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
   const fileInputRef = useRef(null);
   const { createStory } = useStoryStore();
 
@@ -20,10 +21,12 @@ export default function StoryCreator({ onClose }) {
     setFile(f);
     setPreview(URL.createObjectURL(f));
     setMode("preview");
+    setError("");
   };
 
   const handleSubmit = async () => {
     setSending(true);
+    setError("");
     try {
       if (mode === "text") {
         await createStory({ caption: text, type: "TEXT", backgroundColor: bgColor, fontStyle: "sans-serif", textColor: "#FFFFFF" });
@@ -35,7 +38,10 @@ export default function StoryCreator({ onClose }) {
         await createStory(fd);
       }
       onClose();
-    } catch { setSending(false); }
+    } catch (e) {
+      setSending(false);
+      setError(e?.response?.data?.message || "Failed to save status. Please try again.");
+    }
   };
 
   if (mode === "choose") {
@@ -101,6 +107,12 @@ export default function StoryCreator({ onClose }) {
           </div>
         )}
 
+        {error && (
+          <div className="story-error">
+            <AlertCircle size={14} />
+            <span>{error}</span>
+          </div>
+        )}
         <button className="story-send-btn" disabled={sending || (isText && !text.trim())} onClick={handleSubmit}>
           {sending ? <Loader2 size={22} className="spin" /> : "Share"}
         </button>

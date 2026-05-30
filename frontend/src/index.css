@@ -5611,32 +5611,107 @@ input, textarea {
   .main-chat-header .mobile-back svg { width: 18px; height: 18px; }
 }
 
-/* === Stories === */
-.stories-bar {
+/* Story error message */
+.story-error {
   display: flex;
-  overflow-x: auto;
-  padding: 12px 12px 8px;
-  gap: 12px;
-  border-bottom: 1px solid var(--border-color, #e9edef);
-  background: var(--bg-primary, #fff);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  align-items: center;
+  gap: 6px;
+  color: #ef5350;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: rgba(239, 83, 80, 0.1);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  width: 100%;
 }
-.stories-bar::-webkit-scrollbar { display: none; }
-.stories-scroll {
+
+/* Vertical story list inside MainChat */
+.mainchat-stories {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.mainchat-stories-header {
   display: flex;
-  gap: 14px;
-  min-width: max-content;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
-.story-avatar-item {
+
+.mainchat-stories-list {
   display: flex;
   flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.mainchat-stories-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mainchat-stories-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.mainchat-story-item {
+  display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 10px;
+  padding: 6px 16px;
   cursor: pointer;
-  text-align: center;
+  transition: background 0.15s;
+}
+
+.mainchat-story-item:hover {
+  background: var(--bg-hover);
+}
+
+.mainchat-story-item .story-avatar-ring {
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
 }
+
+.mainchat-story-item .story-avatar-img-wrap {
+  width: 36px;
+  height: 36px;
+}
+
+.mainchat-story-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainchat-story-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.mainchat-story-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mainchat-story-seen {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+}
+
+/* === Stories (shared ring styles) === */
 .story-avatar-ring {
   width: 54px;
   height: 54px;
@@ -5687,14 +5762,6 @@ input, textarea {
   align-items: center;
   justify-content: center;
   border: 2px solid var(--bg-primary, #fff);
-}
-.story-name {
-  font-size: 11px;
-  color: var(--text-secondary, #667781);
-  max-width: 60px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Story ring on chat list avatar */

@@ -7,7 +7,6 @@ import MainChat from "../components/app/MainChat.jsx";
 import UserPanel from "../components/app/UserPanel.jsx";
 import CallOverlay from "../components/app/CallOverlay.jsx";
 import IncomingCall from "../components/app/IncomingCall.jsx";
-import StoriesBar from "../components/app/StoriesBar.jsx";
 import StoryCreator from "../components/app/StoryCreator.jsx";
 import StoryViewer from "../components/app/StoryViewer.jsx";
 import { useAuthStore } from "../stores/authStore.js";
@@ -143,11 +142,10 @@ export default function ChatPage() {
         ) : (
           <>
             <div className="chat-list-panel-wrap">
-              {features.isEnabled("stories_enabled") && <StoriesBar onOpenCreator={() => setShowStoryCreator(true)} />}
               <ChatList onSelectChat={handleSelectChat} groupFilter={activeNav === "groups"} />
             </div>
             <div className="main-chat-wrap">
-              <MainChat onTogglePanel={() => setShowPanel(!showPanel)} onBack={handleBackToList} />
+              <MainChat onTogglePanel={() => setShowPanel(!showPanel)} onBack={handleBackToList} onOpenStoryCreator={() => setShowStoryCreator(true)} />
             </div>
           </>
         )}

@@ -8,12 +8,12 @@ import { useTranslate } from "../../hooks/useTranslate.js";
 import { joinConversation, leaveConversation, emitMarkAsRead } from "../../stores/socketStore.js";
 import MessageInput from "../MessageInput.jsx";
 import MessageBubble from "../MessageBubble.jsx";
-import { ArrowLeft, Info, Phone, Video, Loader2, Search, X, Pin, BarChart3 } from "lucide-react";
+import { ArrowLeft, Info, Phone, Video, Loader2, Search, X, Pin, BarChart3, Plus } from "lucide-react";
 import { handleAvatarError } from "../../utils/avatar.js";
 import axios from "../../lib/axios.js";
 import PollModal from "../PollModal.jsx";
 
-export default function MainChat({ onTogglePanel, onBack }) {
+export default function MainChat({ onTogglePanel, onBack, onOpenStoryCreator }) {
   const { selectedConversation, messages, isMessagesLoading, isLoadingMore, nextCursor, getMessages, onlineUsers, typingUsers } = useChatStore();
   const { authUser } = useAuthStore();
   const t = useTranslate();
@@ -152,6 +152,37 @@ export default function MainChat({ onTogglePanel, onBack }) {
           <button className="icon-btn" onClick={onTogglePanel} title="Info"><Info size={20} /></button>
         </div>
       </div>
+      {storiesEnabled && groups.length > 0 && (
+        <div className="mainchat-stories">
+          <div className="mainchat-stories-header">
+            <span>Status</span>
+            <button className="icon-btn" title="Add status" onClick={() => onOpenStoryCreator?.()}>
+              <Plus size={16} />
+            </button>
+          </div>
+          <div className="mainchat-stories-list">
+            {groups.map((group) => {
+              const hasUnviewed = group.stories.some((s) => !s.viewed);
+              const isMe = group.user.id === authUser.id;
+              const label = isMe ? "You" : group.user.fullName.split(" ")[0];
+              return (
+                <div key={group.user.id} className="mainchat-story-item" onClick={() => openViewer(group.user.id, 0)}>
+                  <div className={`story-avatar-ring ${hasUnviewed ? "unviewed" : "viewed"}`}>
+                    <div className="story-avatar-img-wrap">
+                      <img src={group.user.avatar || ""} alt="" onError={(e) => handleAvatarError(e, group.user.fullName)} />
+                    </div>
+                  </div>
+                  <div className="mainchat-story-info">
+                    <span className="mainchat-story-name">{label}</span>
+                    <span className="mainchat-story-meta">{group.stories.length} story{group.stories.length > 1 ? "ies" : "y"}</span>
+                  </div>
+                  {!hasUnviewed && <span className="mainchat-story-seen">Seen</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {pinnedMessages.length > 0 && (
         <div className="pinned-messages-bar">
           <Pin size={14} />
