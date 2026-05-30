@@ -145,7 +145,7 @@ export default function ChatPage() {
               <ChatList onSelectChat={handleSelectChat} groupFilter={activeNav === "groups"} />
             </div>
             <div className="main-chat-wrap">
-              <MainChat onTogglePanel={() => setShowPanel(!showPanel)} onBack={handleBackToList} onOpenStoryCreator={() => setShowStoryCreator(true)} />
+              <MainChat onTogglePanel={() => setShowPanel(!showPanel)} onBack={handleBackToList} />
             </div>
           </>
         )}
