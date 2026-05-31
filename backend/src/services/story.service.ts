@@ -21,7 +21,7 @@ export class StoryService {
         backgroundColor: data.backgroundColor || "#000000",
         fontStyle: data.fontStyle || "sans-serif",
         textColor: data.textColor || "#FFFFFF",
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        expiresAt: new Date("2099-12-31"),
       },
       include: { user: { select: { id: true, fullName: true, avatar: true } } },
     });
@@ -32,10 +32,7 @@ export class StoryService {
   }
 
   async getStories(userId: string) {
-    const now = new Date();
-
     const stories = await prisma.story.findMany({
-      where: { expiresAt: { gt: now } },
       include: {
         user: { select: { id: true, fullName: true, avatar: true } },
         views: { select: { viewerId: true, viewedAt: true } },
@@ -51,7 +48,7 @@ export class StoryService {
       }
       grouped.get(key)!.stories.push({
         ...story,
-        viewed: story.views.some((v: { viewerId: string }) => v.viewerId === userId),
+        viewed: false,
         views: undefined,
       });
     }
