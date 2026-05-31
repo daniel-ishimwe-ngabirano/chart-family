@@ -5625,6 +5625,86 @@ input, textarea {
   width: 100%;
 }
 
+/* My Stories list in ProfileModal */
+.my-stories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.my-story-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.my-story-item:hover {
+  background: var(--bg-hover);
+}
+
+.my-story-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-tertiary);
+}
+
+.my-story-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.my-story-text-preview {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+  text-align: center;
+  padding: 2px;
+}
+
+.my-story-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.my-story-type {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.my-story-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.my-story-delete {
+  padding: 6px;
+  border-radius: 50%;
+  color: var(--danger);
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.my-story-delete:hover {
+  background: rgba(239, 83, 80, 0.15);
+}
+
 /* === Stories (shared ring styles) === */
 .story-avatar-ring {
   width: 54px;

@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../stores/authStore.js";
 import { useThemePrefStore } from "../stores/themePrefStore.js";
 import { useLocaleStore, locales_list } from "../stores/localeStore.js";
+import { useStoryStore } from "../stores/storyStore.js";
 import { useTranslate } from "../hooks/useTranslate.js";
 import {
   registerServiceWorker,
   subscribeToPush,
   unsubscribeFromPush,
 } from "../utils/push.js";
-import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages, Sparkles, Palette } from "lucide-react";
+import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages, Sparkles, Palette, Trash2, Circle } from "lucide-react";
 import { handleAvatarError, generateAvatarSvg } from "../utils/avatar.js";
 import AvatarBuilder from "./AvatarBuilder.jsx";
 
@@ -31,6 +32,7 @@ export default function ProfileModal({ onClose }) {
   const { authUser, updateProfile, uploadAvatar, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemePrefStore();
   const { locale, setLocale } = useLocaleStore();
+  const { groups, deleteStory, fetchStories } = useStoryStore();
   const t = useTranslate();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -140,6 +142,42 @@ export default function ProfileModal({ onClose }) {
                 <button className="btn-secondary" onClick={() => setEditing(true)}>{t("common.edit", "Edit Profile")}</button>
               </div>
             )}
+          </div>
+
+          <div className="settings-divider" />
+
+          <div className="settings-section">
+            <h3><Circle size={14} style={{ color: "var(--accent)", verticalAlign: "middle", marginRight: 6 }} />My Stories</h3>
+            {(() => {
+              const myGroup = groups.find((g) => g.user.id === authUser?.id);
+              const myStories = myGroup?.stories || [];
+              return myStories.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>No stories yet</p>
+              ) : (
+                <div className="my-stories-list">
+                  {myStories.map((s) => (
+                    <div key={s.id} className="my-story-item">
+                      <div className="my-story-preview">
+                        {s.type === "TEXT" ? (
+                          <div className="my-story-text-preview" style={{ backgroundColor: s.backgroundColor || "#000" }}>
+                            <span>{s.caption?.slice(0, 30) || "Text"}</span>
+                          </div>
+                        ) : (
+                          <img src={s.media} alt="" />
+                        )}
+                      </div>
+                      <div className="my-story-info">
+                        <span className="my-story-type">{s.type === "TEXT" ? "Text" : s.type === "VIDEO" ? "Video" : "Photo"}</span>
+                        <span className="my-story-date">{new Date(s.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <button className="my-story-delete" onClick={async () => { await deleteStory(s.id); fetchStories(); }} title="Delete">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           <div className="settings-divider" />
