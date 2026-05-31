@@ -125,9 +125,14 @@ export default function ChatPage() {
   }, [authUser?.id]);
 
   useEffect(() => {
+    fetchStories();
+    const interval = setInterval(fetchStories, 30000);
     const handler = () => fetchStories();
     window.addEventListener("app:story", handler);
-    return () => window.removeEventListener("app:story", handler);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("app:story", handler);
+    };
   }, [fetchStories]);
 
   return (
