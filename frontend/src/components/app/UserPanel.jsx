@@ -83,10 +83,21 @@ export default function UserPanel({ onClose }) {
       <div className="user-panel-content">
         {tab === "media" && (
           <div className="up-grid">
+            {otherUser?.avatar && (
+              <div className="up-avatar-section">
+                <div
+                  className="up-avatar-item"
+                  onClick={() => { setViewerUrl(otherUser.avatar); setViewerMime("image/jpeg"); }}
+                >
+                  <img src={otherUser.avatar} alt="" />
+                </div>
+                <span className="up-avatar-label">Profile Photo</span>
+              </div>
+            )}
             {mediaLoading ? (
               <div className="up-empty"><Loader2 size={24} className="spin" /></div>
             ) : media.length === 0 ? (
-              <div className="up-empty">No shared media yet</div>
+              !otherUser?.avatar && <div className="up-empty">No shared media yet</div>
             ) : (
               <div className="up-media-grid">
                 {media.map((item) => (

@@ -205,8 +205,6 @@ export class AdminService {
   }
 
   async seedDefaultSettings() {
-    const count = await prisma.setting.count();
-    if (count > 0) return;
     const defaults = [
       // General
       { key: "site_name", value: "WaveChat", type: "string", group: "general", label: "Site Name" },
@@ -231,7 +229,15 @@ export class AdminService {
       { key: "theme_mode", value: "dark", type: "string", group: "theme", label: "Theme Mode (dark/light)" },
       { key: "theme_glass_effect", value: "false", type: "boolean", group: "theme", label: "Glass Effect (frosted glass UI)" },
     ];
-    await prisma.setting.createMany({ data: defaults });
+    await prisma.$transaction(
+      defaults.map((d) =>
+        prisma.setting.upsert({
+          where: { key: d.key },
+          create: d,
+          update: {},
+        })
+      )
+    );
   }
 
   // ========== ADMIN LOGS ==========
