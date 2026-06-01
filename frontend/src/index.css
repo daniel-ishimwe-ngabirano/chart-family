@@ -1008,8 +1008,10 @@ input, textarea {
 /* Message Input */
 .message-input-container {
   flex-shrink: 0;
+  flex-grow: 0;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
+  width: 100%;
 }
 
 .reply-preview {
@@ -3248,6 +3250,7 @@ input, textarea {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  height: 100%;
 }
 
 /* Chat List Panel */
@@ -3435,6 +3438,7 @@ input, textarea {
   background: var(--bg-chat);
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .main-chat-content {
@@ -3479,6 +3483,8 @@ input, textarea {
   overflow-y: auto;
   padding: clamp(8px, 1.5cqi, 20px) clamp(8px, 2.5cqi, 36px);
   background: var(--bg-chat) url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  display: flex;
+  flex-direction: column;
 }
 
 /* User Panel (right side) */
