@@ -3240,7 +3240,7 @@ input, textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  overflow: hidden;
+  min-height: 0;
 }
 
 /* Chat List Panel */
@@ -3426,7 +3426,7 @@ input, textarea {
   display: flex;
   flex-direction: column;
   background: var(--bg-chat);
-  height: 100%;
+  min-height: 0;
 }
 
 .main-chat.empty {
@@ -3458,6 +3458,7 @@ input, textarea {
 
 .main-chat-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: clamp(8px, 1.5cqi, 20px) clamp(8px, 2.5cqi, 36px);
   background: var(--bg-chat) url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
