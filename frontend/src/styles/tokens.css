@@ -1,0 +1,88 @@
+/* ============================================================
+   TOKENS — colors, spacing, typography, fluid scale
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary:       #111b21;
+  --bg-secondary:     #202c33;
+  --bg-tertiary:      #2a3942;
+  --bg-chat:          #0b141a;
+  --bg-message-own:   #005c4b;
+  --bg-message-other: #202c33;
+  --bg-hover:         #2a3942;
+  --bg-active:        #2a3942;
+  --text-primary:     #e9edef;
+  --text-secondary:   #8696a0;
+  --text-muted:       #667781;
+  --text-link:        #53bdeb;
+  --accent:           #00a884;
+  --accent-hover:     #06cf9c;
+  --danger:           #ef5350;
+  --border:           #313d45;
+  --shadow:           rgba(0,0,0,0.3);
+  --radius:           8px;
+  --radius-lg:        16px;
+
+  /* Fluid spacing */
+  --sp-xs: clamp(2px,  0.4vw, 6px);
+  --sp-sm: clamp(4px,  0.6vw, 10px);
+  --sp-md: clamp(8px,  1vw,   16px);
+  --sp-lg: clamp(12px, 1.5vw, 24px);
+  --sp-xl: clamp(16px, 2vw,   32px);
+
+  /* Fluid typography */
+  --tx-xs:   clamp(9px,  0.7vw + 0.2vh, 11px);
+  --tx-sm:   clamp(11px, 0.8vw + 0.3vh, 13px);
+  --tx-base: clamp(13px, 0.9vw + 0.3vh, 15px);
+  --tx-md:   clamp(14px, 1vw   + 0.4vh, 17px);
+  --tx-lg:   clamp(16px, 1.2vw + 0.5vh, 22px);
+  --tx-xl:   clamp(20px, 1.8vw + 0.6vh, 32px);
+
+  /* Fluid sizing */
+  --av-xs:   clamp(22px, 2.5vw, 32px);
+  --av-sm:   clamp(28px, 3vw,   40px);
+  --av-md:   clamp(36px, 4vw,   52px);
+  --av-lg:   clamp(56px, 7vw,   96px);
+  --sidebar: clamp(48px, 5vw,   68px);
+  --panel:   clamp(220px,26vw,  420px);
+  --hdr-h:   clamp(48px, 5.5vw, 64px);
+  --inp-h:   clamp(34px, 4vw,   46px);
+  --nav-h:   clamp(48px, 6vh,   58px);
+
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] {
+  --bg-primary:       #ffffff;
+  --bg-secondary:     #f0f2f5;
+  --bg-tertiary:      #e9edef;
+  --bg-chat:          #efeae2;
+  --bg-message-own:   #d9fdd3;
+  --bg-message-other: #ffffff;
+  --bg-hover:         #e9edef;
+  --bg-active:        #d1d7db;
+  --text-primary:     #111b21;
+  --text-secondary:   #667781;
+  --text-muted:       #8696a0;
+  --text-link:        #027eb5;
+  --danger:           #e53935;
+  --border:           #d1d7db;
+  --shadow:           rgba(0,0,0,0.08);
+}
+
+html, body { height: 100%; overflow: hidden; }
+#root { height: 100%; width: 100%; overflow: hidden; display: flex; flex-direction: column; }
+a { color: var(--text-link); text-decoration: none; }
+button { cursor: pointer; border: none; background: none; color: var(--text-secondary); font-family: inherit; }
+input, textarea { font-family: inherit; outline: none; }
+.spin { animation: _spin 1s linear infinite; }
+@keyframes _spin { to { transform: rotate(360deg); } }
+
+*::-webkit-scrollbar       { width: 4px; height: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
