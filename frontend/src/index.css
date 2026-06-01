@@ -63,6 +63,8 @@ html, body {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Global custom scrollbar */
@@ -3151,15 +3153,18 @@ input, textarea {
 .app-layout {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   background: var(--bg-primary);
   overflow: hidden;
+  flex: 1;
 }
 
 /* Left Sidebar (icon nav) */
 .app-sidebar {
   width: 64px;
   min-width: 64px;
+  height: 100%;
   background: var(--bg-secondary);
   display: flex;
   flex-direction: column;
@@ -3167,6 +3172,7 @@ input, textarea {
   padding: 12px 0;
   border-right: 1px solid var(--border);
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
@@ -3234,6 +3240,7 @@ input, textarea {
   display: flex;
   overflow: hidden;
   height: 100%;
+  min-height: 0;
   container-type: inline-size;
 }
 
@@ -3245,6 +3252,8 @@ input, textarea {
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
+  height: 100%;
+  overflow: hidden;
 }
 
 .main-chat-wrap {
