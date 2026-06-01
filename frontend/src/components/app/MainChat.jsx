@@ -184,68 +184,70 @@ export default function MainChat({ onTogglePanel, onBack }) {
           <button className="icon-btn" onClick={onTogglePanel} title="Info"><Info size={20} /></button>
         </div>
       </div>
-      {pinnedMessages.length > 0 && (
-        <div className="pinned-messages-bar">
-          <Pin size={14} />
-          <span className="pinned-count">{pinnedMessages.length} pinned</span>
-          <span className="pinned-preview">{pinnedMessages[0]?.message?.text || "Media"}</span>
-          {pinnedMessages.length > 1 && <span className="pinned-more">+{pinnedMessages.length - 1} more</span>}
-        </div>
-      )}
-      {showSearch && (
-        <div className="chat-search-bar">
-          <Search size={16} />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search messages..."
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); doSearch(e.target.value); }}
-          />
-          <button className="icon-btn" onClick={() => { setShowSearch(false); setSearchQuery(""); setSearchResults([]); }}><X size={16} /></button>
-        </div>
-      )}
-      {showSearch && searchQuery && (
-        <div className="chat-search-results">
-          {searching ? (
-            <div className="loading-center"><Loader2 size={16} className="spin" /></div>
-          ) : searchResults.length === 0 ? (
-            <div className="search-no-results">No messages found</div>
-          ) : (
-            searchResults.slice(0, 10).map((msg) => (
-              <div key={msg.id} className="search-result-item" onClick={() => { setShowSearch(false); }}>
-                <div className="search-result-sender">{msg.sender?.fullName || "Unknown"}</div>
-                <div className="search-result-text">{msg.text}</div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-      <div className="main-chat-messages" ref={messagesContainerRef} onScroll={handleScroll}>
-        {isMessagesLoading ? (
-          <div className="loading-center"><Loader2 size={32} className="spin" /></div>
-        ) : (
-          <>
-            {isLoadingMore && (
-              <div className="loading-more"><Loader2 size={20} className="spin" /></div>
-            )}
-            {messages.length === 0 ? (
-              <div className="empty-chat"><p>No messages yet</p><p className="hint">Send a message to start</p></div>
+      <div className="main-chat-content">
+        {pinnedMessages.length > 0 && (
+          <div className="pinned-messages-bar">
+            <Pin size={14} />
+            <span className="pinned-count">{pinnedMessages.length} pinned</span>
+            <span className="pinned-preview">{pinnedMessages[0]?.message?.text || "Media"}</span>
+            {pinnedMessages.length > 1 && <span className="pinned-more">+{pinnedMessages.length - 1} more</span>}
+          </div>
+        )}
+        {showSearch && (
+          <div className="chat-search-bar">
+            <Search size={16} />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); doSearch(e.target.value); }}
+            />
+            <button className="icon-btn" onClick={() => { setShowSearch(false); setSearchQuery(""); setSearchResults([]); }}><X size={16} /></button>
+          </div>
+        )}
+        {showSearch && searchQuery && (
+          <div className="chat-search-results">
+            {searching ? (
+              <div className="loading-center"><Loader2 size={16} className="spin" /></div>
+            ) : searchResults.length === 0 ? (
+              <div className="search-no-results">No messages found</div>
             ) : (
-              messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} isOwn={msg.senderId === authUser.id} onReply={setReplyTo} />
+              searchResults.slice(0, 10).map((msg) => (
+                <div key={msg.id} className="search-result-item" onClick={() => { setShowSearch(false); }}>
+                  <div className="search-result-sender">{msg.sender?.fullName || "Unknown"}</div>
+                  <div className="search-result-text">{msg.text}</div>
+                </div>
               ))
             )}
-            <div ref={messagesEndRef} />
-          </>
+          </div>
+        )}
+        <div className="main-chat-messages" ref={messagesContainerRef} onScroll={handleScroll}>
+          {isMessagesLoading ? (
+            <div className="loading-center"><Loader2 size={32} className="spin" /></div>
+          ) : (
+            <>
+              {isLoadingMore && (
+                <div className="loading-more"><Loader2 size={20} className="spin" /></div>
+              )}
+              {messages.length === 0 ? (
+                <div className="empty-chat"><p>No messages yet</p><p className="hint">Send a message to start</p></div>
+              ) : (
+                messages.map((msg) => (
+                  <MessageBubble key={msg.id} message={msg} isOwn={msg.senderId === authUser.id} onReply={setReplyTo} />
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </>
+          )}
+        </div>
+        {typingText && (
+          <div className="typing-indicator">
+            <span className="typing-dots"><span /><span /><span /></span>
+            <span className="typing-text">{typingText}</span>
+          </div>
         )}
       </div>
-      {typingText && (
-        <div className="typing-indicator">
-          <span className="typing-dots"><span /><span /><span /></span>
-          <span className="typing-text">{typingText}</span>
-        </div>
-      )}
       <MessageInput replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
       {showPoll && <PollModal conversationId={selectedConversation.id} onClose={() => setShowPoll(false)} />}
     </div>

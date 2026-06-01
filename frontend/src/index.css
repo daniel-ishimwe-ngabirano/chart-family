@@ -1007,6 +1007,7 @@ input, textarea {
 
 /* Message Input */
 .message-input-container {
+  flex-shrink: 0;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
 }
@@ -3241,6 +3242,7 @@ input, textarea {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* Chat List Panel */
@@ -3423,11 +3425,19 @@ input, textarea {
 /* Main Chat */
 .main-chat {
   flex: 1;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   background: var(--bg-chat);
   min-height: 0;
   height: 100%;
+}
+
+.main-chat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .main-chat.empty {
@@ -3436,6 +3446,7 @@ input, textarea {
 }
 
 .main-chat-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: clamp(8px, 1cqi, 14px);
