@@ -3240,7 +3240,6 @@ input, textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  container-type: inline-size;
   overflow: hidden;
 }
 
