@@ -8,6 +8,8 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend && npm run build --prefix backend",
     "start": "npm run start --prefix backend",
+    "test": "npm run test --prefix backend",
+    "test:watch": "npm run test:watch --prefix backend",
     "db:generate": "npm run db:generate --prefix backend",
     "db:push": "npm run db:push --prefix backend",
     "db:migrate": "npm run db:migrate --prefix backend"

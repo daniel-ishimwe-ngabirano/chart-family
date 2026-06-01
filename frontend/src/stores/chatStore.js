@@ -182,6 +182,15 @@ export const useChatStore = create((set, get) => ({
   setSelectedConversation: (conversation) => set({ selectedConversation: conversation }),
   setMessages: (messages) => set({ messages }),
 
+  pinMessage: async (messageId, conversationId) => {
+    try {
+      const res = await axios.post(`/conversations/messages/${messageId}/pin`, { conversationId });
+      return res.data;
+    } catch (error) {
+      console.error("PinMessage error:", error);
+    }
+  },
+
   typingUsers: {},
   addTypingUser: (conversationId, { userId, fullName }) =>
     set((state) => {

@@ -229,6 +229,7 @@ export class AdminService {
       { key: "theme_chat_bubble_style", value: "rounded", type: "string", group: "theme", label: "Chat Bubble Style (rounded/square/modern)" },
       { key: "theme_animation", value: "all", type: "string", group: "theme", label: "Animations (all/minimal/none)" },
       { key: "theme_mode", value: "dark", type: "string", group: "theme", label: "Theme Mode (dark/light)" },
+      { key: "theme_glass_effect", value: "false", type: "boolean", group: "theme", label: "Glass Effect (frosted glass UI)" },
     ];
     await prisma.setting.createMany({ data: defaults });
   }

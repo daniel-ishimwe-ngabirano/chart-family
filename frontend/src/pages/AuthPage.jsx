@@ -4,6 +4,7 @@ import { useLocaleStore } from "../stores/localeStore.js";
 import { useTranslate } from "../hooks/useTranslate.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MessageCircle, Eye, EyeOff, Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
+import axios from "../lib/axios.js";
 
 function GoogleButton({ label }) {
   return (
@@ -37,20 +38,17 @@ function LoginForm({ onNavigate }) {
   };
 
   const sendOtp = async () => {
-    const res = await fetch("/api/auth/send-otp", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }), credentials: "include",
-    });
-    if (res.ok) setOtpSent(true);
+    try {
+      await axios.post("/auth/send-otp", { phone });
+      setOtpSent(true);
+    } catch { }
   };
 
   const verifyOtp = async () => {
-    const res = await fetch("/api/auth/verify-otp", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, otp }), credentials: "include",
-    });
-    const data = await res.json();
-    if (data.accessToken) window.location.reload();
+    try {
+      const { data } = await axios.post("/auth/verify-otp", { phone, otp });
+      if (data.accessToken) window.location.reload();
+    } catch { }
   };
 
   return (

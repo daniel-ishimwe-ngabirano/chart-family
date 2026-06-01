@@ -8,7 +8,7 @@ import { useTranslate } from "../../hooks/useTranslate.js";
 import { joinConversation, leaveConversation, emitMarkAsRead } from "../../stores/socketStore.js";
 import MessageInput from "../MessageInput.jsx";
 import MessageBubble from "../MessageBubble.jsx";
-import { ArrowLeft, Info, Phone, Video, Loader2, Search, X, Pin, BarChart3 } from "lucide-react";
+import { ArrowLeft, Info, Phone, Video, Loader2, Search, X, Pin, BarChart3, ThumbsUp } from "lucide-react";
 import { handleAvatarError } from "../../utils/avatar.js";
 import axios from "../../lib/axios.js";
 import PollModal from "../PollModal.jsx";
@@ -65,6 +65,16 @@ export default function MainChat({ onTogglePanel, onBack }) {
   }, [selectedConversation?.id]);
 
   useEffect(() => {
+    const handler = (e) => {
+      if (e.detail.conversationId === selectedConversation?.id) {
+        setPinnedMessages(e.detail.pinned);
+      }
+    };
+    window.addEventListener("app:pinned-updated", handler);
+    return () => window.removeEventListener("app:pinned-updated", handler);
+  }, [selectedConversation?.id]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
@@ -82,10 +92,11 @@ export default function MainChat({ onTogglePanel, onBack }) {
   }, [isLoadingMore, nextCursor, selectedConversation?.id, getMessages]);
 
   useEffect(() => {
-    if (selectedConversation && messages.length > 0) {
-      messages.filter((m) => m.senderId !== authUser.id && !m.readReceipts?.some((r) => r.userId === authUser.id))
-        .forEach((m) => emitMarkAsRead(selectedConversation.id, m.id, authUser.id));
-    }
+    if (!selectedConversation || messages.length === 0) return;
+    const userSettings = JSON.parse(localStorage.getItem("wavechat_user_settings") || "{}");
+    if (userSettings.readReceipts === false) return;
+    messages.filter((m) => m.senderId !== authUser.id && !m.readReceipts?.some((r) => r.userId === authUser.id))
+      .forEach((m) => emitMarkAsRead(selectedConversation.id, m.id, authUser.id));
   }, [messages, selectedConversation]);
 
   if (!selectedConversation) {

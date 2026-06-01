@@ -12,6 +12,7 @@ const themeFields = [
   { key: "theme_chat_bubble_style", label: "Chat Bubble Style", type: "select", options: ["rounded", "square", "modern"] },
   { key: "theme_animation", label: "Animations", type: "select", options: ["all", "minimal", "none"] },
   { key: "theme_mode", label: "Theme Mode", type: "select", options: ["dark", "light"] },
+  { key: "theme_glass_effect", label: "🌊 Glass Effect", type: "toggle", hint: "Makes entire UI look like frosted glass/water" },
 ];
 
 export default function AdminTheme() {
@@ -91,6 +92,16 @@ export default function AdminTheme() {
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
+                ) : field.type === "toggle" ? (
+                  <label className="admin-toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={val === "true"}
+                      onChange={(e) => handleChange(field.key, e.target.checked ? "true" : "false")}
+                    />
+                    <span className="admin-toggle-switch-slider" />
+                    <span className="admin-toggle-switch-label">{val === "true" ? "ON" : "OFF"}</span>
+                  </label>
                 ) : (
                   <input
                     type="text"
@@ -100,6 +111,7 @@ export default function AdminTheme() {
                   />
                 )}
                 <code>{field.key}</code>
+                {field.hint && field.type !== "text" && <small className="admin-theme-hint">{field.hint}</small>}
               </div>
             );
           })}

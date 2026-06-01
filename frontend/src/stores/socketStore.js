@@ -108,6 +108,15 @@ export const connectSocket = () => {
     useChatStore.getState().removeMessage(messageId);
   });
 
+  socket.on("message:pinned", ({ conversationId }) => {
+    const chatState = useChatStore.getState();
+    if (chatState.selectedConversation?.id === conversationId) {
+      axios.get(`/conversations/${conversationId}/pinned`).then((res) => {
+        window.dispatchEvent(new CustomEvent("app:pinned-updated", { detail: { conversationId, pinned: res.data || [] } }));
+      }).catch(() => {});
+    }
+  });
+
   socket.on("message:read", ({ messageId, userId, conversationId }) => {
     useChatStore.getState().markMessageRead(messageId, userId, conversationId);
   });
@@ -252,6 +261,10 @@ export const emitStopTyping = (conversationId, userId) => {
 
 export const emitMarkAsRead = (conversationId, messageId, userId) => {
   socket?.emit("message:read", { conversationId, messageId, userId });
+};
+
+export const emitPinMessage = (conversationId, messageId) => {
+  socket?.emit("message:pin", { conversationId, messageId });
 };
 
 export default socket;

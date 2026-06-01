@@ -36,6 +36,7 @@ function applyTheme(theme) {
     "chat-bubble-style": "--chat-bubble-style",
     "animation": "--animation",
     "mode": "--mode",
+    "glass-effect": "--glass",
   };
 
   for (const [key, cssVar] of Object.entries(map)) {
@@ -49,5 +50,11 @@ function applyTheme(theme) {
   }
   if (theme["primary-color"] && !theme["accent-color"]) {
     root.style.setProperty("--accent", theme["primary-color"]);
+  }
+  // glass effect
+  if (theme["glass-effect"] === "true") {
+    root.setAttribute("data-glass", "true");
+  } else {
+    root.removeAttribute("data-glass");
   }
 }

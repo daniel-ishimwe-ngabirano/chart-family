@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { messageService } from "../services/message.service.js";
+import { storyService } from "../services/story.service.js";
 import { getIO } from "../socket/index.js";
 
 export interface AppEvent {
@@ -119,6 +120,7 @@ export function startBackgroundJobs() {
   setupScheduledMessageHandler();
   intervals.push(setInterval(processScheduledMessages, 30000));
   intervals.push(setInterval(cleanupDisappearingMessages, 60000));
+  intervals.push(setInterval(() => storyService.cleanupExpired(), 5 * 60 * 1000));
   console.log("Background jobs started");
 }
 

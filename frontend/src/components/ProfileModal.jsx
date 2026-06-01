@@ -9,9 +9,10 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
 } from "../utils/push.js";
-import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages, Sparkles, Palette, Trash2, Circle } from "lucide-react";
+import { X, Camera, Moon, Sun, Bell, Shield, Eye, LogOut, Globe, Languages, Sparkles, Palette, Trash2, Circle, Star } from "lucide-react";
 import { handleAvatarError, generateAvatarSvg } from "../utils/avatar.js";
 import AvatarBuilder from "./AvatarBuilder.jsx";
+import StarredMessages from "./StarredMessages.jsx";
 
 const SETTINGS_KEY = "wavechat_user_settings";
 let swRegistration = null;
@@ -43,6 +44,7 @@ export default function ProfileModal({ onClose }) {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarBuilder, setShowAvatarBuilder] = useState(false);
+const [showStarred, setShowStarred] = useState(false);
   const [notifications, setNotifications] = useState(() => loadSettings().notifications ?? true);
   const [lastSeen, setLastSeen] = useState(() => loadSettings().lastSeen ?? "everyone");
   const fileRef = useRef(null);
@@ -200,7 +202,11 @@ export default function ProfileModal({ onClose }) {
               <div className="setting-info">
                 <span>{t("settings.readReceipts", "Read Receipts")}</span>
                 <label className="toggle">
-                  <input type="checkbox" defaultChecked onChange={() => {}} />
+                  <input type="checkbox" checked={loadSettings().readReceipts ?? true} onChange={() => {
+                    const next = !(loadSettings().readReceipts ?? true);
+                    saveSettings({ ...loadSettings(), readReceipts: next });
+                    setLastSeen(loadSettings().lastSeen ?? "everyone");
+                  }} />
                   <span className="toggle-slider" />
                 </label>
               </div>
@@ -260,6 +266,13 @@ export default function ProfileModal({ onClose }) {
 
           <div className="settings-divider" />
 
+          <div className="settings-section">
+            <h3><Star size={14} style={{ color: "var(--accent)", verticalAlign: "middle", marginRight: 6 }} />Starred</h3>
+            <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setShowStarred(true)}>View Starred Messages</button>
+          </div>
+
+          <div className="settings-divider" />
+
           <button className="logout-btn" onClick={logout}>
             <LogOut size={18} />
             {t("settings.signOut", "Sign Out")}
@@ -267,6 +280,7 @@ export default function ProfileModal({ onClose }) {
         </div>
       </div>
       {showAvatarBuilder && <AvatarBuilder onClose={() => setShowAvatarBuilder(false)} />}
+      {showStarred && <StarredMessages onClose={() => setShowStarred(false)} />}
     </div>
   );
 }

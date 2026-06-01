@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useChatStore } from "../stores/chatStore.js";
 import { useAuthStore } from "../stores/authStore.js";
-import { MoreVertical, Reply, Pencil, Trash2, SmilePlus, Check, CheckCheck, Forward, Image } from "lucide-react";
+import { emitPinMessage } from "../stores/socketStore.js";
+import { MoreVertical, Reply, Pencil, Trash2, SmilePlus, Check, CheckCheck, Forward, Image, Pin } from "lucide-react";
 import MediaViewer from "./MediaViewer.jsx";
 import ForwardModal from "./ForwardModal.jsx";
 import VoicePlayer from "./VoicePlayer.jsx";
@@ -134,6 +135,9 @@ export default function MessageBubble({ message, isOwn, onReply }) {
               </button>
               <button onClick={() => { setShowForward(true); setShowMenu(false); }}>
                 <Forward size={16} /> Forward
+              </button>
+              <button onClick={() => { emitPinMessage(message.conversationId, message.id); setShowMenu(false); }}>
+                <Pin size={16} /> Pin
               </button>
               {isOwn && (
                 <button onClick={handleEdit}>

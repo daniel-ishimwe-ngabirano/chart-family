@@ -21,7 +21,7 @@ export class StoryService {
         backgroundColor: data.backgroundColor || "#000000",
         fontStyle: data.fontStyle || "sans-serif",
         textColor: data.textColor || "#FFFFFF",
-        expiresAt: new Date("2099-12-31"),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
       include: { user: { select: { id: true, fullName: true, avatar: true } } },
     });

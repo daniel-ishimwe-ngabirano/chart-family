@@ -1,6 +1,8 @@
 import { prisma } from "../config/prisma.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { stripHtmlTags, sanitizeHtml } from "../utils/index.js";
+import { adminService } from "./admin.service.js";
+import { mediaService } from "./media.service.js";
 
 const MAX_MESSAGE_LENGTH = 10000;
 
@@ -19,6 +21,10 @@ export class MessageService {
     const text = sanitizeHtml(stripHtmlTags(data.text || "")).slice(0, MAX_MESSAGE_LENGTH);
     if (!text && !data.attachments?.length) {
       throw new AppError("Message text or attachment required", 400);
+    }
+
+    if (text && await adminService.checkTextForBadWords(text)) {
+      throw new AppError("Message contains inappropriate content", 400);
     }
 
     const message = await prisma.message.create({
@@ -78,6 +84,9 @@ export class MessageService {
     if (message.isDeleted) throw new AppError("Cannot edit deleted message", 400);
 
     const cleanText = sanitizeHtml(stripHtmlTags(text)).slice(0, MAX_MESSAGE_LENGTH);
+    if (cleanText && await adminService.checkTextForBadWords(cleanText)) {
+      throw new AppError("Message contains inappropriate content", 400);
+    }
     return prisma.message.update({
       where: { id: messageId },
       data: { text: cleanText, isEdited: true },
@@ -86,9 +95,20 @@ export class MessageService {
   }
 
   async deleteMessage(messageId: string, userId: string, deleteForEveryone = false) {
-    const message = await prisma.message.findUnique({ where: { id: messageId } });
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      include: { attachments: true },
+    });
     if (!message) throw new AppError("Message not found", 404);
     if (message.senderId !== userId && deleteForEveryone) throw new AppError("Unauthorized", 403);
+
+    if (deleteForEveryone && message.attachments?.length) {
+      for (const att of message.attachments) {
+        if (att.publicId) {
+          await mediaService.deleteFile(att.publicId, "wavechat/messages").catch(() => {});
+        }
+      }
+    }
 
     return prisma.message.update({
       where: { id: messageId },
