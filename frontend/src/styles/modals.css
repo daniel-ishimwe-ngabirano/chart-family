@@ -42,6 +42,70 @@
 .link-btn { color: var(--accent); font-weight: 600; font-size: var(--tx-sm); }
 .link-btn:hover { text-decoration: underline; }
 
+/* ── Auth branding panel ── */
+.auth-brand-content {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  padding: var(--sp-xl);
+}
+.auth-brand-content .sidebar-brand-icon,
+.auth-brand-content svg { color: var(--accent); margin-bottom: var(--sp-md); }
+.auth-brand-content h1 {
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: var(--sp-md) 0 var(--sp-sm);
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.auth-brand-content p {
+  color: var(--text-muted);
+  font-size: clamp(14px, 1.5vw, 17px);
+  margin-bottom: var(--sp-xl);
+}
+
+/* ── Animated message bubbles ── */
+.auth-animation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+  align-items: center;
+  margin-top: var(--sp-lg);
+}
+.auth-msg {
+  padding: clamp(8px,1.2vw,12px) clamp(16px,2.5vw,28px);
+  border-radius: 20px;
+  background: var(--bg-tertiary);
+  font-size: clamp(12px,1.1vw,14px);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(16px);
+  animation: authMsgIn 0.6s ease-out forwards;
+  position: relative;
+}
+.auth-msg::before {
+  content: "✓";
+  color: var(--accent);
+  margin-right: 8px;
+  font-weight: 700;
+}
+.anim-1 { animation-delay: 0.4s; }
+.anim-2 { animation-delay: 1.0s; }
+.anim-3 { animation-delay: 1.6s; }
+@keyframes authMsgIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Forgot password ── */
+.auth-forgot-row { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.forgot-password-link { font-size: var(--tx-xs); color: var(--accent); text-align: right; background: none; border: none; cursor: pointer; padding: 0; }
+.forgot-password-link:hover { text-decoration: underline; }
+
 /* ── Input group ── */
 .input-group { display: flex; flex-direction: column; gap: 6px; }
 .input-group label { font-size: var(--tx-xs); color: var(--text-secondary); font-weight: 500; }
