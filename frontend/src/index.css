@@ -499,13 +499,13 @@ input, textarea {
 }
 
 .chat-header-name {
-  font-size: 16px;
+  font-size: clamp(14px, 1.3vw, 17px);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .chat-header-status {
-  font-size: 12px;
+  font-size: clamp(11px, 1vw, 13px);
   color: var(--text-secondary);
 }
 
@@ -571,7 +571,7 @@ input, textarea {
   flex-direction: column;
   margin-bottom: 4px;
   position: relative;
-  max-width: min(65%, 520px);
+  max-width: min(68%, 560px);
 }
 
 .message-wrapper.own {
@@ -739,7 +739,7 @@ input, textarea {
 }
 
 .message-bubble {
-  padding: 6px 10px 6px 10px;
+  padding: clamp(5px, 0.6vw, 8px) clamp(8px, 0.9vw, 12px);
   border-radius: var(--radius);
   position: relative;
   word-wrap: break-word;
@@ -776,7 +776,7 @@ input, textarea {
 }
 
 .message-text {
-  font-size: 14.5px;
+  font-size: clamp(13px, 1.1vw, 15px);
   line-height: 1.4;
   color: var(--text-primary);
 }
@@ -797,7 +797,7 @@ input, textarea {
 }
 
 .message-time {
-  font-size: 11px;
+  font-size: clamp(10px, 0.8vw, 12px);
   color: var(--text-muted);
 }
 
@@ -1059,13 +1059,13 @@ input, textarea {
 .input-form {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
-  padding: 8px 16px;
-  min-height: 56px;
+  gap: clamp(4px, 0.6vw, 10px);
+  padding: clamp(6px, 0.8vw, 10px) clamp(10px, 1.2vw, 18px);
+  min-height: 52px;
 }
 
 .input-action {
-  padding: 8px;
+  padding: clamp(5px, 0.6vw, 8px);
   border-radius: 50%;
   flex-shrink: 0;
   transition: background 0.2s;
@@ -1080,13 +1080,13 @@ input, textarea {
   background: var(--bg-tertiary);
   border: none;
   border-radius: var(--radius);
-  padding: 10px 14px;
+  padding: clamp(8px, 0.8vw, 11px) clamp(10px, 1vw, 14px);
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: clamp(13px, 1.1vw, 15px);
   resize: none;
   max-height: 120px;
-  min-height: 40px;
-  height: 40px;
+  min-height: 38px;
+  height: 38px;
   line-height: 1.4;
   overflow-y: auto;
   display: block;
@@ -1152,7 +1152,8 @@ input, textarea {
 .send-btn {
   background: var(--accent);
   color: white;
-  padding: 10px;
+  width: clamp(34px, 3vw, 42px);
+  height: clamp(34px, 3vw, 42px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1621,7 +1622,15 @@ input, textarea {
   color: var(--text-muted);
 }
 
-/* Responsive */
+/* ==============================================
+   RESPONSIVE SYSTEM
+   xs: < 480px   (small phones)
+   sm: 480–767px (large phones)
+   md: 768–1023px (tablets)
+   lg: 1024–1279px (small laptops)
+   xl: 1280px+  (desktops)
+   ============================================== */
+
 /* Auth Tabs */
 .auth-tabs {
   display: flex;
@@ -3162,8 +3171,8 @@ input, textarea {
 
 /* Left Sidebar (icon nav) */
 .app-sidebar {
-  width: 64px;
-  min-width: 64px;
+  width: clamp(52px, 5vw, 68px);
+  min-width: 52px;
   height: 100%;
   background: var(--bg-secondary);
   display: flex;
@@ -3196,8 +3205,8 @@ input, textarea {
 }
 
 .sidebar-nav-item {
-  width: 48px;
-  height: 48px;
+  width: clamp(36px, 3.5vw, 48px);
+  height: clamp(36px, 3.5vw, 48px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3245,9 +3254,9 @@ input, textarea {
 }
 
 .chat-list-panel-wrap {
-  flex: 0 1 30%;
-  min-width: 280px;
-  max-width: 420px;
+  flex: 0 1 clamp(260px, 28vw, 420px);
+  min-width: clamp(220px, 22vw, 280px);
+  max-width: clamp(300px, 32vw, 440px);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -3277,11 +3286,12 @@ input, textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: clamp(12px, 1.5cqi, 18px) clamp(14px, 1.8cqi, 20px);
+  padding: clamp(10px, 1.5vw, 18px) clamp(12px, 1.8vw, 20px);
+  flex-shrink: 0;
 }
 
 .chat-list-header h2 {
-  font-size: clamp(16px, 2cqi, 22px);
+  font-size: clamp(15px, 1.5vw, 20px);
   font-weight: 700;
 }
 
@@ -3289,11 +3299,12 @@ input, textarea {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 12px 10px;
-  padding: 10px 14px;
+  margin: 0 clamp(8px, 1vw, 12px) 10px;
+  padding: clamp(7px, 0.8vw, 10px) clamp(10px, 1.2vw, 14px);
   background: var(--bg-tertiary);
   border-radius: 10px;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .chat-list-search input {
@@ -3309,21 +3320,25 @@ input, textarea {
 .chat-list-filters {
   display: flex;
   gap: 6px;
-  padding: 0 12px 10px;
+  padding: 0 clamp(8px, 1vw, 12px) 8px;
   overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
 }
+.chat-list-filters::-webkit-scrollbar { display: none; }
 
 .filter-chip {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 14px;
+  padding: clamp(4px, 0.5vw, 6px) clamp(10px, 1.2vw, 14px);
   border-radius: 20px;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: clamp(11px, 1vw, 13px);
   font-weight: 500;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s;
 }
 
@@ -3339,8 +3354,8 @@ input, textarea {
 
 .chat-list-item {
   display: flex;
-  gap: clamp(8px, 1.2cqi, 14px);
-  padding: clamp(8px, 1.2cqi, 14px) clamp(12px, 2cqi, 20px);
+  gap: clamp(8px, 1.2vw, 14px);
+  padding: clamp(8px, 1vw, 13px) clamp(10px, 1.5vw, 18px);
   cursor: pointer;
   transition: background 0.15s;
   border-bottom: 1px solid var(--border);
@@ -3351,14 +3366,14 @@ input, textarea {
 
 .chat-list-avatar {
   position: relative;
-  width: clamp(36px, 4cqi, 52px);
-  height: clamp(36px, 4cqi, 52px);
+  width: clamp(36px, 3.5vw, 48px);
+  height: clamp(36px, 3.5vw, 48px);
   flex-shrink: 0;
 }
 
 .chat-list-avatar img {
-  width: clamp(36px, 4cqi, 52px);
-  height: clamp(36px, 4cqi, 52px);
+  width: clamp(36px, 3.5vw, 48px);
+  height: clamp(36px, 3.5vw, 48px);
   border-radius: 50%;
   object-fit: cover;
 }
@@ -3392,12 +3407,12 @@ input, textarea {
 }
 
 .chat-list-name {
-  font-size: 15px;
+  font-size: clamp(13px, 1.2vw, 15px);
   font-weight: 500;
 }
 
 .chat-list-time {
-  font-size: 11px;
+  font-size: clamp(10px, 0.9vw, 12px);
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -3409,7 +3424,7 @@ input, textarea {
 }
 
 .chat-list-preview {
-  font-size: 13px;
+  font-size: clamp(11px, 1vw, 13px);
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -3471,15 +3486,15 @@ input, textarea {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1cqi, 14px);
-  padding: clamp(8px, 1cqi, 12px) clamp(12px, 1.8cqi, 20px);
+  gap: clamp(8px, 1vw, 14px);
+  padding: clamp(8px, 1vw, 12px) clamp(12px, 1.5vw, 20px);
   background: var(--bg-tertiary);
-  min-height: clamp(48px, 5cqi, 64px);
+  min-height: clamp(50px, 5vw, 64px);
 }
 
 .chat-header-avatar {
-  width: clamp(32px, 3.5cqi, 44px);
-  height: clamp(32px, 3.5cqi, 44px);
+  width: clamp(32px, 3vw, 44px);
+  height: clamp(32px, 3vw, 44px);
   border-radius: 50%;
   object-fit: cover;
 }
@@ -3494,7 +3509,7 @@ input, textarea {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: clamp(8px, 1.5cqi, 20px) clamp(8px, 2.5cqi, 36px);
+  padding: clamp(8px, 1.5vw, 20px) clamp(8px, 2.5vw, 40px);
   background: var(--bg-chat) url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   display: flex;
   flex-direction: column;
@@ -3502,9 +3517,9 @@ input, textarea {
 
 /* User Panel (right side) */
 .user-panel-wrap {
-  flex: 0 1 25%;
-  min-width: 260px;
-  max-width: 380px;
+  flex: 0 1 clamp(240px, 22vw, 360px);
+  min-width: clamp(220px, 20vw, 260px);
+  max-width: clamp(260px, 25vw, 380px);
   border-left: 1px solid var(--border);
   background: var(--bg-secondary);
   overflow-y: auto;
@@ -5845,17 +5860,17 @@ input, textarea {
   flex-shrink: 0;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
-  padding: 8px 0;
+  padding: clamp(4px, 0.5vw, 8px) 0;
 }
 
 .stories-scroll {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: clamp(8px, 1vw, 14px);
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 4px 12px;
+  padding: 4px clamp(8px, 1vw, 14px);
   scrollbar-width: none;
 }
 
@@ -5873,10 +5888,10 @@ input, textarea {
 }
 
 .story-name {
-  font-size: 11px;
+  font-size: clamp(9px, 0.8vw, 11px);
   color: var(--text-secondary);
   white-space: nowrap;
-  max-width: 54px;
+  max-width: clamp(40px, 4vw, 54px);
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center;
@@ -5884,8 +5899,8 @@ input, textarea {
 
 /* === Stories (shared ring styles) === */
 .story-avatar-ring {
-  width: 54px;
-  height: 54px;
+  width: clamp(42px, 4vw, 54px);
+  height: clamp(42px, 4vw, 54px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -5907,8 +5922,8 @@ input, textarea {
   position: relative;
 }
 .story-avatar-img-wrap {
-  width: 48px;
-  height: 48px;
+  width: clamp(36px, 3.5vw, 48px);
+  height: clamp(36px, 3.5vw, 48px);
   border-radius: 50%;
   overflow: hidden;
   background: var(--bg-secondary, #f0f2f5);
