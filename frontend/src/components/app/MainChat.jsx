@@ -132,6 +132,7 @@ export default function MainChat({ onTogglePanel, onBack }) {
   }
 
   const otherUser = selectedConversation?.isGroup ? null : selectedConversation?.members?.find((m) => m.user?.id !== authUser.id)?.user;
+  const isOnline = otherUser ? onlineUsers.has(otherUser.id) : false;
   const voiceCallsEnabled = features.isEnabled("voice_calls");
   const videoCallsEnabled = features.isEnabled("video_calls");
   const storiesEnabled = features.isEnabled("stories_enabled");
@@ -161,9 +162,9 @@ export default function MainChat({ onTogglePanel, onBack }) {
         <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="chat-header-avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown")} />
         <div className="chat-header-info">
           <div className="chat-header-name">{selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown"}</div>
-          {selectedConversation?.isGroup && (
-            <div className="chat-header-status">{selectedConversation.members?.length || 0} members</div>
-          )}
+          <div className="chat-header-status">
+            {selectedConversation?.isGroup ? `${selectedConversation.members?.length || 0} members` : isOnline ? "Online" : otherUser?.lastSeen ? `Last seen ${new Date(otherUser.lastSeen).toLocaleTimeString()}` : "Offline"}
+          </div>
         </div>
         <div className="chat-header-actions">
           {voiceCallsEnabled && <button className="icon-btn" title="Voice call" onClick={handleVoiceCall}><Phone size={20} /></button>}
