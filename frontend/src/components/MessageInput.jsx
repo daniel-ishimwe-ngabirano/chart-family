@@ -164,6 +164,9 @@ export default function MessageInput({ replyTo, onCancelReply }) {
     emitStopTyping(selectedConversation.id, authUser.id);
     await axios.delete(`/conversations/${selectedConversation.id}/draft`).catch(() => {});
     playMessageSent();
+    // reset textarea height
+    const ta = document.querySelector(".input-form textarea");
+    if (ta) ta.style.height = "40px";
   };
 
   const handleFileSelect = (e) => {
@@ -277,6 +280,8 @@ export default function MessageInput({ replyTo, onCancelReply }) {
           onChange={(e) => {
             setText(e.target.value);
             handleTyping();
+            e.target.style.height = "40px";
+            e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
             clearTimeout(draftTimerRef.current);
             draftTimerRef.current = setTimeout(() => {
               if (selectedConversation && e.target.value.trim()) {
@@ -286,6 +291,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
           }}
           onKeyDown={handleKeyDown}
           rows={1}
+          style={{ height: "40px" }}
         />
         <button
           type="submit"

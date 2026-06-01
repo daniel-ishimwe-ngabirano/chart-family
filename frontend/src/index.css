@@ -1055,6 +1055,7 @@ input, textarea {
   align-items: flex-end;
   gap: 8px;
   padding: 8px 16px;
+  min-height: 56px;
 }
 
 .input-action {
@@ -1077,8 +1078,12 @@ input, textarea {
   color: var(--text-primary);
   font-size: 15px;
   resize: none;
-  max-height: 100px;
-  min-height: 20px;
+  max-height: 120px;
+  min-height: 40px;
+  height: 40px;
+  line-height: 1.4;
+  overflow-y: auto;
+  display: block;
 }
 
 .input-form textarea::placeholder {
