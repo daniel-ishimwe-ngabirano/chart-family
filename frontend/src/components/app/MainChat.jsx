@@ -24,6 +24,8 @@ export default function MainChat({ onTogglePanel, onBack }) {
   const messagesContainerRef = useRef(null);
   const [replyTo, setReplyTo] = useState(null);
   const prevMessageCountRef = useRef(0);
+  const seenReadReceiptsRef = useRef(new Set());
+  const isPaginatingRef = useRef(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -54,6 +56,8 @@ export default function MainChat({ onTogglePanel, onBack }) {
       joinConversation(selectedConversation.id);
       axios.post(`/conversations/${selectedConversation.id}/read`).catch(() => {});
       prevMessageCountRef.current = 0;
+      seenReadReceiptsRef.current = new Set();
+      isPaginatingRef.current = false;
       setShowSearch(false);
       setSearchQuery("");
       setSearchResults([]);
@@ -75,17 +79,24 @@ export default function MainChat({ onTogglePanel, onBack }) {
   }, [selectedConversation?.id]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const prev = prevMessageCountRef.current;
+    prevMessageCountRef.current = messages.length;
+    if (isPaginatingRef.current) return;
+    if (messages.length > prev) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages.length]);
 
   const handleScroll = useCallback(() => {
     const container = messagesContainerRef.current;
-    if (!container || isLoadingMore || !nextCursor) return;
-    if (container.scrollTop < 100) {
+    if (!container || isLoadingMore || !nextCursor || isPaginatingRef.current) return;
+    if (container.scrollTop < 80) {
+      isPaginatingRef.current = true;
       const prevHeight = container.scrollHeight;
-      getMessages(selectedConversation.id, nextCursor).then(() => {
+      getMessages(selectedConversation.id, nextCursor).finally(() => {
         requestAnimationFrame(() => {
           container.scrollTop = container.scrollHeight - prevHeight;
+          isPaginatingRef.current = false;
         });
       });
     }
@@ -95,8 +106,18 @@ export default function MainChat({ onTogglePanel, onBack }) {
     if (!selectedConversation || messages.length === 0) return;
     const userSettings = JSON.parse(localStorage.getItem("wavechat_user_settings") || "{}");
     if (userSettings.readReceipts === false) return;
-    messages.filter((m) => m.senderId !== authUser.id && !m.readReceipts?.some((r) => r.userId === authUser.id))
-      .forEach((m) => emitMarkAsRead(selectedConversation.id, m.id, authUser.id));
+    const seen = seenReadReceiptsRef.current;
+    const unread = [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.senderId === authUser.id) continue;
+      if (m.readReceipts?.some((r) => r.userId === authUser.id)) continue;
+      if (seen.has(m.id)) continue;
+      seen.add(m.id);
+      unread.push(m);
+      if (unread.length >= 5) break;
+    }
+    unread.forEach((m) => emitMarkAsRead(selectedConversation.id, m.id, authUser.id));
   }, [messages, selectedConversation]);
 
   if (!selectedConversation) {

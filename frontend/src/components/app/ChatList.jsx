@@ -10,6 +10,8 @@ import GroupModal from "../GroupModal.jsx";
 import { handleAvatarError } from "../../utils/avatar.js";
 
 const ChatListItem = memo(function ChatListItem({ conversation, authUser, selectedId, onSelect, onSelectChat, openViewer, groups }) {
+  const onlineUsers = useChatStore((s) => s.onlineUsers);
+  const typingUsers = useChatStore((s) => s.typingUsers);
   const isGroup = conversation.isGroup;
   const other = isGroup ? null : conversation.members?.find((m) => m.user?.id !== authUser.id)?.user;
   const otherId = other?.id || null;
@@ -25,12 +27,9 @@ const ChatListItem = memo(function ChatListItem({ conversation, authUser, select
   const storyData = otherId ? storyMap[otherId] : null;
   const storyCount = storyData?.count || 0;
 
-  const isOnline = () => {
-    if (isGroup) return false;
-    return other ? useChatStore.getState().onlineUsers.has(other.id) : false;
-  };
+  const online = !isGroup && other ? onlineUsers.has(other.id) : false;
 
-  const typing = useChatStore.getState().typingUsers[conversation.id]?.filter((u) => u.userId !== authUser.id);
+  const typing = typingUsers[conversation.id]?.filter((u) => u.userId !== authUser.id);
 
   const getLastMsg = () => {
     if (typing?.length > 0) {
@@ -40,8 +39,6 @@ const ChatListItem = memo(function ChatListItem({ conversation, authUser, select
     if (conversation.lastMessage.isDeleted) return "Message deleted";
     return conversation.lastMessage.text || (conversation.lastMessage.type === "IMAGE" ? "📷 Image" : conversation.lastMessage.type === "VIDEO" ? "🎥 Video" : "Media");
   };
-
-  const online = isOnline();
 
   return (
     <div className={`chat-list-item ${selectedId === conversation.id ? "active" : ""}`}>
