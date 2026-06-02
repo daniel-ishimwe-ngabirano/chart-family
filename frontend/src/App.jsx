@@ -26,6 +26,7 @@ import AdminSettings from "./pages/admin/Settings.jsx";
 import AdminLogs from "./pages/admin/Logs.jsx";
 import AdminMediaSettings from "./pages/admin/MediaSettings.jsx";
 import AdminSections from "./pages/admin/Sections.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }) {
