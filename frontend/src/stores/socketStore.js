@@ -191,6 +191,15 @@ export const connectSocket = () => {
 
   socket.on("settings:updated", (settings) => {
     useSettingsStore.getState().applySettingsUpdate(settings);
+    // re-apply theme live for all users
+    const hasTheme = Array.isArray(settings)
+      ? settings.some((s) => s.key?.startsWith("theme_"))
+      : Object.keys(settings || {}).some((k) => k.startsWith("theme_"));
+    if (hasTheme) {
+      import("./themeStore.js").then(({ useThemeStore }) => {
+        useThemeStore.getState().loadTheme();
+      });
+    }
   });
 
   socket.on("sections:updated", () => {

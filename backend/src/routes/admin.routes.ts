@@ -38,6 +38,7 @@ router.put("/settings", protectAdmin, adminController.updateSettings);
 
 // Theme
 router.get("/theme", protectAdmin, adminController.getTheme);
+router.get("/theme/public", adminController.getPublicTheme);
 
 // Logs
 router.get("/logs", protectAdmin, adminController.getLogs);

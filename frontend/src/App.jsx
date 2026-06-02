@@ -64,10 +64,10 @@ function App() {
       getUsers();
       if (authUser.role === "admin") {
         fetchFeatures();
-        loadTheme();
       } else {
         fetchPublicFeatures();
       }
+      loadTheme();
       const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_SETTINGS) || "{}");
       if (settings.notifications !== false) {
         registerServiceWorker().then((reg) => {

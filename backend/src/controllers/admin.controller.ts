@@ -172,6 +172,12 @@ export async function getTheme(req: Request, res: Response, next: NextFunction) 
   } catch (err) { next(err); }
 }
 
+export async function getPublicTheme(_req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await adminService.getTheme());
+  } catch (err) { next(err); }
+}
+
 // ========== ADMIN AUTH ==========
 
 export async function checkAdminPasswordStatus(_req: Request, res: Response, next: NextFunction) {

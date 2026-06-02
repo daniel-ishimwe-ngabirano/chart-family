@@ -6,16 +6,12 @@ export const useThemeStore = create((set, get) => ({
 
   loadTheme: async () => {
     try {
-      const res = await axios.get("/admin/settings?group=theme");
-      const theme = {};
-      res.data.forEach((s) => {
-        const key = s.key.replace("theme_", "").replace(/_/g, "-");
-        theme[key] = s.value;
-      });
+      const res = await axios.get("/admin/theme/public");
+      const theme = res.data;
       set({ theme });
       applyTheme(theme);
     } catch {
-      // not an admin user - use defaults
+      // use defaults
     }
   },
 
