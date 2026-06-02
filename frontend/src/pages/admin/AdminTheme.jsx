@@ -33,8 +33,22 @@ export default function AdminTheme() {
   }, []);
 
   const applyThemePreview = (key, value) => {
-    const cssVar = `--${key.replace("theme_", "").replace(/_/g, "-")}`;
-    document.documentElement.style.setProperty(cssVar, value);
+    const root = document.documentElement;
+    if (key === "theme_accent_color" || key === "theme_primary_color") {
+      root.style.setProperty("--accent", value);
+      root.style.setProperty("--accent-hover", value);
+    } else if (key === "theme_bg_color") {
+      root.style.setProperty("--bg-primary", value);
+      root.style.setProperty("--bg-chat", value);
+    } else if (key === "theme_border_radius") {
+      root.style.setProperty("--radius", value);
+    } else if (key === "theme_font") {
+      root.style.fontFamily = value;
+    } else if (key === "theme_mode") {
+      root.setAttribute("data-theme", value);
+    } else if (key === "theme_glass_effect") {
+      value === "true" ? root.setAttribute("data-glass", "true") : root.removeAttribute("data-glass");
+    }
   };
 
   const handleChange = (key, value) => {
