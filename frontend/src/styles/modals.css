@@ -166,10 +166,103 @@
 /* ── Group / Forward / New Conversation modals ── */
 .group-modal .modal-body { max-height: 60dvh; overflow-y: auto; }
 .participants-info { display: flex; align-items: center; gap: 8px; padding: 8px 0; color: var(--accent); font-size: var(--tx-xs); font-weight: 500; }
-.user-select-list { max-height: 300px; overflow-y: auto; }
-.user-select-item { display: flex; align-items: center; gap: var(--sp-md); padding: var(--sp-sm) var(--sp-md); border-radius: var(--radius); cursor: pointer; transition: background 0.15s; }
+
+/* ── Search bar inside modals ── */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md);
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+.search-bar input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--tx-sm);
+}
+.search-bar input::placeholder { color: var(--text-muted); }
+
+/* ── User select list ── */
+.user-select-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.user-select-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
 .user-select-item:hover    { background: var(--bg-hover); }
 .user-select-item.selected { background: rgba(0,168,132,0.1); }
+
+/* ── Avatar with online dot ── */
+.avatar-wrapper {
+  position: relative;
+  width: var(--av-md);
+  height: var(--av-md);
+  flex-shrink: 0;
+}
+.avatar {
+  width: var(--av-md);
+  height: var(--av-md);
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.avatar-wrapper .avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.avatar-wrapper .online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-secondary);
+}
+
+/* ── User info inside select item ── */
+.user-select-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.user-select-name {
+  font-size: var(--tx-base);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.user-select-email {
+  font-size: var(--tx-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Chat icon ── */
+.chat-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.user-select-item:hover .chat-icon {
+  opacity: 1;
+}
+
 .check-icon { margin-left: auto; color: var(--accent); }
 .forward-modal .modal-body { max-height: 60dvh; overflow-y: auto; }
 .forward-list { max-height: 300px; overflow-y: auto; }
