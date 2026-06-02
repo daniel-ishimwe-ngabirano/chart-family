@@ -5,7 +5,21 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WaveChat</title>
-    <script>try { document.documentElement.setAttribute("data-theme", localStorage.getItem("wavechat_theme") || "dark"); } catch {}</script>
+    <script>try {
+      var t = localStorage.getItem("wavechat_theme") || "dark";
+      document.documentElement.setAttribute("data-theme", t);
+      var saved = localStorage.getItem("wavechat_theme_vars");
+      if (saved) {
+        var theme = JSON.parse(saved);
+        var r = document.documentElement;
+        var accent = theme["accent-color"] || theme["primary-color"];
+        if (accent) { r.style.setProperty("--accent", accent); r.style.setProperty("--accent-hover", accent); }
+        if (theme["border-radius"]) r.style.setProperty("--radius", theme["border-radius"]);
+        if (theme["font"]) r.style.fontFamily = theme["font"];
+        if (theme["bg-color"]) { r.style.setProperty("--bg-primary", theme["bg-color"]); r.style.setProperty("--bg-chat", theme["bg-color"]); }
+        if (theme["glass-effect"] === "true") r.setAttribute("data-glass", "true");
+      }
+    } catch {}</script>
   </head>
   <body>
     <div id="root"></div>
