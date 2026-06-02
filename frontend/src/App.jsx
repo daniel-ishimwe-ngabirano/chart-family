@@ -102,6 +102,7 @@ function App() {
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
         <Route path="/admin/roles" element={<AdminRoute><AdminRoles /></AdminRoute>} />
         <Route path="/admin/sections" element={<AdminRoute><AdminSections /></AdminRoute>} />
+        <Route path="/admin/theme" element={<AdminRoute><AdminTheme /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
         <Route path="/admin/logs" element={<AdminRoute><AdminLogs /></AdminRoute>} />
       </Routes>

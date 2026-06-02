@@ -29,6 +29,7 @@ function clearAdminCookie(res: Response) {
 
 async function checkAdmin(req: Request) {
   if (!req.userId) throw new AppError("Unauthorized", 401);
+  if (req.userId === "env-admin") return; // env-admin is always admin
   await adminService.requireAdmin(req.userId);
 }
 

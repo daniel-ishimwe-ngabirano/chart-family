@@ -35,6 +35,23 @@ export async function protectRoute(req: Request, _res: Response, next: NextFunct
   }
 }
 
+export async function protectAdmin(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  try {
+    const token = req.cookies?.admin_token;
+    if (!token) throw new AppError("Unauthorized", 401);
+    const payload = jwt.verify(token, env.ADMIN_JWT_SECRET) as { adminId: string };
+    if (!payload?.adminId) throw new AppError("Unauthorized", 401);
+    if (payload.adminId !== "env-admin") {
+      const user = await prisma.user.findUnique({ where: { id: payload.adminId }, select: { id: true, role: true } });
+      if (!user || user.role !== "admin") throw new AppError("Admin access required", 403);
+    }
+    req.userId = payload.adminId;
+    next();
+  } catch (error) {
+    next(error instanceof AppError ? error : new AppError("Unauthorized", 401));
+  }
+}
+
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   try {
     const token = req.cookies?.jwt || req.headers.authorization?.replace("Bearer ", "");

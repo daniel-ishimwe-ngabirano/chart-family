@@ -1,12 +1,12 @@
 import { Router } from "express";
 import multer from "multer";
 import * as adminController from "../controllers/admin.controller.js";
-import { protectRoute } from "../middleware/auth.js";
+import { protectAdmin } from "../middleware/auth.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Admin Auth (no protectRoute — uses env vars directly)
+// Admin Auth (no protectAdmin — uses env vars directly)
 router.get("/auth/status", adminController.checkAdminPasswordStatus);
 router.post("/auth/setup", adminController.setupAdminPassword);
 router.post("/auth/login", adminController.loginAdmin);
@@ -15,66 +15,66 @@ router.put("/auth/change-password", adminController.changeAdminPassword);
 router.get("/auth/verify", adminController.verifyAdminSession);
 
 // Dashboard
-router.get("/stats", protectRoute, adminController.getDashboardStats);
-router.get("/server", protectRoute, adminController.getServerStats);
+router.get("/stats", protectAdmin, adminController.getDashboardStats);
+router.get("/server", protectAdmin, adminController.getServerStats);
 
 // Users
-router.get("/users", protectRoute, adminController.getUsers);
-router.post("/users", protectRoute, adminController.createUser);
-router.put("/users/:userId", protectRoute, adminController.updateUser);
-router.delete("/users/:userId", protectRoute, adminController.deleteUser);
-router.post("/users/:userId/ban", protectRoute, adminController.banUser);
-router.post("/users/:userId/unban", protectRoute, adminController.unbanUser);
-router.delete("/messages/:messageId", protectRoute, adminController.deleteMessage);
+router.get("/users", protectAdmin, adminController.getUsers);
+router.post("/users", protectAdmin, adminController.createUser);
+router.put("/users/:userId", protectAdmin, adminController.updateUser);
+router.delete("/users/:userId", protectAdmin, adminController.deleteUser);
+router.post("/users/:userId/ban", protectAdmin, adminController.banUser);
+router.post("/users/:userId/unban", protectAdmin, adminController.unbanUser);
+router.delete("/messages/:messageId", protectAdmin, adminController.deleteMessage);
 
 // Feature Flags
-router.get("/features", protectRoute, adminController.getFeatures);
-router.put("/features/:name", protectRoute, adminController.toggleFeature);
+router.get("/features", protectAdmin, adminController.getFeatures);
+router.put("/features/:name", protectAdmin, adminController.toggleFeature);
 router.get("/features/public", adminController.getPublicFeatures);
 
 // Settings
-router.get("/settings", protectRoute, adminController.getSettings);
-router.put("/settings", protectRoute, adminController.updateSettings);
+router.get("/settings", protectAdmin, adminController.getSettings);
+router.put("/settings", protectAdmin, adminController.updateSettings);
 
 // Theme
-router.get("/theme", protectRoute, adminController.getTheme);
+router.get("/theme", protectAdmin, adminController.getTheme);
 
 // Logs
-router.get("/logs", protectRoute, adminController.getLogs);
+router.get("/logs", protectAdmin, adminController.getLogs);
 
 // Content Moderation
-router.get("/reports", protectRoute, adminController.getReports);
-router.put("/reports/:reportId", protectRoute, adminController.resolveReport);
-router.get("/bad-words", protectRoute, adminController.getBadWords);
-router.post("/bad-words", protectRoute, adminController.addBadWord);
-router.delete("/bad-words/:wordId", protectRoute, adminController.removeBadWord);
+router.get("/reports", protectAdmin, adminController.getReports);
+router.put("/reports/:reportId", protectAdmin, adminController.resolveReport);
+router.get("/bad-words", protectAdmin, adminController.getBadWords);
+router.post("/bad-words", protectAdmin, adminController.addBadWord);
+router.delete("/bad-words/:wordId", protectAdmin, adminController.removeBadWord);
 
 // Notification Broadcasting
-router.get("/broadcasts", protectRoute, adminController.getBroadcasts);
-router.post("/broadcasts", protectRoute, adminController.createBroadcast);
-router.delete("/broadcasts/:broadcastId", protectRoute, adminController.deleteBroadcast);
+router.get("/broadcasts", protectAdmin, adminController.getBroadcasts);
+router.post("/broadcasts", protectAdmin, adminController.createBroadcast);
+router.delete("/broadcasts/:broadcastId", protectAdmin, adminController.deleteBroadcast);
 router.get("/broadcasts/active", adminController.getActiveBroadcasts);
 
 // Navigation Builder
-router.get("/nav-items", protectRoute, adminController.getNavItems);
-router.post("/nav-items", protectRoute, adminController.createNavItem);
-router.put("/nav-items/:navItemId", protectRoute, adminController.updateNavItem);
-router.delete("/nav-items/:navItemId", protectRoute, adminController.deleteNavItem);
-router.put("/nav-items/reorder", protectRoute, adminController.reorderNavItems);
+router.get("/nav-items", protectAdmin, adminController.getNavItems);
+router.post("/nav-items", protectAdmin, adminController.createNavItem);
+router.put("/nav-items/:navItemId", protectAdmin, adminController.updateNavItem);
+router.delete("/nav-items/:navItemId", protectAdmin, adminController.deleteNavItem);
+router.put("/nav-items/reorder", protectAdmin, adminController.reorderNavItems);
 
 // Role System
-router.get("/roles", protectRoute, adminController.getUsersByRole);
-router.get("/roles/list", protectRoute, adminController.getAvailableRoles);
-router.put("/roles/:userId", protectRoute, adminController.updateUserRole);
+router.get("/roles", protectAdmin, adminController.getUsersByRole);
+router.get("/roles/list", protectAdmin, adminController.getAvailableRoles);
+router.put("/roles/:userId", protectAdmin, adminController.updateUserRole);
 
 // Page Sections
-router.get("/page-sections", protectRoute, adminController.getPageSections);
-router.put("/page-sections/:slug", protectRoute, adminController.upsertPageSection);
+router.get("/page-sections", protectAdmin, adminController.getPageSections);
+router.put("/page-sections/:slug", protectAdmin, adminController.upsertPageSection);
 
 // File Upload
-router.post("/upload", protectRoute, upload.single("file"), adminController.uploadAdminFile);
+router.post("/upload", protectAdmin, upload.single("file"), adminController.uploadAdminFile);
 
 // Seed
-router.post("/seed", protectRoute, adminController.seedAdminData);
+router.post("/seed", protectAdmin, adminController.seedAdminData);
 
 export default router;
