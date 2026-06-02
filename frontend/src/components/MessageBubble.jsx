@@ -87,7 +87,20 @@ export default function MessageBubble({ message, isOwn, onReply }) {
 
       {attachments.length > 0 && attachments[0].mimeType?.startsWith("video/") && (
         <div className="message-video" onClick={() => setShowMedia(true)}>
-          <video src={attachments[0].url} controls preload="metadata" />
+          <video 
+            src={attachments[0].url} 
+            poster={attachments[0].thumbnail}
+            preload="metadata" 
+            style={{cursor: 'pointer', maxWidth: '300px', maxHeight: '200px', borderRadius: '8px'}}
+          />
+          <div className="video-play-overlay">
+            <div className="play-button">▶</div>
+            {attachments[0].duration && (
+              <div className="video-duration">
+                {Math.floor(attachments[0].duration / 60)}:{String(attachments[0].duration % 60).padStart(2, '0')}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

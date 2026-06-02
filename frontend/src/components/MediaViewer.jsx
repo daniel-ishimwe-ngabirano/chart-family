@@ -21,7 +21,19 @@ export default function MediaViewer({ url, mimeType, onClose }) {
           {mimeType?.startsWith("image/") ? (
             <img src={url} alt="" className="media-viewer-image" />
           ) : mimeType?.startsWith("video/") ? (
-            <video src={url} controls className="media-viewer-video" autoPlay />
+            <video 
+              src={url} 
+              controls 
+              className="media-viewer-video" 
+              preload="metadata"
+              controlsList="nodownload"
+              style={{maxWidth: '100%', maxHeight: '80vh'}}
+            />
+          ) : mimeType?.startsWith("audio/") ? (
+            <div className="media-viewer-audio">
+              <audio src={url} controls className="media-viewer-audio-player" />
+              <p>Audio File</p>
+            </div>
           ) : (
             <div className="media-viewer-file">
               <p>Preview not available</p>

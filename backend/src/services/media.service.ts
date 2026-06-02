@@ -102,7 +102,11 @@ export class MediaService {
     "image/webp": [new Uint8Array([0x52, 0x49, 0x46, 0x46])],
     "video/mp4": [new Uint8Array([0x00, 0x00, 0x00]), new Uint8Array([0x66, 0x74, 0x79, 0x70])],
     "video/webm": [new Uint8Array([0x1A, 0x45, 0xDF, 0xA3])],
+    "video/mov": [new Uint8Array([0x00, 0x00, 0x00]), new Uint8Array([0x66, 0x74, 0x79, 0x70])],
+    "video/avi": [new Uint8Array([0x52, 0x49, 0x46, 0x46])],
+    "video/mkv": [new Uint8Array([0x1A, 0x45, 0xDF, 0xA3])],
     "audio/mpeg": [new Uint8Array([0xFF, 0xFB]), new Uint8Array([0x49, 0x44, 0x33])],
+    "audio/mp3": [new Uint8Array([0xFF, 0xFB]), new Uint8Array([0x49, 0x44, 0x33])],
     "audio/ogg": [new Uint8Array([0x4F, 0x67, 0x67, 0x53])],
     "audio/wav": [new Uint8Array([0x52, 0x49, 0x46, 0x46])],
     "application/pdf": [new Uint8Array([0x25, 0x50, 0x44, 0x46])],
@@ -119,10 +123,22 @@ export class MediaService {
   }
 
   validateFile(file: Express.Multer.File): void {
-    const maxSize = 50 * 1024 * 1024;
+    // Get dynamic limits from settings if available
+    const getSettingValue = (key: string, defaultValue: number) => {
+      // In a real implementation, you'd fetch from settings
+      // For now, using default values with enhanced limits
+      const settings: Record<string, number> = {
+        max_video_size: 100,
+        max_image_size: 10, 
+        max_audio_size: 25,
+        max_upload_size: 50
+      };
+      return settings[key] || defaultValue;
+    };
+
     const allowedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    const allowedVideoTypes = ["video/mp4", "video/webm"];
-    const allowedAudioTypes = ["audio/mpeg", "audio/ogg", "audio/wav", "audio/webm"];
+    const allowedVideoTypes = ["video/mp4", "video/webm", "video/mov", "video/avi", "video/mkv", "video/wmv", "video/flv", "video/3gp"];
+    const allowedAudioTypes = ["audio/mpeg", "audio/ogg", "audio/wav", "audio/webm", "audio/mp3", "audio/aac", "audio/flac"];
     const allowedDocTypes = [
       "application/pdf", "text/plain",
       "application/msword",
@@ -130,12 +146,24 @@ export class MediaService {
     ];
     const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedAudioTypes, ...allowedDocTypes];
 
-    if (file.size > maxSize) {
-      throw new AppError("File too large. Maximum size is 50MB", 400);
+    // Dynamic size limits based on file type
+    const isVideo = allowedVideoTypes.includes(file.mimetype);
+    const isImage = allowedImageTypes.includes(file.mimetype);
+    const isAudio = allowedAudioTypes.includes(file.mimetype);
+    
+    let sizeLimit = getSettingValue('max_upload_size', 50) * 1024 * 1024;
+    if (isVideo) sizeLimit = getSettingValue('max_video_size', 100) * 1024 * 1024;
+    else if (isImage) sizeLimit = getSettingValue('max_image_size', 10) * 1024 * 1024;
+    else if (isAudio) sizeLimit = getSettingValue('max_audio_size', 25) * 1024 * 1024;
+
+    if (file.size > sizeLimit) {
+      const sizeMB = Math.round(sizeLimit / 1024 / 1024);
+      const type = isVideo ? 'Video' : isImage ? 'Image' : isAudio ? 'Audio' : 'File';
+      throw new AppError(`${type} too large. Maximum size is ${sizeMB}MB`, 400);
     }
 
     const mime = file.mimetype;
-    if (!allowedTypes.includes(mime) && !mime.startsWith("image/")) {
+    if (!allowedTypes.includes(mime) && !mime.startsWith("image/") && !mime.startsWith("video/")) {
       throw new AppError(`File type ${mime} not allowed`, 400);
     }
 

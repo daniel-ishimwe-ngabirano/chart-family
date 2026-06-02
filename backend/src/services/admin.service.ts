@@ -210,13 +210,39 @@ export class AdminService {
       { key: "site_name", value: "WaveChat", type: "string", group: "general", label: "Site Name" },
       { key: "site_description", value: "Fast, secure, real-time messaging.", type: "string", group: "general", label: "Site Description" },
       { key: "maintenance_mode", value: "false", type: "boolean", group: "system", label: "Maintenance Mode" },
-      // Limits
+      { key: "allow_registration", value: "true", type: "boolean", group: "system", label: "Allow User Registration" },
+      // Media & Upload Limits
       { key: "max_upload_size", value: "50", type: "number", group: "limits", label: "Max Upload Size (MB)" },
+      { key: "max_video_size", value: "100", type: "number", group: "limits", label: "Max Video Size (MB)" },
+      { key: "max_image_size", value: "10", type: "number", group: "limits", label: "Max Image Size (MB)" },
+      { key: "max_audio_size", value: "25", type: "number", group: "limits", label: "Max Audio Size (MB)" },
+      { key: "allowed_video_formats", value: "mp4,webm,mov,avi,mkv", type: "string", group: "media", label: "Allowed Video Formats (comma separated)" },
+      { key: "allowed_image_formats", value: "jpg,jpeg,png,gif,webp", type: "string", group: "media", label: "Allowed Image Formats" },
+      { key: "allowed_audio_formats", value: "mp3,wav,ogg,webm,aac,flac", type: "string", group: "media", label: "Allowed Audio Formats" },
+      { key: "video_quality_compression", value: "true", type: "boolean", group: "media", label: "Enable Video Compression" },
+      { key: "auto_play_videos", value: "false", type: "boolean", group: "media", label: "Auto-play Videos in Chat" },
       { key: "max_group_members", value: "200", type: "number", group: "limits", label: "Max Group Members" },
+      { key: "max_message_length", value: "10000", type: "number", group: "limits", label: "Max Message Length" },
+      // Chat Features
+      { key: "enable_message_reactions", value: "true", type: "boolean", group: "chat", label: "Enable Message Reactions" },
+      { key: "enable_message_editing", value: "true", type: "boolean", group: "chat", label: "Enable Message Editing" },
+      { key: "enable_message_deletion", value: "true", type: "boolean", group: "chat", label: "Enable Message Deletion" },
+      { key: "enable_voice_messages", value: "true", type: "boolean", group: "chat", label: "Enable Voice Messages" },
+      { key: "enable_file_sharing", value: "true", type: "boolean", group: "chat", label: "Enable File Sharing" },
+      { key: "enable_polls", value: "true", type: "boolean", group: "chat", label: "Enable Polls" },
+      { key: "enable_stories", value: "true", type: "boolean", group: "social", label: "Enable Stories" },
+      { key: "enable_calls", value: "true", type: "boolean", group: "communication", label: "Enable Voice/Video Calls" },
+      // Security & Moderation
+      { key: "content_moderation", value: "true", type: "boolean", group: "security", label: "Enable Content Moderation" },
+      { key: "auto_ban_spam", value: "false", type: "boolean", group: "security", label: "Auto-ban Spam Users" },
+      { key: "require_email_verification", value: "false", type: "boolean", group: "security", label: "Require Email Verification" },
+      { key: "max_login_attempts", value: "5", type: "number", group: "security", label: "Max Login Attempts" },
       // Branding
       { key: "logo_url", value: "", type: "string", group: "branding", label: "Logo URL" },
       { key: "favicon_url", value: "", type: "string", group: "branding", label: "Favicon URL" },
       { key: "default_avatar", value: "", type: "string", group: "branding", label: "Default Avatar URL" },
+      { key: "app_icon", value: "", type: "string", group: "branding", label: "App Icon URL" },
+      { key: "hero_image", value: "", type: "string", group: "branding", label: "Hero Image URL" },
       // Theme
       { key: "theme_primary_color", value: "#7c3aed", type: "string", group: "theme", label: "Primary Color" },
       { key: "theme_accent_color", value: "#00a884", type: "string", group: "theme", label: "Accent Color" },
@@ -228,6 +254,10 @@ export class AdminService {
       { key: "theme_animation", value: "all", type: "string", group: "theme", label: "Animations (all/minimal/none)" },
       { key: "theme_mode", value: "dark", type: "string", group: "theme", label: "Theme Mode (dark/light)" },
       { key: "theme_glass_effect", value: "false", type: "boolean", group: "theme", label: "Glass Effect (frosted glass UI)" },
+      // Notifications
+      { key: "enable_push_notifications", value: "true", type: "boolean", group: "notifications", label: "Enable Push Notifications" },
+      { key: "enable_email_notifications", value: "true", type: "boolean", group: "notifications", label: "Enable Email Notifications" },
+      { key: "notification_sound", value: "default", type: "string", group: "notifications", label: "Default Notification Sound" },
     ];
     await prisma.$transaction(
       defaults.map((d) =>

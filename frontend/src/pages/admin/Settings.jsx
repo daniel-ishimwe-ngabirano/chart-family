@@ -4,7 +4,9 @@ import { useAdminAuthStore } from "../../stores/adminAuthStore.js";
 import { Save, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import AdminImageUpload from "../../components/AdminImageUpload.jsx";
 
-const IMAGE_SETTING_KEYS = ["logo", "favicon", "og_image", "background", "banner", "avatar_default", "icon", "image"];
+const IMAGE_SETTING_KEYS = ["logo", "favicon", "og_image", "background", "banner", "avatar_default", "icon", "image", "hero"];
+const COLOR_SETTING_KEYS = ["color", "primary", "accent", "bg"];
+const NUMBER_SETTING_KEYS = ["size", "max", "limit", "attempts", "length"];
 
 export default function AdminSettings() {
   const { settings, loading, fetchSettings, updateSettings } = useSettingsStore();
@@ -85,12 +87,28 @@ export default function AdminSettings() {
                     onChange={(val) => setLocal({ ...local, [setting.key]: val })}
                     label={setting.label || setting.key}
                   />
+                ) : COLOR_SETTING_KEYS.some((k) => setting.key.toLowerCase().includes(k)) ? (
+                  <input
+                    className="admin-input"
+                    type="color"
+                    value={local[setting.key] ?? ""}
+                    onChange={(e) => setLocal({ ...local, [setting.key]: e.target.value })}
+                  />
+                ) : setting.key.includes("formats") ? (
+                  <textarea
+                    className="admin-input"
+                    rows={2}
+                    placeholder="Comma separated values (e.g., mp4,webm,mov)"
+                    value={local[setting.key] ?? ""}
+                    onChange={(e) => setLocal({ ...local, [setting.key]: e.target.value })}
+                  />
                 ) : (
                   <input
                     className="admin-input"
                     type={setting.type === "number" ? "number" : "text"}
                     value={local[setting.key] ?? ""}
                     onChange={(e) => setLocal({ ...local, [setting.key]: e.target.value })}
+                    {...(setting.type === "number" && { min: "0", step: setting.key.includes("size") ? "1" : "1" })}
                   />
                 )}
                 <code className="admin-setting-key">{setting.key}</code>

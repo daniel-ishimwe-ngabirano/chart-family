@@ -5,7 +5,7 @@ import { useFeatureStore } from "../stores/featureStore.js";
 import { emitTyping, emitStopTyping } from "../stores/socketStore.js";
 import { useTranslate } from "../hooks/useTranslate.js";
 import { playTyping, playMessageSent } from "../lib/sounds.js";
-import { SmilePlus, Send, Paperclip, X, Reply, Mic, Square } from "lucide-react";
+import { SmilePlus, Send, Paperclip, X, Reply, Mic, Square, Video, Music, FileText } from "lucide-react";
 import axios from "../lib/axios.js";
 
 const EMOJI_CATEGORIES = [
@@ -171,6 +171,25 @@ export default function MessageInput({ replyTo, onCancelReply }) {
 
   const handleFileSelect = (e) => {
     const selected = Array.from(e.target.files);
+    
+    // Validate file sizes before adding
+    for (const file of selected) {
+      const sizeInMB = file.size / 1024 / 1024;
+      const isVideo = file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+      const isAudio = file.type.startsWith('audio/');
+      
+      let maxSize = 50; // default
+      if (isVideo) maxSize = 100;
+      else if (isImage) maxSize = 10;
+      else if (isAudio) maxSize = 25;
+      
+      if (sizeInMB > maxSize) {
+        alert(`File "${file.name}" is too large. Maximum size is ${maxSize}MB for ${isVideo ? 'videos' : isImage ? 'images' : isAudio ? 'audio' : 'files'}.`);
+        return;
+      }
+    }
+    
     const newFiles = [...files, ...selected];
     setFiles(newFiles);
     const previews = newFiles.map((f) => URL.createObjectURL(f));
@@ -217,9 +236,25 @@ export default function MessageInput({ replyTo, onCancelReply }) {
           {filePreviews.map((preview, i) => (
             <div key={i} className="file-preview-item">
               {files[i]?.type?.startsWith("image/") ? (
-                <img src={preview} alt="" />
+                <img src={preview} alt="" className="preview-image" />
+              ) : files[i]?.type?.startsWith("video/") ? (
+                <div className="video-preview">
+                  <video src={preview} className="preview-video" muted />
+                  <div className="video-overlay">
+                    <Video size={24} />
+                    <span>{Math.round(files[i].size / 1024 / 1024)}MB</span>
+                  </div>
+                </div>
+              ) : files[i]?.type?.startsWith("audio/") ? (
+                <div className="audio-preview">
+                  <Music size={24} />
+                  <span>{files[i]?.name?.slice(0, 15)}...</span>
+                </div>
               ) : (
-                <div className="file-icon">{files[i]?.name?.slice(0, 10)}</div>
+                <div className="file-icon">
+                  <FileText size={20} />
+                  <span>{files[i]?.name?.slice(0, 10)}...</span>
+                </div>
               )}
               <button onClick={() => removeFile(i)} className="remove-file">
                 <X size={18} />
@@ -257,7 +292,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
             <Paperclip size={22} />
           </button>
         )}
-        <input type="file" ref={fileInputRef} hidden multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt" onChange={handleFileSelect} />
+        <input type="file" ref={fileInputRef} hidden multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.mov,.avi,.mkv,.wmv,.flv,.3gp,.mp3,.aac,.flac" onChange={handleFileSelect} />
         <button type="button" className="input-action" onClick={() => setShowEmoji(!showEmoji)}>
           <SmilePlus size={22} />
         </button>

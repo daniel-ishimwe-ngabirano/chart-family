@@ -24,8 +24,8 @@ import AdminRoles from "./pages/admin/AdminRoles.jsx";
 import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import AdminSettings from "./pages/admin/Settings.jsx";
 import AdminLogs from "./pages/admin/Logs.jsx";
+import AdminMediaSettings from "./pages/admin/MediaSettings.jsx";
 import AdminSections from "./pages/admin/Sections.jsx";
-import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }) {
@@ -93,8 +93,8 @@ function App() {
         <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/media" element={<AdminRoute><AdminMediaSettings /></AdminRoute>} />
         <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
-        <Route path="/admin/theme" element={<AdminRoute><AdminTheme /></AdminRoute>} />
         <Route path="/admin/moderation" element={<AdminRoute><AdminModeration /></AdminRoute>} />
         <Route path="/admin/broadcasts" element={<AdminRoute><AdminBroadcasts /></AdminRoute>} />
         <Route path="/admin/navigation" element={<AdminRoute><AdminNavigation /></AdminRoute>} />

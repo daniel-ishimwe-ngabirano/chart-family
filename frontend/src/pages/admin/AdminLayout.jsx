@@ -4,13 +4,14 @@ import { useAuthStore } from "../../stores/authStore.js";
 import { useAdminAuthStore } from "../../stores/adminAuthStore.js";
 import {
   LayoutDashboard, Flag, Settings, History, ArrowLeft, LogOut, Shield,
-  Paintbrush, ShieldAlert, Megaphone, Menu, Users, Loader2, UserCog, FileText,
+  Paintbrush, ShieldAlert, Megaphone, Menu, Users, Loader2, UserCog, FileText, Video,
 } from "lucide-react";
 
 const sidebarItems = [
   { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/admin" },
   { icon: <Users size={20} />, label: "Users", path: "/admin/users" },
   { icon: <Flag size={20} />, label: "Features", path: "/admin/features" },
+  { icon: <Video size={20} />, label: "Media Settings", path: "/admin/media" },
   { icon: <Paintbrush size={20} />, label: "Theme", path: "/admin/theme" },
   { icon: <ShieldAlert size={20} />, label: "Moderation", path: "/admin/moderation" },
   { icon: <Megaphone size={20} />, label: "Broadcasts", path: "/admin/broadcasts" },
