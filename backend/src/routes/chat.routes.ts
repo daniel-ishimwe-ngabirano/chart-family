@@ -23,6 +23,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage, limits: { fileSize: 4 * 1024 * 1024 * 1024 } });
 
+const router = Router();
+
 // Conversations
 router.get("/", protectRoute, chatController.getConversations);
 
