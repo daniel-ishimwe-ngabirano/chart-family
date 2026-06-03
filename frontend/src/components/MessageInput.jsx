@@ -7,6 +7,7 @@ import { useTranslate } from "../hooks/useTranslate.js";
 import { playTyping, playMessageSent } from "../lib/sounds.js";
 import { SmilePlus, Send, Paperclip, X, Reply, Mic, Square, Video, Music, FileText } from "lucide-react";
 import axios from "../lib/axios.js";
+import { compressImage } from "../lib/compressImage.js";
 
 const EMOJI_CATEGORIES = [
   {
@@ -140,21 +141,30 @@ export default function MessageInput({ replyTo, onCancelReply }) {
     if (!text.trim() && files.length === 0) return;
     if (!selectedConversation || sending) return;
 
+    setSending(true);
+
     const formData = new FormData();
     formData.append("conversationId", selectedConversation.id);
     formData.append("text", text.trim());
     if (replyTo) formData.append("replyToId", replyTo.id);
-    files.forEach((f) => formData.append("files", f));
 
-    if (files.length > 0) {
-      const mime = files[0].type;
+    const compressedFiles = await Promise.all(
+      files.map(async (f) => {
+        if (f.type.startsWith("image/")) return compressImage(f);
+        return f;
+      }),
+    );
+
+    compressedFiles.forEach((f) => formData.append("files", f));
+
+    if (compressedFiles.length > 0) {
+      const mime = compressedFiles[0].type;
       if (mime.startsWith("audio/")) formData.append("type", "VOICE_NOTE");
       else if (mime.startsWith("image/")) formData.append("type", "IMAGE");
       else if (mime.startsWith("video/")) formData.append("type", "VIDEO");
       else formData.append("type", "FILE");
     }
 
-    setSending(true);
     const result = await sendMessage(formData);
     setSending(false);
 
