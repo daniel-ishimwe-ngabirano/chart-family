@@ -194,10 +194,8 @@ export default function MessageInput({ replyTo, onCancelReply }) {
       const isImage = file.type.startsWith('image/');
       const isAudio = file.type.startsWith('audio/');
       
-      let maxSize = 50;
-      if (isVideo) maxSize = 100;
-      else if (isImage) maxSize = 10;
-      else if (isAudio) maxSize = 25;
+      let maxSize = 4096;
+      if (isImage) maxSize = 50;
       
       if (sizeInMB > maxSize) {
         const fileTypeLabel = isVideo ? t("chat.filesVideos", "videos") : isImage ? t("chat.filesImages", "images") : isAudio ? t("chat.filesAudio", "audio") : t("chat.files", "files");

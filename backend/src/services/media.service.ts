@@ -3,8 +3,8 @@ import { env } from "../config/env.js";
 import { AppError } from "../middleware/errorHandler.js";
 import type { FileUploadResult } from "../types/index.js";
 import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
-import crypto from "crypto";
 
 cloudinary.config({
   cloud_name: env.CLOUDINARY_CLOUD_NAME,
@@ -29,25 +29,26 @@ export class MediaService {
     file: Express.Multer.File,
     folder: string
   ): Promise<FileUploadResult> {
-    const b64 = Buffer.from(file.buffer).toString("base64");
-    const dataUri = `data:${file.mimetype};base64,${b64}`;
+    try {
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder,
+        resource_type: "auto",
+        ...(file.mimetype.startsWith("video/") && { video_metadata: true }),
+      });
 
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder,
-      resource_type: "auto",
-      ...(file.mimetype.startsWith("video/") && { video_metadata: true }),
-    });
-
-    return {
-      url: result.secure_url,
-      publicId: result.public_id,
-      fileName: file.originalname,
-      fileSize: file.size,
-      mimeType: file.mimetype,
-      width: result.width,
-      height: result.height,
-      duration: result.duration ? Math.round(result.duration) : undefined,
-    };
+      return {
+        url: result.secure_url,
+        publicId: result.public_id,
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        width: result.width,
+        height: result.height,
+        duration: result.duration ? Math.round(result.duration) : undefined,
+      };
+    } finally {
+      fs.unlink(file.path).catch(() => {});
+    }
   }
 
   private async _uploadToDisk(
@@ -56,18 +57,14 @@ export class MediaService {
   ): Promise<FileUploadResult> {
     const destDir = path.join(UPLOADS_DIR, folder);
     await fs.mkdir(destDir, { recursive: true });
+    const destPath = path.join(destDir, file.filename);
+    await fs.rename(file.path, destPath);
 
-    const ext = path.extname(file.originalname) || ".jpg";
-    const uniqueName = `${crypto.randomUUID()}${ext}`;
-    const filePath = path.join(destDir, uniqueName);
-
-    await fs.writeFile(filePath, file.buffer);
-
-    const url = `/uploads/${folder}/${uniqueName}`;
+    const url = `/uploads/${folder}/${file.filename}`;
 
     return {
       url,
-      publicId: uniqueName,
+      publicId: file.filename,
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
@@ -112,10 +109,27 @@ export class MediaService {
     "application/pdf": [new Uint8Array([0x25, 0x50, 0x44, 0x46])],
   };
 
+  private _readFileHead(file: Express.Multer.File, bytes: number): Uint8Array {
+    if (file.buffer) {
+      return new Uint8Array(file.buffer.subarray(0, bytes));
+    }
+    if (file.path) {
+      const fd = fsSync.openSync(file.path, "r");
+      const buf = Buffer.alloc(bytes);
+      try {
+        fsSync.readSync(fd, buf, 0, bytes, 0);
+      } finally {
+        fsSync.closeSync(fd);
+      }
+      return new Uint8Array(buf);
+    }
+    return new Uint8Array(0);
+  }
+
   private _checkMagicBytes(file: Express.Multer.File, mimeType: string): boolean {
     const signatures = this._magicBytes[mimeType];
     if (!signatures) return true;
-    const buf = new Uint8Array(file.buffer);
+    const buf = this._readFileHead(file, 4096);
     return signatures.some((sig) => {
       if (buf.length < sig.length) return false;
       return sig.every((byte, i) => buf[i] === byte);
@@ -123,19 +137,6 @@ export class MediaService {
   }
 
   validateFile(file: Express.Multer.File): void {
-    // Get dynamic limits from settings if available
-    const getSettingValue = (key: string, defaultValue: number) => {
-      // In a real implementation, you'd fetch from settings
-      // For now, using default values with enhanced limits
-      const settings: Record<string, number> = {
-        max_video_size: 100,
-        max_image_size: 10, 
-        max_audio_size: 25,
-        max_upload_size: 50
-      };
-      return settings[key] || defaultValue;
-    };
-
     const allowedImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     const allowedVideoTypes = ["video/mp4", "video/webm", "video/mov", "video/avi", "video/mkv", "video/wmv", "video/flv", "video/3gp"];
     const allowedAudioTypes = ["audio/mpeg", "audio/ogg", "audio/wav", "audio/webm", "audio/mp3", "audio/aac", "audio/flac"];
@@ -145,22 +146,6 @@ export class MediaService {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
     const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedAudioTypes, ...allowedDocTypes];
-
-    // Dynamic size limits based on file type
-    const isVideo = allowedVideoTypes.includes(file.mimetype);
-    const isImage = allowedImageTypes.includes(file.mimetype);
-    const isAudio = allowedAudioTypes.includes(file.mimetype);
-    
-    let sizeLimit = getSettingValue('max_upload_size', 50) * 1024 * 1024;
-    if (isVideo) sizeLimit = getSettingValue('max_video_size', 100) * 1024 * 1024;
-    else if (isImage) sizeLimit = getSettingValue('max_image_size', 10) * 1024 * 1024;
-    else if (isAudio) sizeLimit = getSettingValue('max_audio_size', 25) * 1024 * 1024;
-
-    if (file.size > sizeLimit) {
-      const sizeMB = Math.round(sizeLimit / 1024 / 1024);
-      const type = isVideo ? 'Video' : isImage ? 'Image' : isAudio ? 'Audio' : 'File';
-      throw new AppError(`${type} too large. Maximum size is ${sizeMB}MB`, 400);
-    }
 
     const mime = file.mimetype;
     if (!allowedTypes.includes(mime) && !mime.startsWith("image/") && !mime.startsWith("video/")) {

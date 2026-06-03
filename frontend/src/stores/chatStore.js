@@ -89,7 +89,7 @@ export const useChatStore = create((set, get) => ({
     try {
       const convId = data instanceof FormData ? data.get("conversationId") : data.conversationId;
       const isFormData = data instanceof FormData;
-      const config = isFormData ? { timeout: 120000 } : {};
+      const config = isFormData ? { timeout: 1800000 } : {};
       const res = await axios.post(`/conversations/${convId}/messages`, data, config);
       set((state) => ({ messages: [...state.messages, res.data] }));
       return { success: true, data: res.data };
