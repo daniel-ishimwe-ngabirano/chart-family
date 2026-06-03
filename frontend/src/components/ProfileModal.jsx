@@ -66,7 +66,7 @@ const [showStarred, setShowStarred] = useState(false);
     const result = await uploadAvatar(file);
     setUploadingAvatar(false);
     if (!result.success) {
-      alert(result.error || "Failed to upload avatar");
+      alert(result.error || t("settings.failedUpload", "Failed to upload avatar"));
     }
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -81,7 +81,7 @@ const [showStarred, setShowStarred] = useState(false);
   const handleGenerateAvatar = async () => {
     setUploadingAvatar(true);
     try {
-      const svg = generateAvatarSvg(authUser?.fullName || "User", 200);
+      const svg = generateAvatarSvg(authUser?.fullName || t("common.user", "User"), 200);
       const blob = new Blob([svg], { type: "image/svg+xml" });
       const file = new File([blob], "avatar.svg", { type: "image/svg+xml" });
       await uploadAvatar(file);
@@ -102,13 +102,13 @@ const [showStarred, setShowStarred] = useState(false);
           <div className="profile-section">
             <div className="profile-avatar-section">
               <img src={authUser?.avatar || "/avatar-placeholder.png"} alt="" className="profile-avatar" onError={(e) => handleAvatarError(e, authUser?.fullName)} />
-              <button className="avatar-edit" onClick={() => fileRef.current?.click()} disabled={uploadingAvatar} title="Upload photo">
+              <button className="avatar-edit" onClick={() => fileRef.current?.click()} disabled={uploadingAvatar} title={t("settings.uploadPhoto", "Upload photo")}>
                 {uploadingAvatar ? <span className="avatar-spinner" /> : <Camera size={18} />}
               </button>
-              <button className="avatar-edit avatar-generate" onClick={handleGenerateAvatar} disabled={uploadingAvatar} title="Generate initials avatar">
+              <button className="avatar-edit avatar-generate" onClick={handleGenerateAvatar} disabled={uploadingAvatar} title={t("settings.generateAvatar", "Generate initials avatar")}>
                 <Sparkles size={18} />
               </button>
-              <button className="avatar-edit avatar-builder-btn" onClick={() => setShowAvatarBuilder(true)} title="Create custom avatar">
+              <button className="avatar-edit avatar-builder-btn" onClick={() => setShowAvatarBuilder(true)} title={t("settings.customAvatar", "Create custom avatar")}>
                 <Palette size={18} />
               </button>
               <input ref={fileRef} type="file" hidden accept="image/*" onChange={handleAvatarChange} />
@@ -121,11 +121,11 @@ const [showStarred, setShowStarred] = useState(false);
                   <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
                 </div>
                 <div className="input-group">
-                  <label>Username</label>
+                  <label>{t("auth.username", "Username")}</label>
                   <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
                 </div>
                 <div className="input-group">
-                  <label>Bio</label>
+                  <label>{t("auth.bio", "Bio")}</label>
                   <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} />
                 </div>
                 <div className="edit-actions">
@@ -149,12 +149,12 @@ const [showStarred, setShowStarred] = useState(false);
           <div className="settings-divider" />
 
           <div className="settings-section">
-            <h3><Circle size={14} style={{ color: "var(--accent)", verticalAlign: "middle", marginRight: 6 }} />My Stories</h3>
+            <h3><Circle size={14} style={{ color: "var(--accent)", verticalAlign: "middle", marginRight: 6 }} />{t("stories.myStories", "My Stories")}</h3>
             {(() => {
               const myGroup = groups.find((g) => g.user.id === authUser?.id);
               const myStories = myGroup?.stories || [];
               return myStories.length === 0 ? (
-                <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>No stories yet</p>
+                <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>{t("stories.noStories", "No stories yet")}</p>
               ) : (
                 <div className="my-stories-list">
                   {myStories.map((s) => (
@@ -162,17 +162,17 @@ const [showStarred, setShowStarred] = useState(false);
                       <div className="my-story-preview">
                         {s.type === "TEXT" ? (
                           <div className="my-story-text-preview" style={{ backgroundColor: s.backgroundColor || "#000" }}>
-                            <span>{s.caption?.slice(0, 30) || "Text"}</span>
+                            <span>{s.caption?.slice(0, 30) || t("stories.text", "Text")}</span>
                           </div>
                         ) : (
                           <img src={s.media} alt="" />
                         )}
                       </div>
                       <div className="my-story-info">
-                        <span className="my-story-type">{s.type === "TEXT" ? "Text" : s.type === "VIDEO" ? "Video" : "Photo"}</span>
+                        <span className="my-story-type">{s.type === "TEXT" ? t("stories.text", "Text") : s.type === "VIDEO" ? t("common.video", "Video") : t("common.image", "Photo")}</span>
                         <span className="my-story-date">{new Date(s.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <button className="my-story-delete" onClick={async () => { await deleteStory(s.id); fetchStories(); }} title="Delete">
+                      <button className="my-story-delete" onClick={async () => { await deleteStory(s.id); fetchStories(); }} title={t("common.delete", "Delete")}>
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -192,8 +192,8 @@ const [showStarred, setShowStarred] = useState(false);
                 <span>{t("settings.lastSeen", "Last Seen")}</span>
                 <select value={lastSeen} onChange={(e) => setLastSeen(e.target.value)}>
                   <option value="everyone">{t("common.all", "Everyone")}</option>
-                  <option value="contacts">My Contacts</option>
-                  <option value="nobody">Nobody</option>
+                  <option value="contacts">{t("settings.myContacts", "My Contacts")}</option>
+                  <option value="nobody">{t("settings.nobody", "Nobody")}</option>
                 </select>
               </div>
             </div>
@@ -267,8 +267,8 @@ const [showStarred, setShowStarred] = useState(false);
           <div className="settings-divider" />
 
           <div className="settings-section">
-            <h3><Star size={14} style={{ color: "var(--accent)", verticalAlign: "middle", marginRight: 6 }} />Starred</h3>
-            <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setShowStarred(true)}>View Starred Messages</button>
+            <h3><Star size={14} style={{ color: "var(--accent)", verticalAlign: "middle", marginRight: 6 }} />{t("settings.starred", "Starred")}</h3>
+            <button className="btn-secondary" style={{ marginTop: 8 }} onClick={() => setShowStarred(true)}>{t("settings.viewStarred", "View Starred Messages")}</button>
           </div>
 
           <div className="settings-divider" />

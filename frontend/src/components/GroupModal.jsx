@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useChatStore } from "../stores/chatStore.js";
+import { useTranslate } from "../hooks/useTranslate.js";
 import { X, Search, Check, Loader2, Users } from "lucide-react";
 import axios from "../lib/axios.js";
 import { handleAvatarError } from "../utils/avatar.js";
 
 export default function GroupModal({ onClose }) {
   const { users, setSelectedConversation } = useChatStore();
+  const t = useTranslate();
   const [groupName, setGroupName] = useState("");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(new Set());
@@ -43,16 +45,16 @@ export default function GroupModal({ onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content group-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>New Group</h2>
+          <h2>{t("chat.newGroup", "New Group")}</h2>
           <button onClick={onClose}><X size={22} /></button>
         </div>
 
         <div className="modal-body">
           <div className="input-group">
-            <label>Group Name</label>
+            <label>{t("chat.groupName", "Group Name")}</label>
             <input
               type="text"
-              placeholder="Enter group name"
+              placeholder={t("chat.enterGroupName", "Enter group name")}
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               autoFocus
@@ -63,7 +65,7 @@ export default function GroupModal({ onClose }) {
             <Search size={18} />
             <input
               type="text"
-              placeholder="Search participants..."
+              placeholder={t("chat.searchParticipants", "Search participants...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -71,7 +73,7 @@ export default function GroupModal({ onClose }) {
 
           <div className="participants-info">
             <Users size={16} />
-            <span>{selected.size} participant{selected.size !== 1 ? "s" : ""} selected</span>
+            <span>{selected.size} {t(selected.size === 1 ? "chat.participant" : "chat.participants", selected.size === 1 ? "participant" : "participants")} {t("chat.selected", "selected")}</span>
           </div>
 
           <div className="user-select-list">
@@ -94,7 +96,7 @@ export default function GroupModal({ onClose }) {
             disabled={creating || !groupName.trim() || selected.size < 1}
             style={{ marginTop: 16 }}
           >
-            {creating ? <Loader2 size={20} className="spin" /> : "Create Group"}
+            {creating ? <Loader2 size={20} className="spin" /> : t("chat.createGroup", "Create Group")}
           </button>
         </div>
       </div>

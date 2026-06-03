@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useChatStore } from "../stores/chatStore.js";
 import { useAuthStore } from "../stores/authStore.js";
+import { useTranslate } from "../hooks/useTranslate.js";
 import { emitPinMessage } from "../stores/socketStore.js";
 import { MoreVertical, Reply, Pencil, Trash2, SmilePlus, Check, CheckCheck, Forward, Image, Pin } from "lucide-react";
 import MediaViewer from "./MediaViewer.jsx";
@@ -12,6 +13,7 @@ const EMOJI_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🙏"];
 export default function MessageBubble({ message, isOwn, onReply }) {
   const { deleteMessage, editMessage, reactToMessage } = useChatStore();
   const { authUser } = useAuthStore();
+  const t = useTranslate();
   const [showMenu, setShowMenu] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -23,7 +25,7 @@ export default function MessageBubble({ message, isOwn, onReply }) {
     return (
       <div className={`message-bubble ${isOwn ? "own" : "other"} deleted`}>
         <div className="message-text deleted-text">
-          {message.deletedForEveryone ? "This message was deleted" : "You deleted this message"}
+          {message.deletedForEveryone ? t("chat.deletedMessage", "This message was deleted") : t("chat.youDeleted", "You deleted this message")}
         </div>
       </div>
     );
@@ -69,7 +71,7 @@ export default function MessageBubble({ message, isOwn, onReply }) {
       {message.replyTo && (
         <div className="replied-message">
           <div className="replied-sender">{message.replyTo.sender?.fullName}</div>
-          <div className="replied-text">{message.replyTo.text || "Media"}</div>
+          <div className="replied-text">{message.replyTo.text || t("common.media", "Media")}</div>
         </div>
       )}
 
@@ -116,14 +118,14 @@ export default function MessageBubble({ message, isOwn, onReply }) {
               autoFocus
             />
             <div className="edit-actions">
-              <button onClick={() => setIsEditing(false)}>Cancel</button>
-              <button onClick={handleSaveEdit}>Save</button>
+              <button onClick={() => setIsEditing(false)}>{t("common.cancel", "Cancel")}</button>
+              <button onClick={handleSaveEdit}>{t("common.save", "Save")}</button>
             </div>
           </div>
         ) : (
           <>
             <div className="message-text">{message.text}</div>
-            {message.isEdited && <span className="edited-badge">edited</span>}
+            {message.isEdited && <span className="edited-badge">{t("chat.edited", "edited")}</span>}
             <div className="message-meta">
               <span className="message-time">{time}</span>
               {isOwn && (
@@ -144,26 +146,26 @@ export default function MessageBubble({ message, isOwn, onReply }) {
             <div className="menu-backdrop" onClick={() => setShowMenu(false)} />
             <div className="menu-content">
               <button onClick={() => { onReply(message); setShowMenu(false); }}>
-                <Reply size={16} /> Reply
+                <Reply size={16} /> {t("chat.reply", "Reply")}
               </button>
               <button onClick={() => { setShowForward(true); setShowMenu(false); }}>
-                <Forward size={16} /> Forward
+                <Forward size={16} /> {t("chat.forward", "Forward")}
               </button>
               <button onClick={() => { emitPinMessage(message.conversationId, message.id); setShowMenu(false); }}>
-                <Pin size={16} /> Pin
+                <Pin size={16} /> {t("chat.pin", "Pin")}
               </button>
               {isOwn && (
                 <button onClick={handleEdit}>
-                  <Pencil size={16} /> Edit
+                  <Pencil size={16} /> {t("chat.edit", "Edit")}
                 </button>
               )}
               {isOwn && (
                 <>
                   <button onClick={() => handleDelete(false)}>
-                    <Trash2 size={16} /> Delete for me
+                    <Trash2 size={16} /> {t("chat.deleteForMe", "Delete for me")}
                   </button>
                   <button onClick={() => handleDelete(true)}>
-                    <Trash2 size={16} /> Delete for everyone
+                    <Trash2 size={16} /> {t("chat.deleteForEveryone", "Delete for everyone")}
                   </button>
                 </>
               )}

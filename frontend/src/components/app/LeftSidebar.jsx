@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../../stores/authStore.js";
 import { useChatStore } from "../../stores/chatStore.js";
 import { useFeatureStore } from "../../stores/featureStore.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
+import { useLocaleStore, locales_list } from "../../stores/localeStore.js";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, MessageSquare, Phone, Users, Settings, Bell, LogOut, Shield, Circle } from "lucide-react";
+import { MessageCircle, MessageSquare, Phone, Users, Settings, Bell, LogOut, Shield, Circle, Globe } from "lucide-react";
 import ProfileModal from "../ProfileModal.jsx";
 import { handleAvatarError } from "../../utils/avatar.js";
 
@@ -12,8 +13,21 @@ export default function LeftSidebar({ activeNav, onNavChange, onOpenStoryCreator
   const { authUser, logout } = useAuthStore();
   const features = useFeatureStore();
   const t = useTranslate();
+  const { locale, setLocale } = useLocaleStore();
   const [showProfile, setShowProfile] = useState(false);
+  const [showLang, setShowLang] = useState(false);
+  const langRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (langRef.current && !langRef.current.contains(e.target)) {
+        setShowLang(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const navItems = [
     { icon: <MessageSquare size={22} />, label: t("nav.chats", "Chats"), key: "chats", flag: "chat_enabled" },
@@ -62,6 +76,24 @@ export default function LeftSidebar({ activeNav, onNavChange, onOpenStoryCreator
             <Shield size={20} />
           </button>
         )}
+        <div className="sidebar-lang-wrapper" ref={langRef}>
+          <button className="sidebar-nav-item" onClick={() => setShowLang(!showLang)} title={t("nav.language", "Language")}>
+            <Globe size={20} />
+          </button>
+          {showLang && (
+            <div className="sidebar-lang-dropdown">
+              {locales_list.map((l) => (
+                <button
+                  key={l.code}
+                  className={`sidebar-lang-option ${locale === l.code ? "active" : ""}`}
+                  onClick={() => { setLocale(l.code); setShowLang(false); }}
+                >
+                  {l.native}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button className="sidebar-nav-item" onClick={() => setShowProfile(true)} title={t("nav.profile", "Profile")}>
           <img src={authUser?.avatar || "/default-avatar.svg"} alt="" className="sidebar-avatar" onError={(e) => handleAvatarError(e, authUser?.fullName)} />
         </button>

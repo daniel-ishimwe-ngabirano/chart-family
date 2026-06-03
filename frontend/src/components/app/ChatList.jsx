@@ -33,11 +33,11 @@ const ChatListItem = memo(function ChatListItem({ conversation, authUser, select
 
   const getLastMsg = () => {
     if (typing?.length > 0) {
-      return `✍️ ${typing[0].fullName}${typing.length > 1 ? ` and ${typing.length - 1} other${typing.length > 2 ? "s" : ""}` : ""} typing...`;
+      return `✍️ ${typing[0].fullName}${typing.length > 1 ? ` ${t("chat.and", "and")} ${typing.length - 1} ${typing.length > 2 ? t("chat.others", "others") : t("chat.other", "other")}` : ""} ${t("chat.typingLower", "typing...")}`;
     }
-    if (!conversation.lastMessage) return "No messages yet";
-    if (conversation.lastMessage.isDeleted) return "Message deleted";
-    return conversation.lastMessage.text || (conversation.lastMessage.type === "IMAGE" ? "📷 Image" : conversation.lastMessage.type === "VIDEO" ? "🎥 Video" : "Media");
+    if (!conversation.lastMessage) return t("chat.noMessages", "No messages yet");
+    if (conversation.lastMessage.isDeleted) return t("chat.deletedMessagePreview", "Message deleted");
+    return conversation.lastMessage.text || (conversation.lastMessage.type === "IMAGE" ? "📷 " + t("common.image", "Image") : conversation.lastMessage.type === "VIDEO" ? "🎥 " + t("common.video", "Video") : t("common.media", "Media"));
   };
 
   return (
@@ -132,9 +132,9 @@ export default function ChatList({ onSelectChat, groupFilter }) {
       <div className="chat-list-header">
         <h2>{t("nav.chats", "Chats")}</h2>
         <div style={{ display: "flex", gap: 4 }}>
-          <button className="icon-btn" onClick={() => setShowNewConv(true)} title="New chat"><UserPlus size={20} /></button>
+          <button className="icon-btn" onClick={() => setShowNewConv(true)} title={t("chat.newChat", "New chat")}><UserPlus size={20} /></button>
           {groupsEnabled && (
-            <button className="icon-btn" onClick={() => setShowGroup(true)} title="Create group"><Users size={20} /></button>
+            <button className="icon-btn" onClick={() => setShowGroup(true)} title={t("chat.createGroupBtn", "Create group")}><Users size={20} /></button>
           )}
         </div>
       </div>

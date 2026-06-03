@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useChatStore } from "../../stores/chatStore.js";
 import { useAuthStore } from "../../stores/authStore.js";
+import { useTranslate } from "../../hooks/useTranslate.js";
 import { X, Image, FileText, Link as LinkIcon, Users, Bell, Shield, Ban, Loader2, Check } from "lucide-react";
 import MediaViewer from "../MediaViewer.jsx";
 import axios from "../../lib/axios.js";
@@ -9,6 +10,7 @@ import { handleAvatarError } from "../../utils/avatar.js";
 export default function UserPanel({ onClose }) {
   const { selectedConversation } = useChatStore();
   const { authUser } = useAuthStore();
+  const t = useTranslate();
   const [tab, setTab] = useState("media");
   const [media, setMedia] = useState([]);
   const [mediaLoading, setMediaLoading] = useState(false);
@@ -46,16 +48,16 @@ export default function UserPanel({ onClose }) {
       const otherId = otherUser?.id;
       if (type === "mute") {
         await axios.post(`/conversations/${selectedConversation.id}/mute`, { muted: true });
-        setActionMsg("Conversation muted");
+        setActionMsg(t("chat.conversationMuted", "Conversation muted"));
       } else if (type === "block" && otherId) {
         await axios.post(`/users/block/${otherId}`);
-        setActionMsg("User blocked");
+        setActionMsg(t("chat.userBlocked", "User blocked"));
       } else if (type === "report" && otherId) {
         await axios.post("/users/report", { reportedId: otherId, reason: "Reported" });
-        setActionMsg("User reported");
+        setActionMsg(t("chat.userReported", "User reported"));
       }
     } catch (err) {
-      setActionMsg(err.response?.data?.error || "Action failed");
+      setActionMsg(err.response?.data?.error || t("chat.actionFailed", "Action failed"));
     } finally {
       setActionLoading(false);
       setTimeout(() => setActionMsg(null), 3000);
@@ -69,14 +71,14 @@ export default function UserPanel({ onClose }) {
   return (
     <div className="user-panel">
       <div className="user-panel-header">
-        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="user-panel-avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown")} />
-        <h3>{selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown"}</h3>
+        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="user-panel-avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || t("common.unknown", "Unknown"))} />
+        <h3>{selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || t("common.unknown", "Unknown")}</h3>
         <button className="icon-btn" onClick={onClose}><X size={20} /></button>
       </div>
 
       <div className="user-panel-tabs">
-        {["media", "files", "links", "members"].map((t) => (
-          <button key={t} className={`up-tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>{t}</button>
+        {["media", "files", "links", "members"].map((tabKey) => (
+          <button key={tabKey} className={`up-tab ${tab === tabKey ? "active" : ""}`} onClick={() => setTab(tabKey)}>{t(`chat.${tabKey}Tab`, tabKey)}</button>
         ))}
       </div>
 
@@ -91,13 +93,13 @@ export default function UserPanel({ onClose }) {
                 >
                   <img src={otherUser.avatar} alt="" />
                 </div>
-                <span className="up-avatar-label">Profile Photo</span>
+                <span className="up-avatar-label">{t("chat.profilePhoto", "Profile Photo")}</span>
               </div>
             )}
             {mediaLoading ? (
               <div className="up-empty"><Loader2 size={24} className="spin" /></div>
             ) : media.length === 0 ? (
-              !otherUser?.avatar && <div className="up-empty">No shared media yet</div>
+              !otherUser?.avatar && <div className="up-empty">{t("chat.noSharedMedia", "No shared media yet")}</div>
             ) : (
               <div className="up-media-grid">
                 {media.map((item) => (
@@ -122,13 +124,13 @@ export default function UserPanel({ onClose }) {
             {mediaLoading ? (
               <div className="up-empty"><Loader2 size={24} className="spin" /></div>
             ) : media.length === 0 ? (
-              <div className="up-empty">No shared files</div>
+              <div className="up-empty">{t("chat.noSharedFiles", "No shared files")}</div>
             ) : (
               media.map((item) => (
                 <div key={item.id} className="up-file-item">
                   <FileText size={20} />
                   <div className="up-file-info">
-                    <span className="up-file-name">{item.fileName || "File"}</span>
+                    <span className="up-file-name">{item.fileName || t("common.file", "File")}</span>
                     <span className="up-file-size">{item.fileSize ? `${(item.fileSize / 1024).toFixed(0)} KB` : ""}</span>
                   </div>
                 </div>
@@ -136,7 +138,7 @@ export default function UserPanel({ onClose }) {
             )}
           </div>
         )}
-        {tab === "links" && <div className="up-empty">No shared links</div>}
+        {tab === "links" && <div className="up-empty">{t("chat.noSharedLinks", "No shared links")}</div>}
         {tab === "members" && selectedConversation?.isGroup && (
           <div className="up-member-list">
             {selectedConversation.members?.map((m) => {
@@ -146,11 +148,11 @@ export default function UserPanel({ onClose }) {
                 <div key={m.user?.id} className="up-member">
                   <img src={m.user?.avatar} alt="" className="up-member-avatar" onError={(e) => handleAvatarError(e, m.user?.fullName)} />
                   <div className="up-member-info">
-                    <span className="up-member-name">{m.user?.fullName}{isMe ? " (you)" : ""}</span>
-                    {m.role === "admin" && <span className="up-member-role">admin</span>}
+                    <span className="up-member-name">{m.user?.fullName}{isMe ? t("chat.you", " (you)") : ""}</span>
+                    {m.role === "admin" && <span className="up-member-role">{t("chat.admin", "admin")}</span>}
                   </div>
                   {isAdmin && !isMe && (
-                    <button className="icon-btn" title="Remove" onClick={async () => {
+                    <button className="icon-btn" title={t("chat.remove", "Remove")} onClick={async () => {
                       try {
                         await axios.delete(`/groups/${selectedConversation.id}/members/${m.user?.id}`);
                         useChatStore.getState().getConversations();
@@ -166,9 +168,9 @@ export default function UserPanel({ onClose }) {
 
       <div className="user-panel-actions">
         {actionMsg && <div className="up-action-msg">{actionMsg}</div>}
-        <button className="up-action" onClick={() => doAction("mute")} disabled={actionLoading}><Bell size={18} /> {actionLoading ? "..." : "Mute"}</button>
+        <button className="up-action" onClick={() => doAction("mute")} disabled={actionLoading}><Bell size={18} /> {actionLoading ? "..." : t("chat.mute", "Mute")}</button>
         {selectedConversation?.isGroup && (
-          <button className="up-action" onClick={async () => {
+            <button className="up-action" onClick={async () => {
             if (actionLoading) return;
             setActionLoading(true);
             try {
@@ -177,17 +179,17 @@ export default function UserPanel({ onClose }) {
               useChatStore.getState().getConversations();
               onClose();
             } catch (err) {
-              setActionMsg(err.response?.data?.error || "Failed to leave group");
+              setActionMsg(err.response?.data?.error || t("chat.failedToLeaveGroup", "Failed to leave group"));
             } finally {
               setActionLoading(false);
               setTimeout(() => setActionMsg(null), 3000);
             }
-          }} disabled={actionLoading}><X size={18} /> {actionLoading ? "..." : "Leave Group"}</button>
+          }} disabled={actionLoading}><X size={18} /> {actionLoading ? "..." : t("chat.leaveGroup", "Leave Group")}</button>
         )}
         {otherUser && (
           <>
-            <button className="up-action" onClick={() => doAction("block")} disabled={actionLoading}><Shield size={18} /> {actionLoading ? "..." : "Block"}</button>
-            <button className="up-action" onClick={() => doAction("report")} disabled={actionLoading}><Ban size={18} /> {actionLoading ? "..." : "Report"}</button>
+            <button className="up-action" onClick={() => doAction("block")} disabled={actionLoading}><Shield size={18} /> {actionLoading ? "..." : t("chat.block", "Block")}</button>
+            <button className="up-action" onClick={() => doAction("report")} disabled={actionLoading}><Ban size={18} /> {actionLoading ? "..." : t("chat.report", "Report")}</button>
           </>
         )}
       </div>

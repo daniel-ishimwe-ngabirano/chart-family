@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
 import { useStoryStore } from "../../stores/storyStore.js";
 import { useAuthStore } from "../../stores/authStore.js";
+import { useTranslate } from "../../hooks/useTranslate.js";
 import { handleAvatarError } from "../../utils/avatar.js";
 import { Plus } from "lucide-react";
 
 export default function StoriesBar({ onOpenCreator }) {
   const { groups, fetchStories, openViewer } = useStoryStore();
   const { authUser } = useAuthStore();
+  const t = useTranslate();
   const fetched = useRef(false);
 
   useEffect(() => {
@@ -39,11 +41,11 @@ export default function StoriesBar({ onOpenCreator }) {
         <div className="story-avatar-item my-story" onClick={handleMyStoryClick}>
           <div className={`story-avatar-ring ${myStoriesCount > 0 ? "unviewed" : "add-ring"}`}>
             <div className="story-avatar-img-wrap">
-              <img src={authUser?.avatar || ""} alt="" onError={(e) => handleAvatarError(e, authUser?.fullName || "You")} />
+              <img src={authUser?.avatar || ""} alt="" onError={(e) => handleAvatarError(e, authUser?.fullName || t("common.you", "You"))} />
               <div className="story-add-badge" onClick={myStoriesCount > 0 ? handleAddStory : undefined}><Plus size={16} /></div>
             </div>
           </div>
-          <span className="story-name">{myStoriesCount > 0 ? "My Status" : "Your Story"}</span>
+          <span className="story-name">{myStoriesCount > 0 ? t("chat.myStatus", "My Status") : t("chat.yourStory", "Your Story")}</span>
         </div>
         {groups.filter((g) => g.user.id !== authUser?.id).map((group) => (
           <div key={group.user.id} className="story-avatar-item" onClick={() => openViewer(group.user.id, 0)}>

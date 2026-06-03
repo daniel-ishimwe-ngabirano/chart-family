@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Phone, Bell } from "lucide-react";
+import { useTranslate } from "../hooks/useTranslate.js";
 import LeftSidebar from "../components/app/LeftSidebar.jsx";
 import MobileBottomNav from "../components/app/MobileBottomNav.jsx";
 import ChatList from "../components/app/ChatList.jsx";
@@ -17,6 +18,7 @@ import { handleAvatarError } from "../utils/avatar.js";
 import { STORAGE_KEYS } from "../lib/constants.js";
 
 function CallsPanel() {
+  const t = useTranslate();
   const [calls, setCalls] = useState([]);
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEYS.CALL_HISTORY);
@@ -27,27 +29,27 @@ function CallsPanel() {
   return (
     <div className="chat-list-panel">
       <div className="chat-list-header">
-        <h2>Calls</h2>
+        <h2>{t("calls.title", "Calls")}</h2>
       </div>
       <div className="chat-list-items">
         {calls.length === 0 ? (
           <div className="panel-empty-state">
             <Phone size={48} />
-            <p>Call history will appear here</p>
+            <p>{t("calls.empty", "Call history will appear here")}</p>
           </div>
         ) : (
           calls.map((call, i) => (
             <div key={i} className="chat-list-item">
               <div className="chat-list-avatar">
-                <img src={call.avatar || ""} alt="" onError={(e) => handleAvatarError(e, call.name || "Unknown")} />
+                  <img src={call.avatar || ""} alt="" onError={(e) => handleAvatarError(e, call.name || t("common.unknown", "Unknown"))} />
               </div>
               <div className="chat-list-info">
                 <div className="chat-list-top">
-                  <span className="chat-list-name">{call.name || "Unknown"}</span>
+                    <span className="chat-list-name">{call.name || t("common.unknown", "Unknown")}</span>
                   <span className="chat-list-time">{call.time || ""}</span>
                 </div>
                 <div className="chat-list-bottom">
-                  <span className="chat-list-preview">{call.type === "missed" ? "Missed call" : call.type === "incoming" ? "Incoming call" : "Outgoing call"}</span>
+                    <span className="chat-list-preview">{call.type === "missed" ? t("calls.missed", "Missed call") : call.type === "incoming" ? t("calls.incoming", "Incoming call") : t("calls.outgoing", "Outgoing call")}</span>
                 </div>
               </div>
             </div>
@@ -59,16 +61,17 @@ function CallsPanel() {
 }
 
 function NotificationsPanel({ notifications }) {
+  const t = useTranslate();
   return (
     <div className="chat-list-panel">
       <div className="chat-list-header">
-        <h2>Notifications</h2>
+        <h2>{t("notifications.title", "Notifications")}</h2>
       </div>
       <div className="chat-list-items">
         {notifications.length === 0 ? (
           <div className="panel-empty-state">
             <Bell size={48} />
-            <p>No notifications yet</p>
+            <p>{t("notifications.empty", "No notifications yet")}</p>
           </div>
         ) : (
           notifications.map((n, i) => (

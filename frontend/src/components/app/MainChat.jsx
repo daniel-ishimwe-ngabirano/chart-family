@@ -124,7 +124,7 @@ export default function MainChat({ onTogglePanel, onBack }) {
     return (
       <div className="main-chat empty">
         <div className="empty-content">
-          <h2>WaveChat</h2>
+          <h2>{t("app.name", "WaveChat")}</h2>
           <p>{t("chat.selectConversation", "Select a conversation to start messaging")}</p>
         </div>
       </div>
@@ -148,9 +148,9 @@ export default function MainChat({ onTogglePanel, onBack }) {
   };
   const typingList = selectedConversation ? (typingUsers[selectedConversation.id] || []).filter((u) => u.userId !== authUser.id) : [];
   const typingText = typingList.length === 1
-    ? `${typingList[0].fullName} is typing...`
+    ? `${typingList[0].fullName} ${t("chat.isTyping", "is typing...")}`
     : typingList.length > 1
-      ? `${typingList[0].fullName} and ${typingList.length - 1} other${typingList.length > 2 ? "s" : ""} are typing...`
+      ? `${typingList[0].fullName} ${t("chat.and", "and")} ${typingList.length - 1} ${typingList.length > 2 ? t("chat.others", "others") : t("chat.other", "other")} ${t("chat.areTyping", "are typing...")}`
       : null;
 
   return (
@@ -159,18 +159,18 @@ export default function MainChat({ onTogglePanel, onBack }) {
         <button className="mobile-back" onClick={() => { useChatStore.getState().setSelectedConversation(null); onBack?.(); }}>
           <ArrowLeft size={24} />
         </button>
-        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="chat-header-avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown")} />
+        <img src={otherUser?.avatar || selectedConversation?.groupAvatar || ""} alt="" className="chat-header-avatar" onError={(e) => handleAvatarError(e, selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || t("common.unknown", "Unknown"))} />
         <div className="chat-header-info">
-          <div className="chat-header-name">{selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || "Unknown"}</div>
+          <div className="chat-header-name">{selectedConversation?.isGroup ? selectedConversation.groupName : otherUser?.fullName || t("common.unknown", "Unknown")}</div>
           <div className="chat-header-status">
-            {selectedConversation?.isGroup ? `${selectedConversation.members?.length || 0} members` : isOnline ? "Online" : otherUser?.lastSeen ? `Last seen ${new Date(otherUser.lastSeen).toLocaleTimeString()}` : "Offline"}
+            {selectedConversation?.isGroup ? `${selectedConversation.members?.length || 0} ${t("chat.members", "members")}` : isOnline ? t("chat.online", "Online") : otherUser?.lastSeen ? `${t("chat.lastSeen", "Last seen")} ${new Date(otherUser.lastSeen).toLocaleTimeString()}` : t("chat.offline", "Offline")}
           </div>
         </div>
         <div className="chat-header-actions">
-          {voiceCallsEnabled && <button className="icon-btn" title="Voice call" onClick={handleVoiceCall}><Phone size={20} /></button>}
-          {videoCallsEnabled && <button className="icon-btn" title="Video call" onClick={handleVideoCall}><Video size={20} /></button>}
+          {voiceCallsEnabled && <button className="icon-btn" title={t("chat.voiceCall", "Voice call")} onClick={handleVoiceCall}><Phone size={20} /></button>}
+          {videoCallsEnabled && <button className="icon-btn" title={t("chat.videoCall", "Video call")} onClick={handleVideoCall}><Video size={20} /></button>}
           {hasStory && (
-            <button className="icon-btn status-header-btn" title="View status" onClick={() => openViewer(otherUser.id, 0)}>
+            <button className="icon-btn status-header-btn" title={t("chat.viewStatus", "View status")} onClick={() => openViewer(otherUser.id, 0)}>
               <svg width="20" height="20" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" fill="none" stroke="var(--accent)" strokeWidth="2" />
                 <circle cx="12" cy="12" r="6" fill="var(--accent)" stroke="none" />
@@ -178,19 +178,19 @@ export default function MainChat({ onTogglePanel, onBack }) {
             </button>
           )}
           {selectedConversation?.isGroup && features.isEnabled("polls_enabled") && (
-            <button className="icon-btn" title="Create poll" onClick={() => setShowPoll(true)}><BarChart3 size={20} /></button>
+            <button className="icon-btn" title={t("chat.createPoll", "Create poll")} onClick={() => setShowPoll(true)}><BarChart3 size={20} /></button>
           )}
-          <button className="icon-btn" title="Search" onClick={() => { setShowSearch(!showSearch); if (!showSearch) setTimeout(() => searchInputRef.current?.focus(), 100); }}><Search size={20} /></button>
-          <button className="icon-btn" onClick={onTogglePanel} title="Info"><Info size={20} /></button>
+          <button className="icon-btn" title={t("chat.search", "Search")} onClick={() => { setShowSearch(!showSearch); if (!showSearch) setTimeout(() => searchInputRef.current?.focus(), 100); }}><Search size={20} /></button>
+          <button className="icon-btn" onClick={onTogglePanel} title={t("chat.info", "Info")}><Info size={20} /></button>
         </div>
       </div>
       <div className="main-chat-content">
         {pinnedMessages.length > 0 && (
           <div className="pinned-messages-bar">
             <Pin size={14} />
-            <span className="pinned-count">{pinnedMessages.length} pinned</span>
-            <span className="pinned-preview">{pinnedMessages[0]?.message?.text || "Media"}</span>
-            {pinnedMessages.length > 1 && <span className="pinned-more">+{pinnedMessages.length - 1} more</span>}
+            <span className="pinned-count">{pinnedMessages.length} {t("chat.pinned", "pinned")}</span>
+            <span className="pinned-preview">{pinnedMessages[0]?.message?.text || t("common.media", "Media")}</span>
+            {pinnedMessages.length > 1 && <span className="pinned-more">+{pinnedMessages.length - 1} {t("chat.more", "more")}</span>}
           </div>
         )}
         {showSearch && (
@@ -199,7 +199,7 @@ export default function MainChat({ onTogglePanel, onBack }) {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search messages..."
+              placeholder={t("chat.searchMessages", "Search messages...")}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); doSearch(e.target.value); }}
             />
@@ -211,11 +211,11 @@ export default function MainChat({ onTogglePanel, onBack }) {
             {searching ? (
               <div className="loading-center"><Loader2 size={16} className="spin" /></div>
             ) : searchResults.length === 0 ? (
-              <div className="search-no-results">No messages found</div>
+              <div className="search-no-results">{t("chat.searchNoResults", "No messages found")}</div>
             ) : (
               searchResults.slice(0, 10).map((msg) => (
                 <div key={msg.id} className="search-result-item" onClick={() => { setShowSearch(false); }}>
-                  <div className="search-result-sender">{msg.sender?.fullName || "Unknown"}</div>
+                  <div className="search-result-sender">{msg.sender?.fullName || t("common.unknown", "Unknown")}</div>
                   <div className="search-result-text">{msg.text}</div>
                 </div>
               ))
@@ -231,7 +231,7 @@ export default function MainChat({ onTogglePanel, onBack }) {
                 <div className="loading-more"><Loader2 size={20} className="spin" /></div>
               )}
               {messages.length === 0 ? (
-                <div className="empty-chat"><p>No messages yet</p><p className="hint">Send a message to start</p></div>
+                <div className="empty-chat"><p>{t("chat.noMessages", "No messages yet")}</p><p className="hint">{t("chat.sendMessageHint", "Send a message to start")}</p></div>
               ) : (
                 messages.map((msg) => (
                   <MessageBubble key={msg.id} message={msg} isOwn={msg.senderId === authUser.id} onReply={setReplyTo} />

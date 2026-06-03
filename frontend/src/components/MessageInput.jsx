@@ -102,7 +102,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
         setRecordingTime((t) => t + 1);
       }, 1000);
     } catch {
-      alert("Microphone access denied. Please allow microphone permissions.");
+      alert(t("chat.micDenied", "Microphone access denied. Please allow microphone permissions."));
     }
   };
 
@@ -185,7 +185,8 @@ export default function MessageInput({ replyTo, onCancelReply }) {
       else if (isAudio) maxSize = 25;
       
       if (sizeInMB > maxSize) {
-        alert(`File "${file.name}" is too large. Maximum size is ${maxSize}MB for ${isVideo ? 'videos' : isImage ? 'images' : isAudio ? 'audio' : 'files'}.`);
+        const fileTypeLabel = isVideo ? t("chat.filesVideos", "videos") : isImage ? t("chat.filesImages", "images") : isAudio ? t("chat.filesAudio", "audio") : t("chat.files", "files");
+        alert(t("chat.fileTooLarge", `File "${file.name}" is too large. Maximum size is ${maxSize}MB for ${fileTypeLabel}.`));
         return;
       }
     }
@@ -222,9 +223,9 @@ export default function MessageInput({ replyTo, onCancelReply }) {
           <Reply size={16} />
           <div className="reply-info">
             <span className="reply-name">
-              {replyTo.senderId === authUser.id ? "You" : replyTo.sender?.fullName}
+              {replyTo.senderId === authUser.id ? t("chat.you", "You") : replyTo.sender?.fullName}
             </span>
-            <span className="reply-text">{replyTo.text || "Media"}</span>
+            <span className="reply-text">{replyTo.text || t("common.media", "Media")}</span>
           </div>
           <button onClick={onCancelReply} className="cancel-reply">
             <X size={18} />
@@ -271,7 +272,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
                 key={cat.name}
                 className={`emoji-cat-btn ${emojiCategory === i ? "active" : ""}`}
                 onClick={() => setEmojiCategory(i)}
-                title={cat.name}
+                title={t("chat." + cat.name.toLowerCase(), cat.name)}
               >
                 {cat.emojis[0]}
               </button>
@@ -305,7 +306,7 @@ export default function MessageInput({ replyTo, onCancelReply }) {
             </button>
           </div>
         ) : (
-          <button type="button" className="input-action" onClick={startRecording} title="Record voice message">
+          <button type="button" className="input-action" onClick={startRecording} title={t("chat.recordVoice", "Record voice message")}>
             <Mic size={22} />
           </button>
         )}
