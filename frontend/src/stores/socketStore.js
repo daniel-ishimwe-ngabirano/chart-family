@@ -117,6 +117,10 @@ export const connectSocket = () => {
     }
   });
 
+  socket.on("message:reacted", ({ messageId, reactions }) => {
+    useChatStore.getState().updateMessageReaction(messageId, reactions);
+  });
+
   socket.on("message:read", ({ messageId, userId, conversationId }) => {
     useChatStore.getState().markMessageRead(messageId, userId, conversationId);
   });

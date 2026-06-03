@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useChatStore } from "../stores/chatStore.js";
 import { useAuthStore } from "../stores/authStore.js";
 import { useTranslate } from "../hooks/useTranslate.js";
@@ -8,7 +8,7 @@ import MediaViewer from "./MediaViewer.jsx";
 import ForwardModal from "./ForwardModal.jsx";
 import VoicePlayer from "./VoicePlayer.jsx";
 
-const EMOJI_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🙏"];
+const EMOJI_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🙏", "🔥", "🎉", "😍", "💯", "✨", "😭", "🤣", "🥰", "😘", "💀", "👏", "🙌", "😤", "🤔"];
 
 export default function MessageBubble({ message, isOwn, onReply }) {
   const { deleteMessage, editMessage, reactToMessage } = useChatStore();
@@ -19,7 +19,20 @@ export default function MessageBubble({ message, isOwn, onReply }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [showMedia, setShowMedia] = useState(false);
+  const [mediaIndex, setMediaIndex] = useState(0);
   const [showForward, setShowForward] = useState(false);
+  const reactionRef = useRef(null);
+
+  useEffect(() => {
+    if (!showReactions) return;
+    const handleClickOutside = (e) => {
+      if (reactionRef.current && !reactionRef.current.contains(e.target)) {
+        setShowReactions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showReactions]);
 
   if (message.isDeleted || message.deletedForEveryone) {
     return (
@@ -51,12 +64,7 @@ export default function MessageBubble({ message, isOwn, onReply }) {
 
   const handleReact = (emoji) => {
     reactToMessage(message.id, emoji);
-    setShowReactions(false);
   };
-
-  const userReaction = message.reactions?.find(
-    (r) => r.userId === authUser.id
-  );
 
   const time = new Date(message.createdAt).toLocaleTimeString([], {
     hour: "2-digit",
@@ -64,7 +72,86 @@ export default function MessageBubble({ message, isOwn, onReply }) {
   });
 
   const attachments = message.attachments || [];
-  const isAudioAttachment = attachments.length > 0 && (attachments[0]?.mimeType?.startsWith("audio/") || message.type === "VOICE_NOTE");
+  const imageAttachments = attachments.filter((a) => a.mimeType?.startsWith("image/"));
+  const videoAttachments = attachments.filter((a) => a.mimeType?.startsWith("video/"));
+  const audioAttachments = attachments.filter((a) => a.mimeType?.startsWith("audio/"));
+  const isAudioAttachment = audioAttachments.length > 0 || message.type === "VOICE_NOTE";
+
+  const hasMixedAttachments = imageAttachments.length > 0 && (videoAttachments.length > 0 || audioAttachments.length > 0);
+
+  const openMedia = (attIndex) => {
+    setMediaIndex(attIndex);
+    setShowMedia(true);
+  };
+
+  const groupedReactions = (message.reactions || []).reduce((acc, r) => {
+    const existing = acc.find((g) => g.emoji === r.emoji);
+    if (existing) {
+      existing.count++;
+      existing.users.push(r.userId);
+    } else {
+      acc.push({ emoji: r.emoji, count: 1, users: [r.userId] });
+    }
+    return acc;
+  }, []);
+
+  const renderImageGrid = () => {
+    if (imageAttachments.length === 0) return null;
+    const count = imageAttachments.length;
+    let gridClass = "message-image-grid";
+    if (count === 2) gridClass += " two";
+    else if (count <= 4) gridClass += " four";
+    else gridClass += " many";
+
+    const displayImages = imageAttachments.slice(0, 5);
+
+    return (
+      <div className={gridClass}>
+        {displayImages.map((att, i) => {
+          const fullIdx = attachments.indexOf(att);
+          return (
+            <div key={att.id || i} className="image-grid-item" onClick={() => openMedia(fullIdx)}>
+              <img src={att.url} alt="" loading="lazy" />
+              {count > 5 && i === 4 && (
+                <div className="image-grid-overlay">+{count - 5}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderVideoAttachments = () =>
+    videoAttachments.map((att) => {
+      const fullIdx = attachments.indexOf(att);
+      return (
+        <div key={att.id} className="message-video" onClick={() => openMedia(fullIdx)}>
+          <video
+            src={att.url}
+            poster={att.thumbnail}
+            preload="metadata"
+          />
+          <div className="video-play-overlay">
+            <div className="play-button">▶</div>
+            {att.duration && (
+              <div className="video-duration">
+                {Math.floor(att.duration / 60)}:{String(att.duration % 60).padStart(2, '0')}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    });
+
+  const renderAudioAttachments = () => {
+    if (!isAudioAttachment) return null;
+    return audioAttachments.map((att) => (
+      <div key={att.id} className="message-audio">
+        <VoicePlayer src={att.url} isOwn={isOwn} />
+      </div>
+    ));
+  };
 
   return (
     <div className={`message-wrapper ${isOwn ? "own" : "other"}`}>
@@ -75,36 +162,16 @@ export default function MessageBubble({ message, isOwn, onReply }) {
         </div>
       )}
 
-      {attachments.length > 0 && attachments[0].mimeType?.startsWith("image/") && (
-        <div className="message-image" onClick={() => setShowMedia(true)}>
-          <img src={attachments[0].url} alt="" />
-        </div>
-      )}
+      {hasMixedAttachments || imageAttachments.length > 1
+        ? renderImageGrid()
+        : imageAttachments.length === 1 && (
+            <div className="message-image" onClick={() => openMedia(attachments.indexOf(imageAttachments[0]))}>
+              <img src={imageAttachments[0].url} alt="" />
+            </div>
+          )}
 
-      {isAudioAttachment && attachments[0]?.url && (
-        <div className="message-audio">
-          <VoicePlayer src={attachments[0].url} isOwn={isOwn} />
-        </div>
-      )}
-
-      {attachments.length > 0 && attachments[0].mimeType?.startsWith("video/") && (
-        <div className="message-video" onClick={() => setShowMedia(true)}>
-          <video 
-            src={attachments[0].url} 
-            poster={attachments[0].thumbnail}
-            preload="metadata" 
-            style={{cursor: 'pointer', maxWidth: '300px', maxHeight: '200px', borderRadius: '8px'}}
-          />
-          <div className="video-play-overlay">
-            <div className="play-button">▶</div>
-            {attachments[0].duration && (
-              <div className="video-duration">
-                {Math.floor(attachments[0].duration / 60)}:{String(attachments[0].duration % 60).padStart(2, '0')}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {renderVideoAttachments()}
+      {renderAudioAttachments()}
 
       <div
         className={`message-bubble ${isOwn ? "own" : "other"}`}
@@ -174,25 +241,33 @@ export default function MessageBubble({ message, isOwn, onReply }) {
         )}
       </div>
 
-      {message.reactions && message.reactions.length > 0 && (
+      {groupedReactions.length > 0 && (
         <div className="message-reactions" onClick={() => setShowReactions(!showReactions)}>
-          {message.reactions.map((r, i) => (
-            <span key={i} className="reaction-emoji">{r.emoji}</span>
-          ))}
+          {groupedReactions.map((g) => {
+            const hasReacted = g.users.includes(authUser.id);
+            return (
+              <span key={g.emoji} className={`reaction-emoji ${hasReacted ? "reacted" : ""}`}>
+                {g.emoji} {g.count > 1 && <span className="reaction-count">{g.count}</span>}
+              </span>
+            );
+          })}
         </div>
       )}
 
       {showReactions && (
-        <div className="reaction-picker">
-          {EMOJI_REACTIONS.map((emoji) => (
-            <button
-              key={emoji}
-              className={`reaction-btn ${userReaction?.emoji === emoji ? "active" : ""}`}
-              onClick={() => handleReact(emoji)}
-            >
-              {emoji}
-            </button>
-          ))}
+        <div className="reaction-picker" ref={reactionRef}>
+          {EMOJI_REACTIONS.map((emoji) => {
+            const hasReacted = (message.reactions || []).some((r) => r.emoji === emoji && r.userId === authUser.id);
+            return (
+              <button
+                key={emoji}
+                className={`reaction-btn ${hasReacted ? "active" : ""}`}
+                onClick={() => handleReact(emoji)}
+              >
+                {emoji}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -201,7 +276,13 @@ export default function MessageBubble({ message, isOwn, onReply }) {
           <SmilePlus size={14} />
         </button>
       )}
-      {showMedia && <MediaViewer url={attachments[0]?.url} mimeType={attachments[0]?.mimeType} onClose={() => setShowMedia(false)} />}
+      {showMedia && (
+        <MediaViewer
+          attachments={attachments}
+          initialIndex={mediaIndex}
+          onClose={() => setShowMedia(false)}
+        />
+      )}
       {showForward && <ForwardModal message={message} onClose={() => setShowForward(false)} />}
     </div>
   );

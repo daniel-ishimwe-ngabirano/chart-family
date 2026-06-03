@@ -142,6 +142,15 @@
   opacity: 1;
 }
 
+/* Media Viewer Gallery Navigation */
+.media-viewer { position: relative; }
+.media-viewer-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; }
+.media-viewer-counter { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+.media-viewer-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; z-index: 10; }
+.media-viewer-nav:hover { background: rgba(0,0,0,0.8); }
+.media-viewer-nav.prev { left: 16px; }
+.media-viewer-nav.next { right: 16px; }
+
 /* Enhanced Media Viewer */
 .media-viewer-audio {
   display: flex;
