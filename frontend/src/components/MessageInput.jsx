@@ -155,8 +155,14 @@ export default function MessageInput({ replyTo, onCancelReply }) {
     }
 
     setSending(true);
-    await sendMessage(formData);
+    const result = await sendMessage(formData);
     setSending(false);
+
+    if (!result?.success) {
+      alert(result?.error || "Failed to send message");
+      return;
+    }
+
     setText("");
     setFiles([]);
     setFilePreviews([]);
@@ -164,22 +170,21 @@ export default function MessageInput({ replyTo, onCancelReply }) {
     emitStopTyping(selectedConversation.id, authUser.id);
     await axios.delete(`/conversations/${selectedConversation.id}/draft`).catch(() => {});
     playMessageSent();
-    // reset textarea height
     const ta = document.querySelector(".input-form textarea");
     if (ta) ta.style.height = "40px";
   };
 
   const handleFileSelect = (e) => {
     const selected = Array.from(e.target.files);
+    const validFiles = [];
     
-    // Validate file sizes before adding
     for (const file of selected) {
       const sizeInMB = file.size / 1024 / 1024;
       const isVideo = file.type.startsWith('video/');
       const isImage = file.type.startsWith('image/');
       const isAudio = file.type.startsWith('audio/');
       
-      let maxSize = 50; // default
+      let maxSize = 50;
       if (isVideo) maxSize = 100;
       else if (isImage) maxSize = 10;
       else if (isAudio) maxSize = 25;
@@ -187,11 +192,13 @@ export default function MessageInput({ replyTo, onCancelReply }) {
       if (sizeInMB > maxSize) {
         const fileTypeLabel = isVideo ? t("chat.filesVideos", "videos") : isImage ? t("chat.filesImages", "images") : isAudio ? t("chat.filesAudio", "audio") : t("chat.files", "files");
         alert(t("chat.fileTooLarge", `File "${file.name}" is too large. Maximum size is ${maxSize}MB for ${fileTypeLabel}.`));
-        return;
+        continue;
       }
+      validFiles.push(file);
     }
     
-    const newFiles = [...files, ...selected];
+    if (validFiles.length === 0) return;
+    const newFiles = [...files, ...validFiles];
     setFiles(newFiles);
     const previews = newFiles.map((f) => URL.createObjectURL(f));
     setFilePreviews(previews);
