@@ -10,6 +10,7 @@ import GroupModal from "../GroupModal.jsx";
 import { handleAvatarError } from "../../utils/avatar.js";
 
 const ChatListItem = memo(function ChatListItem({ conversation, authUser, selectedId, onSelect, onSelectChat, openViewer, groups }) {
+  const t = useTranslate();
   const onlineUsers = useChatStore((s) => s.onlineUsers);
   const typingUsers = useChatStore((s) => s.typingUsers);
   const isGroup = conversation.isGroup;
