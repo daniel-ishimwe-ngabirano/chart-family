@@ -129,7 +129,7 @@
   .hero-stats { justify-content: center; }
   .hero-preview { display: none; }
   .auth-branding { display: none; }
-  .auth-form-panel { width: 100%; min-width: 0; border-left: none; }
+  .auth-form-panel { width: 100%; min-width: 0; border-left: none; padding: clamp(16px, 5vw, 32px); }
   .footer-inner { grid-template-columns: 1fr; }
   .footer-links { grid-template-columns: 1fr 1fr; }
   .navbar-links { display: none; position: fixed; top: 60px; left: 0; right: 0; background: var(--bg-secondary); padding: var(--sp-md); flex-direction: column; border-bottom: 1px solid var(--border); z-index: 200; }

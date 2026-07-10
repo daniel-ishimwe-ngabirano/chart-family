@@ -5,7 +5,7 @@ import { X, Search, MessageSquare } from "lucide-react";
 import { useTranslate } from "../hooks/useTranslate.js";
 import { handleAvatarError } from "../utils/avatar.js";
 
-export default function NewConversationModal({ onClose }) {
+export default function NewConversationModal({ onClose, onSelectChat }) {
   const { authUser } = useAuthStore();
   const { users, getOrCreateConversation, setSelectedConversation, onlineUsers } = useChatStore();
   const t = useTranslate();
@@ -19,6 +19,7 @@ export default function NewConversationModal({ onClose }) {
     const conv = await getOrCreateConversation(userId);
     if (conv) {
       setSelectedConversation(conv);
+      onSelectChat?.();
       onClose();
     }
   };

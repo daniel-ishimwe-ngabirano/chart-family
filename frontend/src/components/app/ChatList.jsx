@@ -101,6 +101,8 @@ export default function ChatList({ onSelectChat, groupFilter }) {
   const conversations = useChatStore((s) => s.conversations);
   const selectedConversation = useChatStore((s) => s.selectedConversation);
   const selectConv = useChatStore((s) => s.setSelectedConversation);
+  const users = useChatStore((s) => s.users);
+  const getOrCreateConv = useChatStore((s) => s.getOrCreateConversation);
   const features = useFeatureStore();
   const { groups, openViewer } = useStoryStore();
   const t = useTranslate();
@@ -121,12 +123,25 @@ export default function ChatList({ onSelectChat, groupFilter }) {
     return name.toLowerCase().includes(search.toLowerCase());
   });
 
+  const matchingUsers = search.trim()
+    ? users.filter((u) => u.id !== authUser?.id && u.fullName.toLowerCase().includes(search.toLowerCase()))
+    : [];
+
   const filters = [
     { key: "all", label: t("chat.all", "All"), icon: <MessageSquare size={14} /> },
     { key: "unread", label: t("chat.unread", "Unread") },
     { key: "groups", label: t("nav.groups", "Groups"), icon: <Users size={14} /> },
     { key: "archived", label: t("chat.archived", "Archived"), icon: <Archive size={14} /> },
   ];
+
+  const handleStartChat = async (userId) => {
+    const conv = await getOrCreateConv(userId);
+    if (conv) {
+      selectConv(conv);
+      onSelectChat?.();
+      setSearch("");
+    }
+  };
 
   return (
     <div className="chat-list-panel">
@@ -156,7 +171,10 @@ export default function ChatList({ onSelectChat, groupFilter }) {
           )
         ))}
       </div>
-      <div className="chat-list-items">
+        <div className="chat-list-items">
+        {search.trim() && matchingUsers.length > 0 && filtered.length > 0 && (
+          <div className="chat-list-section-label">{t("chat.conversations", "Conversations")}</div>
+        )}
         {filtered.map((c) => (
           <ChatListItem
             key={c.id}
@@ -169,8 +187,31 @@ export default function ChatList({ onSelectChat, groupFilter }) {
             groups={groups}
           />
         ))}
+        {search.trim() && matchingUsers.length > 0 && (
+          <>
+            <div className="chat-list-section-label">{t("chat.people", "People")}</div>
+            {matchingUsers.map((user) => (
+              <div key={user.id} className="chat-list-item" onClick={() => handleStartChat(user.id)}>
+                <div className="chat-list-avatar">
+                  <img src={user.avatar || "/avatar-placeholder.png"} alt="" onError={(e) => handleAvatarError(e, user.fullName)} />
+                </div>
+                <div className="chat-list-info">
+                  <div className="chat-list-top">
+                    <span className="chat-list-name">{user.fullName}</span>
+                  </div>
+                  <div className="chat-list-bottom">
+                    <span className="chat-list-preview">{t("chat.startNewChat", "Start chat")}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        {search.trim() && filtered.length === 0 && matchingUsers.length === 0 && (
+          <div className="empty-state">{t("chat.noResults", "No results found")}</div>
+        )}
       </div>
-      {showNewConv && <NewConversationModal onClose={() => setShowNewConv(false)} />}
+      {showNewConv && <NewConversationModal onClose={() => setShowNewConv(false)} onSelectChat={onSelectChat} />}
       {showGroup && <GroupModal onClose={() => setShowGroup(false)} />}
     </div>
   );

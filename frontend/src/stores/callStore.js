@@ -26,11 +26,7 @@ async function getIceServers() {
   return result;
 }
 
-// --- ICE candidate queue for candidates arriving before peer connection exists ---
-let pendingIceCandidates = [];
-
-// --- Connection timeout duration (30 seconds) ---
-const CONNECTION_TIMEOUT_MS = 30000;
+const CONNECTION_TIMEOUT_MS = 45000;
 let connectionTimeoutId = null;
 
 function clearConnectionTimeout() {
@@ -45,7 +41,7 @@ function startConnectionTimeout(get) {
   connectionTimeoutId = setTimeout(() => {
     const state = get();
     if (state.status === "calling" && !state.remoteStream) {
-      console.warn("Call connection timed out after 30 seconds");
+      console.warn("Call connection timed out");
       state.endCall();
     }
   }, CONNECTION_TIMEOUT_MS);
@@ -81,7 +77,7 @@ export const useCallStore = create((set, get) => ({
   },
 
   startCall: async (remoteUser, type, conversationId) => {
-    set({ status: "initializing", error: null });
+    set({ status: "initializing", error: null, peerConnection: null });
     let stream;
     let actualType = type;
     try {
@@ -101,14 +97,10 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
-    // Check if the call was cancelled by the user before camera permission was granted
     if (get().status === "idle") {
       if (stream) stream.getTracks().forEach(t => t.stop());
       return;
     }
-
-    // Clear any stale queued candidates from a previous call
-    pendingIceCandidates = [];
 
     const iceServers = await getIceServers();
     const pc = new RTCPeerConnection(iceServers);
@@ -117,35 +109,34 @@ export const useCallStore = create((set, get) => ({
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         const socket = getSocket();
-        socket?.emit("signal:ice-candidate", { to: remoteUser.id, candidate: e.candidate });
+        const targetId = remoteUser.id;
+        socket?.emit("signal:ice-candidate", { to: targetId, candidate: e.candidate });
       }
     };
 
     pc.ontrack = (e) => {
-      const currentStream = get().remoteStream;
-      const newStream = new MediaStream(currentStream ? currentStream.getTracks() : []);
-      if (e.track) {
-        newStream.addTrack(e.track);
-      } else if (e.streams && e.streams[0]) {
-        e.streams[0].getTracks().forEach(t => {
-          if (!newStream.getTracks().find(existing => existing.id === t.id)) {
-            newStream.addTrack(t);
-          }
-        });
+      const s = e.streams?.[0];
+      if (s) {
+        set({ remoteStream: s });
+      } else if (e.track) {
+        const existing = get().remoteStream;
+        if (existing) {
+          existing.addTrack(e.track);
+        } else {
+          set({ remoteStream: new MediaStream([e.track]) });
+        }
       }
-      set({ remoteStream: newStream });
     };
 
     pc.onnegotiationneeded = () => {};
 
-    // --- Monitor BOTH connectionState and iceConnectionState ---
     pc.onconnectionstatechange = () => {
-      const state = pc.connectionState;
-      if (state === "connected") {
+      const s = pc.connectionState;
+      if (s === "connected") {
         clearConnectionTimeout();
         get().startTimer();
       }
-      if (state === "disconnected" || state === "failed") {
+      if (s === "disconnected" || s === "failed") {
         clearConnectionTimeout();
         get().endCall();
       }
@@ -153,41 +144,29 @@ export const useCallStore = create((set, get) => ({
 
     pc.oniceconnectionstatechange = () => {
       const iceState = pc.iceConnectionState;
-      console.log("ICE connection state:", iceState);
-
+      console.log("ICE state:", iceState);
       if (iceState === "connected" || iceState === "completed") {
         clearConnectionTimeout();
         get().startTimer();
       }
-
       if (iceState === "failed") {
-        // Attempt ICE restart before giving up
-        console.warn("ICE connection failed, attempting ICE restart...");
-        try {
-          pc.createOffer({ iceRestart: true }).then((offer) => {
-            return pc.setLocalDescription(offer);
-          }).then(() => {
-            const socket = getSocket();
-            const remote = get().remoteUser;
-            if (socket && remote) {
-              socket.emit("signal:offer", { to: remote.id, offer: pc.localDescription });
-            }
-          }).catch((err) => {
-            console.error("ICE restart failed:", err);
-            clearConnectionTimeout();
-            get().endCall();
-          });
-        } catch {
+        console.warn("ICE failed, restarting...");
+        pc.createOffer({ iceRestart: true }).then((offer) => {
+          return pc.setLocalDescription(offer);
+        }).then(() => {
+          const socket = getSocket();
+          const remote = get().remoteUser;
+          if (socket && remote) {
+            socket.emit("signal:offer", { to: remote.id, offer: pc.localDescription });
+          }
+        }).catch(() => {
           clearConnectionTimeout();
           get().endCall();
-        }
+        });
       }
-
       if (iceState === "disconnected") {
-        // Give it a few seconds to recover before ending
         setTimeout(() => {
           if (pc.iceConnectionState === "disconnected") {
-            console.warn("ICE still disconnected after grace period, ending call");
             clearConnectionTimeout();
             get().endCall();
           }
@@ -205,12 +184,6 @@ export const useCallStore = create((set, get) => ({
       return;
     }
 
-    const socket = getSocket();
-    if (socket) {
-      socket.emit("call:start", { receiverId: remoteUser.id, type: actualType, conversationId });
-      socket.emit("signal:offer", { to: remoteUser.id, offer });
-    }
-
     set({
       status: "calling",
       type: actualType,
@@ -224,9 +197,20 @@ export const useCallStore = create((set, get) => ({
       isSpeakerOn: false,
       isVideoEnabled: actualType === "VIDEO",
       error: null,
+      pendingOffer: null,
+      pendingCallerId: null,
     });
 
-    // Start connection timeout — if not connected in 30s, end the call
+    const socket = getSocket();
+    if (socket) {
+      socket.emit("call:start-with-offer", {
+        receiverId: remoteUser.id,
+        type: actualType,
+        conversationId,
+        offer,
+      });
+    }
+
     startConnectionTimeout(get);
   },
 
@@ -254,7 +238,6 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
-    // Check if the caller hung up before camera permission was granted
     if (get().status === "idle") {
       if (stream) stream.getTracks().forEach(t => t.stop());
       return;
@@ -272,30 +255,28 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      const currentStream = get().remoteStream;
-      const newStream = new MediaStream(currentStream ? currentStream.getTracks() : []);
-      if (e.track) {
-        newStream.addTrack(e.track);
-      } else if (e.streams && e.streams[0]) {
-        e.streams[0].getTracks().forEach(t => {
-          if (!newStream.getTracks().find(existing => existing.id === t.id)) {
-            newStream.addTrack(t);
-          }
-        });
+      const s = e.streams?.[0];
+      if (s) {
+        set({ remoteStream: s });
+      } else if (e.track) {
+        const existing = get().remoteStream;
+        if (existing) {
+          existing.addTrack(e.track);
+        } else {
+          set({ remoteStream: new MediaStream([e.track]) });
+        }
       }
-      set({ remoteStream: newStream });
     };
 
     pc.onnegotiationneeded = () => {};
 
-    // --- Monitor BOTH connectionState and iceConnectionState ---
     pc.onconnectionstatechange = () => {
-      const state = pc.connectionState;
-      if (state === "connected") {
+      const s = pc.connectionState;
+      if (s === "connected") {
         clearConnectionTimeout();
         get().startTimer();
       }
-      if (state === "disconnected" || state === "failed") {
+      if (s === "disconnected" || s === "failed") {
         clearConnectionTimeout();
         get().endCall();
       }
@@ -303,19 +284,16 @@ export const useCallStore = create((set, get) => ({
 
     pc.oniceconnectionstatechange = () => {
       const iceState = pc.iceConnectionState;
-      console.log("ICE connection state (receiver):", iceState);
-
+      console.log("ICE state (receiver):", iceState);
       if (iceState === "connected" || iceState === "completed") {
         clearConnectionTimeout();
         get().startTimer();
       }
-
       if (iceState === "failed") {
-        console.warn("ICE connection failed on receiver side");
+        console.warn("ICE failed on receiver");
         clearConnectionTimeout();
         get().endCall();
       }
-
       if (iceState === "disconnected") {
         setTimeout(() => {
           if (pc.iceConnectionState === "disconnected") {
@@ -326,50 +304,35 @@ export const useCallStore = create((set, get) => ({
       }
     };
 
+    set({ peerConnection: pc });
+
     const users = useChatStore.getState().users;
     const caller = users.find((u) => u.id === callerId);
     const remoteUser = { id: callerId, fullName: caller?.fullName || "Caller", avatar: caller?.avatar || "" };
 
+    const offer = get().pendingOffer;
     let answered = false;
 
-    const currentState = get();
-    const offer = currentState.pendingOffer;
     if (offer) {
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
-
-        // --- Flush any ICE candidates that arrived while we had no peer connection ---
-        if (pendingIceCandidates.length > 0) {
-          console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates`);
-          for (const candidate of pendingIceCandidates) {
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(candidate));
-            } catch (err) {
-              console.warn("Failed to add queued ICE candidate:", err);
-            }
-          }
-          pendingIceCandidates = [];
-        }
-
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         const socket = getSocket();
         socket?.emit("signal:answer", { to: callerId, answer });
         answered = true;
       } catch (err) {
-        console.error("Failed to set pending offer:", err);
+        console.error("Failed to answer:", err);
       }
     }
 
-    const currentRemoteStream = get().remoteStream;
-    const stateUpdates = {
+    set({
       status: "calling",
       type: actualType,
       remoteUser,
       conversationId: incomingConversationId,
       localStream: stream,
-      peerConnection: pc,
-      remoteStream: currentRemoteStream,
+      remoteStream: get().remoteStream,
       callDuration: 0,
       isMuted: false,
       isSpeakerOn: false,
@@ -377,14 +340,10 @@ export const useCallStore = create((set, get) => ({
       incomingCallerId: null,
       incomingType: null,
       incomingConversationId: null,
+      pendingOffer: answered ? null : get().pendingOffer,
+      pendingCallerId: answered ? null : get().pendingCallerId,
       error: null,
-    };
-
-    if (answered) {
-      stateUpdates.pendingOffer = null;
-      stateUpdates.pendingCallerId = null;
-    }
-    set(stateUpdates);
+    });
 
     const socket = getSocket();
     if (socket) {
@@ -396,31 +355,17 @@ export const useCallStore = create((set, get) => ({
       if (retryOffer) {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(retryOffer));
-
-          // --- Flush queued ICE candidates on retry path too ---
-          if (pendingIceCandidates.length > 0) {
-            console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates (retry path)`);
-            for (const candidate of pendingIceCandidates) {
-              try {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
-              } catch (err) {
-                console.warn("Failed to add queued ICE candidate:", err);
-              }
-            }
-            pendingIceCandidates = [];
-          }
-
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket?.emit("signal:answer", { to: callerId, answer });
           set({ pendingOffer: null, pendingCallerId: null });
+          answered = true;
         } catch (err) {
-          console.error("Failed to handle late offer:", err);
+          console.error("Retry answer failed:", err);
         }
       }
     }
 
-    // Start connection timeout for the receiver side too
     startConnectionTimeout(get);
   },
 
@@ -438,7 +383,6 @@ export const useCallStore = create((set, get) => ({
       const socket = getSocket();
       socket?.emit("call:reject", { callerId: incomingCallerId });
     }
-    pendingIceCandidates = [];
     get().endCall();
   },
 
@@ -447,9 +391,6 @@ export const useCallStore = create((set, get) => ({
     const { peerConnection, localStream, remoteUser, _durationInterval, type } = state;
     clearInterval(_durationInterval);
     clearConnectionTimeout();
-
-    // Clear queued ICE candidates
-    pendingIceCandidates = [];
 
     if (peerConnection) {
       peerConnection.close();
@@ -504,28 +445,13 @@ export const useCallStore = create((set, get) => ({
       return;
     }
 
-    const signalingState = pc.signalingState;
-    if (signalingState !== "stable") {
-      console.log("handleSignalOffer: PC not in stable state, deferring", signalingState);
+    if (pc.signalingState !== "stable") {
+      console.log("handleSignalOffer: PC not stable, deferring", pc.signalingState);
       return;
     }
 
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
-
-      // --- Flush any queued ICE candidates now that remote description is set ---
-      if (pendingIceCandidates.length > 0) {
-        console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates after re-offer`);
-        for (const candidate of pendingIceCandidates) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
-          } catch (err) {
-            console.warn("Failed to add queued ICE candidate:", err);
-          }
-        }
-        pendingIceCandidates = [];
-      }
-
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       const socket = getSocket();
@@ -538,24 +464,11 @@ export const useCallStore = create((set, get) => ({
   handleSignalAnswer: async (answer) => {
     const pc = get().peerConnection;
     if (!pc) {
-      console.warn("handleSignalAnswer: no peer connection");
+      console.warn("handleSignalAnswer: no PC");
       return;
     }
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
-
-      // --- Flush any queued ICE candidates now that remote description is set ---
-      if (pendingIceCandidates.length > 0) {
-        console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates after answer`);
-        for (const candidate of pendingIceCandidates) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
-          } catch (err) {
-            console.warn("Failed to add queued ICE candidate:", err);
-          }
-        }
-        pendingIceCandidates = [];
-      }
     } catch (err) {
       console.error("Failed to handle answer:", err);
     }
@@ -563,14 +476,9 @@ export const useCallStore = create((set, get) => ({
 
   handleIceCandidate: async (candidate) => {
     const pc = get().peerConnection;
-
-    // --- Queue candidates if no peer connection or no remote description yet ---
     if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
-      console.log("Queuing ICE candidate (no PC or no remote description yet)");
-      pendingIceCandidates.push(candidate);
       return;
     }
-
     try {
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
     } catch (err) {
@@ -585,7 +493,6 @@ export const useCallStore = create((set, get) => ({
     if (localStream) localStream.getTracks().forEach((t) => t.stop());
     clearInterval(state._durationInterval);
     clearConnectionTimeout();
-    pendingIceCandidates = [];
 
     if (remoteUser && state.status !== "calling") {
       const direction = state.incomingCallerId || state.pendingCallerId ? "incoming" : "outgoing";

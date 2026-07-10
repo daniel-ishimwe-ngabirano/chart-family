@@ -140,6 +140,7 @@
 }
 .chat-list-item:hover  { background: var(--bg-hover); }
 .chat-list-item.active { background: var(--bg-active); }
+.chat-list-section-label { padding: 6px var(--sp-lg); font-size: var(--tx-sm); font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
 .chat-list-avatar-wrap { display: flex; align-items: center; justify-content: center; width: var(--av-md); height: var(--av-md); flex-shrink: 0; }
 .chat-list-avatar { position: relative; width: var(--av-md); height: var(--av-md); flex-shrink: 0; }
 .chat-list-avatar img { width: var(--av-md); height: var(--av-md); border-radius: 50%; object-fit: cover; }

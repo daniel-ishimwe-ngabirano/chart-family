@@ -23,6 +23,18 @@ export function setupCallHandlers(io: SocketServer, socket: SocketWithUser) {
     }
   });
 
+  socket.on("call:start-with-offer", ({ receiverId, type, conversationId, offer }) => {
+    const receiverSockets = getUserSocketIds(receiverId);
+    receiverSockets.forEach((sid) => {
+      io.to(sid).emit("call:incoming", {
+        callerId: userId,
+        type,
+        conversationId,
+      });
+      io.to(sid).emit("signal:offer", { from: userId, offer });
+    });
+  });
+
   socket.on("call:accept", ({ callerId }) => {
     const callerSockets = getUserSocketIds(callerId);
     callerSockets.forEach((sid) => {

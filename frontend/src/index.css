@@ -3077,7 +3077,7 @@ input, textarea {
    ============================================== */
 .auth-page-split {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-primary);
 }
 
@@ -3142,12 +3142,12 @@ input, textarea {
 .anim-3 { animation-delay: 2.5s; }
 
 .auth-form-panel {
-  width: 480px;
-  min-width: 480px;
+  width: clamp(320px, 40vw, 480px);
+  min-width: clamp(300px, 35vw, 480px);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 48px;
+  padding: clamp(24px, 4vw, 48px);
   border-left: 1px solid var(--border);
   position: relative;
 }
@@ -4000,6 +4000,11 @@ input, textarea {
   .hero-preview { display: none; }
   .footer-inner { grid-template-columns: 1fr; }
   .footer-links { grid-template-columns: 1fr 1fr; }
+
+  /* Auth — full width on mobile */
+  .auth-page-split { flex-direction: column; }
+  .auth-branding { display: none; }
+  .auth-form-panel { width: 100%; min-width: 0; border-left: none; padding: clamp(16px, 5vw, 32px); }
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
