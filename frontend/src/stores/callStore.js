@@ -122,16 +122,18 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      let remoteStream = get().remoteStream;
-      if (!remoteStream) {
-        remoteStream = new MediaStream();
-        set({ remoteStream });
-      }
+      const currentStream = get().remoteStream;
+      const newStream = new MediaStream(currentStream ? currentStream.getTracks() : []);
       if (e.track) {
-        remoteStream.addTrack(e.track);
+        newStream.addTrack(e.track);
       } else if (e.streams && e.streams[0]) {
-        e.streams[0].getTracks().forEach(t => remoteStream.addTrack(t));
+        e.streams[0].getTracks().forEach(t => {
+          if (!newStream.getTracks().find(existing => existing.id === t.id)) {
+            newStream.addTrack(t);
+          }
+        });
       }
+      set({ remoteStream: newStream });
     };
 
     pc.onnegotiationneeded = () => {};
@@ -270,16 +272,18 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      let remoteStream = get().remoteStream;
-      if (!remoteStream) {
-        remoteStream = new MediaStream();
-        set({ remoteStream });
-      }
+      const currentStream = get().remoteStream;
+      const newStream = new MediaStream(currentStream ? currentStream.getTracks() : []);
       if (e.track) {
-        remoteStream.addTrack(e.track);
+        newStream.addTrack(e.track);
       } else if (e.streams && e.streams[0]) {
-        e.streams[0].getTracks().forEach(t => remoteStream.addTrack(t));
+        e.streams[0].getTracks().forEach(t => {
+          if (!newStream.getTracks().find(existing => existing.id === t.id)) {
+            newStream.addTrack(t);
+          }
+        });
       }
+      set({ remoteStream: newStream });
     };
 
     pc.onnegotiationneeded = () => {};
