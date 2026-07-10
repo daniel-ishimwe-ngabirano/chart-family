@@ -26,6 +26,31 @@ async function getIceServers() {
   return result;
 }
 
+// --- ICE candidate queue for candidates arriving before peer connection exists ---
+let pendingIceCandidates = [];
+
+// --- Connection timeout duration (30 seconds) ---
+const CONNECTION_TIMEOUT_MS = 30000;
+let connectionTimeoutId = null;
+
+function clearConnectionTimeout() {
+  if (connectionTimeoutId) {
+    clearTimeout(connectionTimeoutId);
+    connectionTimeoutId = null;
+  }
+}
+
+function startConnectionTimeout(get) {
+  clearConnectionTimeout();
+  connectionTimeoutId = setTimeout(() => {
+    const state = get();
+    if (state.status === "calling" && !state.remoteStream) {
+      console.warn("Call connection timed out after 30 seconds");
+      state.endCall();
+    }
+  }, CONNECTION_TIMEOUT_MS);
+}
+
 export const useCallStore = create((set, get) => ({
   status: "idle",
   error: null,
@@ -75,6 +100,9 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
+    // Clear any stale queued candidates from a previous call
+    pendingIceCandidates = [];
+
     const iceServers = await getIceServers();
     const pc = new RTCPeerConnection(iceServers);
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
@@ -100,13 +128,60 @@ export const useCallStore = create((set, get) => ({
 
     pc.onnegotiationneeded = () => {};
 
+    // --- Monitor BOTH connectionState and iceConnectionState ---
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
       if (state === "connected") {
+        clearConnectionTimeout();
         get().startTimer();
       }
       if (state === "disconnected" || state === "failed") {
+        clearConnectionTimeout();
         get().endCall();
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      const iceState = pc.iceConnectionState;
+      console.log("ICE connection state:", iceState);
+
+      if (iceState === "connected" || iceState === "completed") {
+        clearConnectionTimeout();
+        get().startTimer();
+      }
+
+      if (iceState === "failed") {
+        // Attempt ICE restart before giving up
+        console.warn("ICE connection failed, attempting ICE restart...");
+        try {
+          pc.createOffer({ iceRestart: true }).then((offer) => {
+            return pc.setLocalDescription(offer);
+          }).then(() => {
+            const socket = getSocket();
+            const remote = get().remoteUser;
+            if (socket && remote) {
+              socket.emit("signal:offer", { to: remote.id, offer: pc.localDescription });
+            }
+          }).catch((err) => {
+            console.error("ICE restart failed:", err);
+            clearConnectionTimeout();
+            get().endCall();
+          });
+        } catch {
+          clearConnectionTimeout();
+          get().endCall();
+        }
+      }
+
+      if (iceState === "disconnected") {
+        // Give it a few seconds to recover before ending
+        setTimeout(() => {
+          if (pc.iceConnectionState === "disconnected") {
+            console.warn("ICE still disconnected after grace period, ending call");
+            clearConnectionTimeout();
+            get().endCall();
+          }
+        }, 5000);
       }
     };
 
@@ -140,6 +215,9 @@ export const useCallStore = create((set, get) => ({
       isVideoEnabled: actualType === "VIDEO",
       error: null,
     });
+
+    // Start connection timeout — if not connected in 30s, end the call
+    startConnectionTimeout(get);
   },
 
   acceptCall: async () => {
@@ -191,13 +269,41 @@ export const useCallStore = create((set, get) => ({
 
     pc.onnegotiationneeded = () => {};
 
+    // --- Monitor BOTH connectionState and iceConnectionState ---
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
       if (state === "connected") {
+        clearConnectionTimeout();
         get().startTimer();
       }
       if (state === "disconnected" || state === "failed") {
+        clearConnectionTimeout();
         get().endCall();
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      const iceState = pc.iceConnectionState;
+      console.log("ICE connection state (receiver):", iceState);
+
+      if (iceState === "connected" || iceState === "completed") {
+        clearConnectionTimeout();
+        get().startTimer();
+      }
+
+      if (iceState === "failed") {
+        console.warn("ICE connection failed on receiver side");
+        clearConnectionTimeout();
+        get().endCall();
+      }
+
+      if (iceState === "disconnected") {
+        setTimeout(() => {
+          if (pc.iceConnectionState === "disconnected") {
+            clearConnectionTimeout();
+            get().endCall();
+          }
+        }, 5000);
       }
     };
 
@@ -212,6 +318,20 @@ export const useCallStore = create((set, get) => ({
     if (offer) {
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+        // --- Flush any ICE candidates that arrived while we had no peer connection ---
+        if (pendingIceCandidates.length > 0) {
+          console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates`);
+          for (const candidate of pendingIceCandidates) {
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (err) {
+              console.warn("Failed to add queued ICE candidate:", err);
+            }
+          }
+          pendingIceCandidates = [];
+        }
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         const socket = getSocket();
@@ -257,6 +377,20 @@ export const useCallStore = create((set, get) => ({
       if (retryOffer) {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(retryOffer));
+
+          // --- Flush queued ICE candidates on retry path too ---
+          if (pendingIceCandidates.length > 0) {
+            console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates (retry path)`);
+            for (const candidate of pendingIceCandidates) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+              } catch (err) {
+                console.warn("Failed to add queued ICE candidate:", err);
+              }
+            }
+            pendingIceCandidates = [];
+          }
+
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket?.emit("signal:answer", { to: callerId, answer });
@@ -266,6 +400,9 @@ export const useCallStore = create((set, get) => ({
         }
       }
     }
+
+    // Start connection timeout for the receiver side too
+    startConnectionTimeout(get);
   },
 
   startTimer: () => {
@@ -282,6 +419,7 @@ export const useCallStore = create((set, get) => ({
       const socket = getSocket();
       socket?.emit("call:reject", { callerId: incomingCallerId });
     }
+    pendingIceCandidates = [];
     get().endCall();
   },
 
@@ -289,6 +427,10 @@ export const useCallStore = create((set, get) => ({
     const state = get();
     const { peerConnection, localStream, remoteUser, _durationInterval, type } = state;
     clearInterval(_durationInterval);
+    clearConnectionTimeout();
+
+    // Clear queued ICE candidates
+    pendingIceCandidates = [];
 
     if (peerConnection) {
       peerConnection.close();
@@ -351,6 +493,20 @@ export const useCallStore = create((set, get) => ({
 
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+      // --- Flush any queued ICE candidates now that remote description is set ---
+      if (pendingIceCandidates.length > 0) {
+        console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates after re-offer`);
+        for (const candidate of pendingIceCandidates) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (err) {
+            console.warn("Failed to add queued ICE candidate:", err);
+          }
+        }
+        pendingIceCandidates = [];
+      }
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       const socket = getSocket();
@@ -368,6 +524,19 @@ export const useCallStore = create((set, get) => ({
     }
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+      // --- Flush any queued ICE candidates now that remote description is set ---
+      if (pendingIceCandidates.length > 0) {
+        console.log(`Flushing ${pendingIceCandidates.length} queued ICE candidates after answer`);
+        for (const candidate of pendingIceCandidates) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (err) {
+            console.warn("Failed to add queued ICE candidate:", err);
+          }
+        }
+        pendingIceCandidates = [];
+      }
     } catch (err) {
       console.error("Failed to handle answer:", err);
     }
@@ -375,7 +544,14 @@ export const useCallStore = create((set, get) => ({
 
   handleIceCandidate: async (candidate) => {
     const pc = get().peerConnection;
-    if (!pc) return;
+
+    // --- Queue candidates if no peer connection or no remote description yet ---
+    if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
+      console.log("Queuing ICE candidate (no PC or no remote description yet)");
+      pendingIceCandidates.push(candidate);
+      return;
+    }
+
     try {
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
     } catch (err) {
@@ -389,6 +565,8 @@ export const useCallStore = create((set, get) => ({
     if (peerConnection) peerConnection.close();
     if (localStream) localStream.getTracks().forEach((t) => t.stop());
     clearInterval(state._durationInterval);
+    clearConnectionTimeout();
+    pendingIceCandidates = [];
 
     if (remoteUser && state.status !== "calling") {
       const direction = state.incomingCallerId || state.pendingCallerId ? "incoming" : "outgoing";
