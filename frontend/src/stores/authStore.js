@@ -10,10 +10,18 @@ export const useAuthStore = create((set) => ({
 
   checkAuth: async () => {
     try {
+      const storedToken = localStorage.getItem("wavechat_token");
+      if (storedToken) {
+        set({ token: storedToken });
+      }
       const res = await axios.get("/auth/me", { timeout: 8000 });
-      set({ authUser: res.data.user, token: res.data.accessToken || null });
+      set({ authUser: res.data.user, token: res.data.accessToken || storedToken || null });
+      if (res.data.accessToken) {
+        localStorage.setItem("wavechat_token", res.data.accessToken);
+      }
     } catch {
       set({ authUser: null, token: null });
+      localStorage.removeItem("wavechat_token");
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -23,6 +31,7 @@ export const useAuthStore = create((set) => ({
     set({ isSigningUp: true });
     try {
       const res = await axios.post("/auth/signup", data);
+      localStorage.setItem("wavechat_token", res.data.accessToken);
       set({ authUser: res.data.user, token: res.data.accessToken });
       return { success: true };
     } catch (error) {
@@ -36,6 +45,7 @@ export const useAuthStore = create((set) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axios.post("/auth/login", data);
+      localStorage.setItem("wavechat_token", res.data.accessToken);
       set({ authUser: res.data.user, token: res.data.accessToken });
       return { success: true };
     } catch (error) {
@@ -48,6 +58,7 @@ export const useAuthStore = create((set) => ({
   logout: async () => {
     try {
       await axios.post("/auth/logout");
+      localStorage.removeItem("wavechat_token");
       set({ authUser: null, token: null });
     } catch (error) {
       console.error("Logout error:", error);

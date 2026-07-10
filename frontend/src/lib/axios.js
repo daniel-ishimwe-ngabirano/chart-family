@@ -23,9 +23,14 @@ axiosInstance.interceptors.request.use(async (config) => {
     return config;
   }
   try {
-    const token = await getCsrfToken();
+    const token = localStorage.getItem("wavechat_token");
     if (token) {
-      config.headers["x-csrf-token"] = token;
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const csrfToken = await getCsrfToken();
+    if (csrfToken) {
+      config.headers["x-csrf-token"] = csrfToken;
     }
   } catch {}
   return config;
