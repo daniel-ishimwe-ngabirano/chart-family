@@ -137,7 +137,7 @@
   .mobile-menu-btn { display: block; }
 
   /* Calls */
-  .incoming-call-content { width: 100%; max-width: 100%; border-radius: 0; padding: clamp(20px,5vh,32px) clamp(16px,4vw,20px); height: 100dvh; justify-content: center; }
+  .incoming-call-content { width: 100%; max-width: 100%; border-radius: 0; padding: clamp(20px,5vh,32px) clamp(16px,4vw,20px); padding-bottom: calc(clamp(20px,5vh,32px) + env(safe-area-inset-bottom, 0px)); height: 100dvh; justify-content: center; }
   .incoming-call-overlay { align-items: stretch; }
   .avatar-builder-body { flex-direction: column; align-items: center; }
 }
