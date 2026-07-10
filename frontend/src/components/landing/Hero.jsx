@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "../../lib/axios.js";
 import { useTranslate } from "../../hooks/useTranslate.js";
-import { MessageCircle, Shield, Zap, Users, ArrowRight } from "lucide-react";
+import { MessageCircle, Shield, Zap, Users, ArrowRight, Download } from "lucide-react";
 
 function formatCount(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(".0", "") + "M+";
@@ -53,6 +53,9 @@ export default function Hero() {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               {t("auth.google", "Continue with Google")}
+            </a>
+            <a href="#" className="btn-secondary btn-lg" onClick={(e) => { e.preventDefault(); alert("Download coming soon!"); }}>
+              <Download size={20} /> {t("landing.downloadApp", "Download App")}
             </a>
           </div>
           <div className="hero-stats">
