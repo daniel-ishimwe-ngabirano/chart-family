@@ -13,12 +13,34 @@ function formatCount(n) {
 export default function Hero() {
   const t = useTranslate();
   const [stats, setStats] = useState(null);
+  const [installEvent, setInstallEvent] = useState(null);
+  const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
     axios.get("/public/stats")
       .then((res) => setStats(res.data))
       .catch(() => setStats({ totalUsers: 0, totalMessages: 0 }));
   }, []);
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallEvent(e); };
+    const installedHandler = () => setInstalled(true);
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", installedHandler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", installedHandler);
+    };
+  }, []);
+
+  const handleInstall = () => {
+    if (!installEvent) return;
+    installEvent.prompt();
+    installEvent.userChoice.then(({ outcome }) => {
+      if (outcome === "accepted") setInstalled(true);
+      setInstallEvent(null);
+    });
+  };
 
   const totalUsers = stats ? formatCount(stats.totalUsers) : "—";
   const totalMessages = stats ? formatCount(stats.totalMessages) : "—";
@@ -54,9 +76,11 @@ export default function Hero() {
               </svg>
               {t("auth.google", "Continue with Google")}
             </a>
-            <a href="#" className="btn-secondary btn-lg" onClick={(e) => { e.preventDefault(); alert("Download coming soon!"); }}>
-              <Download size={20} /> {t("landing.downloadApp", "Download App")}
-            </a>
+            {!installed && (
+              <button className="btn-secondary btn-lg" onClick={handleInstall} disabled={!installEvent}>
+                <Download size={20} /> {t("landing.downloadApp", "Download App")}
+              </button>
+            )}
           </div>
           <div className="hero-stats">
             <div className="stat"><strong>{totalUsers}</strong> {t("landing.activeUsers", "Active Users")}</div>
