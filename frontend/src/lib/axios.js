@@ -19,15 +19,18 @@ async function getCsrfToken() {
 }
 
 axiosInstance.interceptors.request.use(async (config) => {
-  if (["get", "head", "options"].includes(config.method?.toLowerCase() || "")) {
-    return config;
-  }
   try {
     const token = localStorage.getItem("wavechat_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+  } catch {}
+
+  if (["get", "head", "options"].includes(config.method?.toLowerCase() || "")) {
+    return config;
+  }
+  
+  try {
     const csrfToken = await getCsrfToken();
     if (csrfToken) {
       config.headers["x-csrf-token"] = csrfToken;
