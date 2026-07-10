@@ -81,6 +81,7 @@ export const useCallStore = create((set, get) => ({
   },
 
   startCall: async (remoteUser, type, conversationId) => {
+    set({ status: "initializing", error: null });
     let stream;
     let actualType = type;
     try {
@@ -95,9 +96,15 @@ export const useCallStore = create((set, get) => ({
           return;
         }
       } else {
-        set({ error: `Cannot access microphone: ${err.message || "Permission denied"}` });
+        set({ error: `Cannot access microphone: ${err.message || "Permission denied"}`, status: "idle" });
         return;
       }
+    }
+
+    // Check if the call was cancelled by the user before camera permission was granted
+    if (get().status === "idle") {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      return;
     }
 
     // Clear any stale queued candidates from a previous call
@@ -115,14 +122,15 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      const existing = get().remoteStream;
-      if (existing) {
-        e.streams[0]?.getTracks().forEach((t) => existing.addTrack(t));
-      } else {
-        set({ remoteStream: e.streams[0] });
+      let remoteStream = get().remoteStream;
+      if (!remoteStream) {
+        remoteStream = new MediaStream();
+        set({ remoteStream });
       }
-      if (get().type === "VIDEO" && !e.streams[0]?.getVideoTracks().length) {
-        set({ type: "VOICE", isVideoEnabled: false });
+      if (e.track) {
+        remoteStream.addTrack(e.track);
+      } else if (e.streams && e.streams[0]) {
+        e.streams[0].getTracks().forEach(t => remoteStream.addTrack(t));
       }
     };
 
@@ -244,6 +252,12 @@ export const useCallStore = create((set, get) => ({
       }
     }
 
+    // Check if the caller hung up before camera permission was granted
+    if (get().status === "idle") {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
     const iceServers = await getIceServers();
     const pc = new RTCPeerConnection(iceServers);
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
@@ -256,14 +270,15 @@ export const useCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (e) => {
-      const existing = get().remoteStream;
-      if (existing) {
-        e.streams[0]?.getTracks().forEach((t) => existing.addTrack(t));
-      } else {
-        set({ remoteStream: e.streams[0] });
+      let remoteStream = get().remoteStream;
+      if (!remoteStream) {
+        remoteStream = new MediaStream();
+        set({ remoteStream });
       }
-      if (get().type === "VIDEO" && !e.streams[0]?.getVideoTracks().length) {
-        set({ type: "VOICE", isVideoEnabled: false });
+      if (e.track) {
+        remoteStream.addTrack(e.track);
+      } else if (e.streams && e.streams[0]) {
+        e.streams[0].getTracks().forEach(t => remoteStream.addTrack(t));
       }
     };
 
