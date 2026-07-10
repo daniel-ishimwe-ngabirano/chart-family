@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCallStore } from "../../stores/callStore.js";
 import { PhoneOff, Mic, MicOff, Video, VideoOff, Volume2, AlertCircle } from "lucide-react";
 import { handleAvatarError } from "../../utils/avatar.js";
@@ -13,6 +13,7 @@ export default function CallOverlay() {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const remoteAudioRef = useRef(null);
+  const [isLocalMaximized, setIsLocalMaximized] = useState(false);
 
   useEffect(() => {
     if (localVideoRef.current) localVideoRef.current.srcObject = localStream;
@@ -43,7 +44,19 @@ export default function CallOverlay() {
       )}
 
       {type === "VIDEO" && remoteStream && (
-        <video ref={remoteVideoRef} autoPlay playsInline className="call-remote-video" />
+        <div 
+          className={isLocalMaximized ? "call-local-video-wrapper" : ""} 
+          onClick={isLocalMaximized ? () => setIsLocalMaximized(false) : undefined}
+          style={{ zIndex: isLocalMaximized ? 10 : 1, cursor: isLocalMaximized ? "pointer" : "default" }}
+        >
+          <video 
+            ref={remoteVideoRef} 
+            autoPlay 
+            playsInline 
+            className={isLocalMaximized ? "call-local-video" : "call-remote-video"} 
+            style={isLocalMaximized ? { transform: "none" } : {}}
+          />
+        </div>
       )}
 
       {type === "VIDEO" && !remoteStream && (
@@ -56,8 +69,19 @@ export default function CallOverlay() {
       )}
 
       {type === "VIDEO" && localStream && (
-        <div className="call-local-video-wrapper">
-          <video ref={localVideoRef} autoPlay playsInline muted className="call-local-video" />
+        <div 
+          className={!isLocalMaximized ? "call-local-video-wrapper" : ""}
+          onClick={!isLocalMaximized ? () => setIsLocalMaximized(true) : undefined}
+          style={{ zIndex: !isLocalMaximized ? 10 : 1, cursor: !isLocalMaximized ? "pointer" : "default" }}
+        >
+          <video 
+            ref={localVideoRef} 
+            autoPlay 
+            playsInline 
+            muted 
+            className={!isLocalMaximized ? "call-local-video" : "call-remote-video"} 
+            style={!isLocalMaximized ? {} : { transform: "scaleX(-1)" }}
+          />
         </div>
       )}
 
