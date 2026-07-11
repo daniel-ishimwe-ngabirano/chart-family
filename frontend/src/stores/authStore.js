@@ -56,9 +56,11 @@ export const useAuthStore = create((set) => ({
   },
 
   logout: async () => {
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=; expires=" + new Date(0).toUTCString() + "; path=/");
+    });
     try { await axios.post("/auth/logout"); } catch {}
-    localStorage.removeItem("wavechat_token");
-    localStorage.removeItem("wavechat_theme_vars");
+    localStorage.clear();
     set({ authUser: null, token: null });
   },
 
