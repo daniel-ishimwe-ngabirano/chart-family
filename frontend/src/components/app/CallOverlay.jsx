@@ -8,6 +8,7 @@ export default function CallOverlay() {
     status, type, remoteUser, localStream, remoteStream,
     callDuration, isMuted, isVideoEnabled, isSpeakerOn, error,
     endCall, toggleMute, toggleVideo, toggleSpeaker, clearError,
+    isRemoteStreamActive,
   } = useCallStore();
 
   const localVideoRef = useRef(null);
@@ -33,12 +34,21 @@ export default function CallOverlay() {
     }
   }, [remoteStream]);
 
+  const handleOverlayClick = () => {
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.play().catch(() => {});
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.play().catch(() => {});
+    }
+  };
+
   if (status !== "calling") return null;
 
   const durationStr = `${String(Math.floor(callDuration / 60)).padStart(2, "0")}:${String(callDuration % 60).padStart(2, "0")}`;
 
   return (
-    <div className={`call-overlay ${type === "VIDEO" ? "video-call" : "voice-call"}`}>
+    <div className={`call-overlay ${type === "VIDEO" ? "video-call" : "voice-call"}`} onClick={handleOverlayClick}>
       {type === "VOICE" && remoteStream && (
         <audio ref={remoteAudioRef} autoPlay />
       )}
@@ -59,7 +69,7 @@ export default function CallOverlay() {
         </div>
       )}
 
-      {type === "VIDEO" && !remoteStream && (
+      {type === "VIDEO" && (!remoteStream || !isRemoteStreamActive) && (
         <div className="call-video-waiting">
           <div className="call-waiting-avatar">
             <img src={remoteUser?.avatar || "/default-avatar.svg"} alt="" />

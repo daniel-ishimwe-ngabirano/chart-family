@@ -65,6 +65,7 @@ export const useCallStore = create((set, get) => ({
   isMuted: false,
   isSpeakerOn: false,
   isVideoEnabled: true,
+  isRemoteStreamActive: false,
 
   clearError: () => set({ error: null }),
 
@@ -113,18 +114,15 @@ export const useCallStore = create((set, get) => ({
         socket?.emit("signal:ice-candidate", { to: targetId, candidate: e.candidate });
       }
     };
+    const rStream = new MediaStream();
+    set({ remoteStream: rStream, isRemoteStreamActive: false });
 
     pc.ontrack = (e) => {
-      const s = e.streams?.[0];
-      if (s) {
-        set({ remoteStream: s });
-      } else if (e.track) {
-        const existing = get().remoteStream;
-        if (existing) {
-          existing.addTrack(e.track);
-        } else {
-          set({ remoteStream: new MediaStream([e.track]) });
+      if (e.track) {
+        if (!rStream.getTracks().find((t) => t.id === e.track.id)) {
+          rStream.addTrack(e.track);
         }
+        set({ isRemoteStreamActive: true });
       }
     };
 
@@ -191,7 +189,8 @@ export const useCallStore = create((set, get) => ({
       conversationId,
       localStream: stream,
       peerConnection: pc,
-      remoteStream: null,
+      remoteStream: rStream,
+      isRemoteStreamActive: false,
       callDuration: 0,
       isMuted: false,
       isSpeakerOn: false,
@@ -254,17 +253,15 @@ export const useCallStore = create((set, get) => ({
       }
     };
 
+    const rStream = new MediaStream();
+    set({ remoteStream: rStream, isRemoteStreamActive: false });
+
     pc.ontrack = (e) => {
-      const s = e.streams?.[0];
-      if (s) {
-        set({ remoteStream: s });
-      } else if (e.track) {
-        const existing = get().remoteStream;
-        if (existing) {
-          existing.addTrack(e.track);
-        } else {
-          set({ remoteStream: new MediaStream([e.track]) });
+      if (e.track) {
+        if (!rStream.getTracks().find((t) => t.id === e.track.id)) {
+          rStream.addTrack(e.track);
         }
+        set({ isRemoteStreamActive: true });
       }
     };
 
@@ -332,7 +329,8 @@ export const useCallStore = create((set, get) => ({
       remoteUser,
       conversationId: incomingConversationId,
       localStream: stream,
-      remoteStream: get().remoteStream,
+      remoteStream: rStream,
+      isRemoteStreamActive: false,
       callDuration: 0,
       isMuted: false,
       isSpeakerOn: false,
@@ -424,6 +422,7 @@ export const useCallStore = create((set, get) => ({
       conversationId: null,
       localStream: null,
       remoteStream: null,
+      isRemoteStreamActive: false,
       peerConnection: null,
       callDuration: 0,
       isMuted: false,
@@ -515,6 +514,7 @@ export const useCallStore = create((set, get) => ({
       conversationId: null,
       localStream: null,
       remoteStream: null,
+      isRemoteStreamActive: false,
       peerConnection: null,
       callDuration: 0,
       _durationInterval: null,
