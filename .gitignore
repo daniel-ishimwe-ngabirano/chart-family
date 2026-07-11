@@ -7,3 +7,6 @@ backend/src/prisma/dev.db
 *.log
 .DS_Store
 coverage
+/frontend/android
+/frontend/ios
+/frontend/release

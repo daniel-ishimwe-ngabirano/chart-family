@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Native app builds
+/android
+/ios
+/release
+node_modules
+dist
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

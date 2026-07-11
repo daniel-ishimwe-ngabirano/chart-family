@@ -10,6 +10,10 @@ function formatCount(n) {
   return n + "+";
 }
 
+function isNativeApp() {
+  return document.querySelector("html")?.hasAttribute("data-capacitor") || window.navigator.standalone;
+}
+
 export default function Hero() {
   const t = useTranslate();
   const [stats, setStats] = useState(null);
@@ -23,6 +27,7 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
+    if (isNativeApp()) return;
     const handler = (e) => { e.preventDefault(); setInstallEvent(e); };
     const installedHandler = () => setInstalled(true);
     window.addEventListener("beforeinstallprompt", handler);
@@ -44,6 +49,7 @@ export default function Hero() {
 
   const totalUsers = stats ? formatCount(stats.totalUsers) : "—";
   const totalMessages = stats ? formatCount(stats.totalMessages) : "—";
+  const showInstall = !isNativeApp() && !installed;
 
   return (
     <section className="hero-section" id="about">
@@ -76,7 +82,7 @@ export default function Hero() {
               </svg>
               {t("auth.google", "Continue with Google")}
             </a>
-            {!installed && (
+            {showInstall && (
               <button className="btn-secondary btn-lg" onClick={handleInstall} disabled={!installEvent}>
                 <Download size={20} /> {t("landing.downloadApp", "Download App")}
               </button>

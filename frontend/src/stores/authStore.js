@@ -56,13 +56,10 @@ export const useAuthStore = create((set) => ({
   },
 
   logout: async () => {
-    try {
-      await axios.post("/auth/logout");
-      localStorage.removeItem("wavechat_token");
-      set({ authUser: null, token: null });
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+    try { await axios.post("/auth/logout"); } catch {}
+    localStorage.removeItem("wavechat_token");
+    localStorage.removeItem("wavechat_theme_vars");
+    set({ authUser: null, token: null });
   },
 
   updateProfile: async (data) => {
