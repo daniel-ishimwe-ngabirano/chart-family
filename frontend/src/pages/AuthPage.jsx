@@ -28,27 +28,43 @@ function LoginForm({ onNavigate }) {
   const [otp, setOtp] = useState("");
   const [mode, setMode] = useState("email");
   const [otpSent, setOtpSent] = useState(false);
+  const [error, setError] = useState("");
   const { login, isLoggingIn } = useAuthStore();
   const t = useTranslate();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login({ email, password });
+    setError("");
+    const result = await login({ email, password });
+    if (!result.success) {
+      setError(result.error || "Login failed. Check your email and password.");
+    }
   };
 
   const sendOtp = async () => {
+    setError("");
     try {
       await axios.post("/auth/send-otp", { phone });
       setOtpSent(true);
-    } catch { }
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to send OTP.");
+    }
   };
 
   const verifyOtp = async () => {
+    setError("");
     try {
       const { data } = await axios.post("/auth/verify-otp", { phone, otp });
-      if (data.accessToken) window.location.reload();
-    } catch { }
+      if (data.accessToken) {
+        localStorage.setItem("wavechat_token", data.accessToken);
+        window.location.reload();
+      } else {
+        setError("Invalid OTP. Please try again.");
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || "OTP verification failed.");
+    }
   };
 
   return (
@@ -64,6 +80,8 @@ function LoginForm({ onNavigate }) {
           <Phone size={16} /> {t("auth.phone", "Phone")}
         </button>
       </div>
+
+      {error && <div className="error-message">{error}</div>}
 
       {mode === "email" ? (
         <form onSubmit={handleSubmit} className="auth-form">
