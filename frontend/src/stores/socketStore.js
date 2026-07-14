@@ -76,27 +76,36 @@ export const connectSocket = () => {
 
   socket.on("message:new", (message) => {
     const authUser = useAuthStore.getState().authUser;
-    if (message.senderId === authUser?.id) return;
-    useChatStore.getState().addMessage(message);
-    useChatStore.getState().getConversations();
+    const chatState = useChatStore.getState();
+    const isOwnMessage = message.senderId === authUser?.id;
 
-    const state = useChatStore.getState();
-    if (state.selectedConversation?.id === message.conversationId) {
-      emitMarkAsRead(message.conversationId, message.id, authUser.id);
-    } else {
-      playMessageReceived();
-      const sender = message.sender;
-      window.dispatchEvent(new CustomEvent("app:notification", {
-        detail: {
-          id: message.id,
-          title: sender?.fullName || "New message",
-          body: message.text || (message.type === "IMAGE" ? "📷 Image" : message.type === "VIDEO" ? "🎥 Video" : "📎 Media"),
-          avatar: sender?.avatar || "",
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "message",
-          conversationId: message.conversationId,
-        },
-      }));
+    // Add to message list only if this conversation is open (dedup handled in addMessage)
+    if (!isOwnMessage) {
+      chatState.addMessage(message);
+    }
+
+    // Always update the conversation list preview in-memory (fast, no API call)
+    chatState.updateConversationLastMessage(message);
+
+    // Show notification only for incoming messages in background conversations
+    if (!isOwnMessage) {
+      if (chatState.selectedConversation?.id === message.conversationId) {
+        emitMarkAsRead(message.conversationId, message.id, authUser.id);
+      } else {
+        playMessageReceived();
+        const sender = message.sender;
+        window.dispatchEvent(new CustomEvent("app:notification", {
+          detail: {
+            id: message.id,
+            title: sender?.fullName || "New message",
+            body: message.text || (message.type === "IMAGE" ? "📷 Image" : message.type === "VIDEO" ? "🎥 Video" : "📎 Media"),
+            avatar: sender?.avatar || "",
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            type: "message",
+            conversationId: message.conversationId,
+          },
+        }));
+      }
     }
   });
 

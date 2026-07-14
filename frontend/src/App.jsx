@@ -76,11 +76,17 @@ function App() {
           }
         });
       }
-      return () => disconnectSocket();
+      // Only disconnect when the user actually logs out (id becomes null)
+      return () => {
+        if (!useAuthStore.getState().authUser) {
+          disconnectSocket();
+        }
+      };
     } else {
       disconnectSocket();
     }
-  }, [authUser, getConversations, getUsers, fetchFeatures, fetchPublicFeatures, loadTheme]);
+  // Use authUser?.id (not authUser) so socket doesn't reconnect on object reference changes
+  }, [authUser?.id, getConversations, getUsers, fetchFeatures, fetchPublicFeatures, loadTheme]);
 
   return (
     <BrowserRouter>

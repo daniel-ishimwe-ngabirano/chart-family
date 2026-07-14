@@ -91,8 +91,18 @@ export const useChatStore = create((set, get) => ({
       const isFormData = data instanceof FormData;
       const config = isFormData ? { timeout: 1800000 } : {};
       const res = await axios.post(`/conversations/${convId}/messages`, data, config);
-      set((state) => ({ messages: [...state.messages, res.data] }));
-      return { success: true, data: res.data };
+      const msg = res.data;
+      // Append only if this conversation is currently open and not already present
+      set((state) => {
+        const alreadyExists = state.messages.some((m) => m.id === msg.id);
+        const isActive = state.selectedConversation?.id === msg.conversationId;
+        return {
+          messages: alreadyExists || !isActive ? state.messages : [...state.messages, msg],
+        };
+      });
+      // Update conversation preview in-memory (no API re-fetch needed)
+      get().updateConversationLastMessage(msg);
+      return { success: true, data: msg };
     } catch (error) {
       console.error("SendMessage error:", error);
       const message = error.response?.data?.error || error.message || "Failed to send message";
@@ -142,7 +152,28 @@ export const useChatStore = create((set, get) => ({
   },
 
   addMessage: (message) => {
-    set((state) => ({ messages: [...state.messages, message] }));
+    set((state) => {
+      // Only add if this is the currently open conversation
+      if (state.selectedConversation?.id !== message.conversationId) return state;
+      // Deduplicate — don't add if we already have this message
+      if (state.messages.some((m) => m.id === message.id)) return state;
+      return { messages: [...state.messages, message] };
+    });
+  },
+
+  // Update a conversation's last message preview in-memory (avoids API re-fetch)
+  updateConversationLastMessage: (message) => {
+    set((state) => ({
+      conversations: state.conversations.map((c) => {
+        if (c.id !== message.conversationId) return c;
+        const isOpen = state.selectedConversation?.id === message.conversationId;
+        return {
+          ...c,
+          lastMessage: message,
+          unreadCount: isOpen ? 0 : (c.unreadCount || 0) + 1,
+        };
+      }),
+    }));
   },
 
   updateMessage: (message) => {
